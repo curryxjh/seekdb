@@ -313,7 +313,14 @@ int ObColumnNamespaceChecker::check_column_exists(const TableItem &table_item, c
         table_id, col_name, is_exist))) {
     }
   } else if (table_item.is_function_table()) {
-    if (OB_FAIL(ObResolverUtils::check_function_table_column_exist(table_item,
+    if (table_item.function_table_expr_ != nullptr
+        && table_item.function_table_expr_->get_expr_type() == T_FUN_SYS_FILE_SCAN) {
+      if (OB_ISNULL(dml_stmt_)) {
+        ret = OB_ERR_UNEXPECTED;
+      } else {
+        is_exist = const_cast<ObDMLStmt *>(dml_stmt_)->get_column_item(table_item.table_id_, col_name) != nullptr;
+      }
+    } else if (OB_FAIL(ObResolverUtils::check_function_table_column_exist(table_item,
                                                                    params_,
                                                                    col_name))) {
     } else {

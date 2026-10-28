@@ -28,6 +28,7 @@
 #include "sql/engine/expr/ob_expr_regexp_context.h"
 #include "sql/engine/expr/ob_json_param_type.h"
 #include "sql/parser/ob_parser_utils.h"
+#include "sql/engine/basic/file_scan_utils.h"
 
 #include "sql/executor/ob_memory_tracker.h"
 namespace oceanbase
@@ -3081,6 +3082,54 @@ int ObSelectResolver::resolve_into_outfile_without_format(const ParseNode *node,
   return ret;
 }
 
+int ObSelectResolver::resolve_file_copy(const ParseNode *node, ObSelectIntoItem &into_item)
+{
+  int ret = OB_SUCCESS;
+  bool enabled = false;
+  file_sql::Options options;
+  options.header = false;
+  std::string error;
+  OZ (session_info_->get_sys_variable(SYS_VAR_ENABLE_FILE_SQL, enabled));
+  if (OB_SUCC(ret) && !enabled) { ret = OB_NOT_SUPPORTED; LOG_USER_ERROR(OB_NOT_SUPPORTED, "file SQL is disabled"); }
+  OZ (resolve_into_const_node(node->children_[0], into_item.outfile_name_));
+  const ParseNode *list = node->children_[1];
+  std::set<std::string> seen;
+  for (int i = 0; OB_SUCC(ret) && list != nullptr && i < list->num_child_; ++i) {
+    const ParseNode *entry = list->children_[i];
+    if (entry == nullptr || entry->num_child_ != 2 || entry->children_[0] == nullptr) {
+      ret = OB_ERR_PARSER_SYNTAX;
+    } else {
+      const ParseNode *key = entry->children_[0], *value = entry->children_[1];
+      std::string name = file_sql::lower(std::string(key->str_value_, key->str_len_)), text;
+      if (!seen.insert(name).second) ret = OB_INVALID_ARGUMENT;
+      else if (value == nullptr) text = "true";
+      else if (value->type_ == T_BOOL) text = value->value_ ? "true" : "false";
+      else if (value->type_ == T_INT) text = std::to_string(value->value_);
+      else if (value->type_ == T_IDENT) text.assign(value->str_value_, value->str_len_);
+      else {
+        ObString str;
+        OZ (resolve_str_const(*value, str));
+        if (OB_SUCC(ret)) text.assign(str.ptr(), str.length());
+      }
+      if (OB_SUCC(ret) && name != "header" && name != "format" && name != "delimiter" && name != "delim"
+          && name != "sep" && name != "quote" && name != "escape" && name != "nullstr" && name != "null") {
+        error = "unknown COPY option: " + name; ret = OB_INVALID_ARGUMENT;
+      }
+      if (OB_SUCC(ret) && !options.set(name, text, error)) ret = OB_INVALID_ARGUMENT;
+    }
+  }
+  if (OB_SUCC(ret) && (options.delimiter == options.quote || options.nullstr.find_first_of(std::string() + options.delimiter + options.quote + '\n' + '\r') != std::string::npos)) {
+    error = "COPY NULL text must not contain CSV syntax characters"; ret = OB_INVALID_ARGUMENT;
+  }
+  if (OB_SUCC(ret)) {
+    const std::string config = options.encode();
+    OZ (ob_write_string(*allocator_, ObString(config.size(), config.data()), into_item.file_copy_options_));
+    get_stmt()->get_query_ctx()->get_query_hint_for_update().get_global_hint().plan_cache_policy_ = OB_USE_PLAN_CACHE_NONE;
+  }
+  if (ret == OB_INVALID_ARGUMENT) LOG_USER_ERROR(OB_INVALID_ARGUMENT, error.empty() ? "invalid COPY option" : error.c_str());
+  return ret;
+}
+
 int ObSelectResolver::resolve_into_clause(const ParseNode *node)
 {
   int ret = OB_SUCCESS;
@@ -3105,7 +3154,9 @@ int ObSelectResolver::resolve_into_clause(const ParseNode *node)
       new(into_item) ObSelectIntoItem();
       into_item->into_type_ = node->type_;
       if (T_INTO_OUTFILE == node->type_) { // into outfile
-        if (is_in_set_query()) {
+        if (node->num_child_ == 2) {
+          ret = resolve_file_copy(node, *into_item);
+        } else if (is_in_set_query()) {
           ret = OB_INAPPROPRIATE_INTO;
         } else if (node->num_child_ == 3 && NULL != node->children_[1]
             && T_EXTERNAL_FILE_FORMAT == node->children_[1]->type_) { // Handle with `FORMAT`

@@ -165,6 +165,8 @@ public:
     return external_properties_;
   }
   const common::ObIArray<ObRawExpr*> &get_select_exprs() const { return select_exprs_; }
+  common::ObString get_file_copy_options() const { return file_copy_options_; }
+  void set_file_copy_options(const common::ObString &options) { file_copy_options_ = options; }
   common::ObIArray<ObRawExpr*> &get_select_exprs() { return select_exprs_; }
   virtual int est_cost() override;
   virtual int compute_plan_type() override;
@@ -188,6 +190,7 @@ private:
   common::ObCollationType cs_type_;
   bool is_overwrite_;
   common::ObString external_properties_;
+  common::ObString file_copy_options_;
 };
 }
 }

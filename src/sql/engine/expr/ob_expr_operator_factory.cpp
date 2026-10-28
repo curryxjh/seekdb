@@ -379,6 +379,7 @@
 #include "sql/engine/expr/ob_expr_array_cardinality.h"
 #include "sql/engine/expr/ob_expr_tokenize.h"
 #include "sql/engine/expr/ob_expr_lock_func.h"
+#include "sql/engine/expr/ob_expr_file_scan.h"
 #include "sql/engine/expr/ob_expr_decode_trace_id.h"
 #include "sql/engine/expr/ob_expr_topn_filter.h"
 #include "sql/engine/expr/ob_expr_get_path.h"
@@ -902,6 +903,11 @@ void ObExprOperatorFactory::register_expr_operators()
     REG_OP(ObExprDecode);
     REG_OP(ObExprICUVersion);
     REG_OP(ObExprGeneratorFunc);
+    REG_OP(ObExprFileScan);
+    REG_SAME_OP(T_FUN_SYS_FILE_SCAN, T_FUN_SYS_FILE_SCAN, "read_json", i);
+    REG_SAME_OP(T_FUN_SYS_FILE_SCAN, T_FUN_SYS_FILE_SCAN, "read_ndjson", i);
+    REG_SAME_OP(T_FUN_SYS_FILE_SCAN, T_FUN_SYS_FILE_SCAN, "read_parquet", i);
+    REG_SAME_OP(T_FUN_SYS_FILE_SCAN, T_FUN_SYS_FILE_SCAN, "glob", i);
     REG_OP(ObExprZipf);
     REG_OP(ObExprNormal);
     REG_OP(ObExprUniform);

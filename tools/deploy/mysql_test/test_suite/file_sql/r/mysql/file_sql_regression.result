@@ -1,0 +1,27 @@
+# cross-format INNER and LEFT JOIN
+id	name	score
+1	Alice	98.5
+2	Bob	NULL
+3	Chen	90
+id	name
+1	Chen
+2	NULL
+3	NULL
+# repeated scans and native aggregate HAVING
+pairs
+3
+active	n	total
+1	2	4
+name	adjusted
+Alice	99.5
+# COPY ordinary table with custom CSV options and NULL
+id	text_value	is_null
+1	a|b	0
+2		0
+3	NULL	1
+# all-NULL metadata and empty COPY result
+is_null	empty_length
+1	0
+n
+0
+# invalid options fail before execution

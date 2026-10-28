@@ -1,0 +1,47 @@
+# owner: database-competition
+# description: Native joins, rescan, grouping, COPY round trip and validation.
+--source mysql_test/test_suite/file_sql/include/copy_file_sql_data.inc
+--disable_query_log
+let $FILE_SQL_DATA_DIR = $OBSERVER_DIR/data_for_mysqltest_file_sql;
+set session enable_file_sql = ON;
+
+--echo # cross-format INNER and LEFT JOIN
+eval select a.id, a.name, b.score from read_csv('$FILE_SQL_DATA_DIR/basic.csv') a
+     inner join read_ndjson('$FILE_SQL_DATA_DIR/basic.jsonl') b on a.id=b.id order by a.id;
+eval select a.id, b.name from read_csv('$FILE_SQL_DATA_DIR/basic.csv') a
+     left join read_json('$FILE_SQL_DATA_DIR/basic.jsonl') b on a.id+2=b.id order by a.id;
+
+--echo # repeated scans and native aggregate HAVING
+eval select count(*) as pairs from read_csv('$FILE_SQL_DATA_DIR/basic.csv') a
+     join read_csv('$FILE_SQL_DATA_DIR/basic.csv') b on a.id<b.id;
+eval select active, count(*) as n, sum(id) as total from read_csv('$FILE_SQL_DATA_DIR/basic.csv')
+     group by active having count(*) > 1 order by active;
+eval select name, score+1 as adjusted from READ_CSV('$FILE_SQL_DATA_DIR/basic.csv') as f
+     where score>90 order by score desc limit 1;
+
+--echo # COPY ordinary table with custom CSV options and NULL
+create table file_sql_copy_roundtrip(id bigint primary key, text_value varchar(100));
+insert into file_sql_copy_roundtrip values(1,'a|b'),(2,''),(3,NULL);
+eval copy file_sql_copy_roundtrip to '$FILE_SQL_DATA_DIR/roundtrip.csv'
+     (format csv, header, delimiter '|', quote '"', escape '"', nullstr 'NULL');
+eval select id, text_value, text_value is null as is_null
+     from read_csv('$FILE_SQL_DATA_DIR/roundtrip.csv', delimiter='|', nullstr='NULL') order by id;
+drop table file_sql_copy_roundtrip;
+
+--echo # all-NULL metadata and empty COPY result
+eval copy (select NULL as n, '' as empty_value) to '$FILE_SQL_DATA_DIR/null.csv' (header);
+eval select n is null as is_null, length(empty_value) as empty_length from read_csv('$FILE_SQL_DATA_DIR/null.csv');
+eval copy (select id from read_csv('$FILE_SQL_DATA_DIR/basic.csv') where false)
+     to '$FILE_SQL_DATA_DIR/empty.csv' (header);
+eval select count(*) as n from read_csv('$FILE_SQL_DATA_DIR/empty.csv');
+
+--echo # invalid options fail before execution
+--disable_result_log
+--error 1064
+eval select * from read_csv('$FILE_SQL_DATA_DIR/basic.csv', header=true, header=false);
+--error 1235
+eval select * from read_json('$FILE_SQL_DATA_DIR/basic.jsonl', sample_size=1);
+--enable_result_log
+set session enable_file_sql = OFF;
+--enable_query_log
+--source mysql_test/test_suite/file_sql/include/remove_file_sql_data.inc
