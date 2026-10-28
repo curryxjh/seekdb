@@ -54,22 +54,34 @@ int ObSelectIntoOp::open_file_copy()
   if (OB_SUCC(ret) && !options.decode(std::string(MY_SPEC.file_copy_options_.ptr(), MY_SPEC.file_copy_options_.length()))) ret = OB_INVALID_ARGUMENT;
   if (OB_SUCC(ret)) {
     options.root.assign(root.ptr(), root.length());
-    ObString path = MY_SPEC.outfile_name_.get_varchar();
-    options.path.assign(path.ptr(), path.length());
-    void *mem = ctx_.get_allocator().alloc(sizeof(file_sql::CsvWriter));
-    if (mem == nullptr) ret = OB_ALLOCATE_MEMORY_FAILED;
-    else {
-      file_copy_writer_ = new (mem) file_sql::CsvWriter();
-      if (!file_copy_writer_->open(options)) {
-        ret = OB_INVALID_ARGUMENT;
-        LOG_USER_ERROR(OB_INVALID_ARGUMENT, file_copy_writer_->error.c_str());
-      } else if (options.header) {
-        std::vector<file_sql::Cell> names;
-        for (int64_t i = 0; i < MY_SPEC.file_copy_headers_.count(); ++i) {
-          const ObString &s = MY_SPEC.file_copy_headers_.at(i);
-          names.emplace_back(std::string(s.ptr(), s.length()));
+    bool need_check = false;
+    ObPhysicalPlanCtx *phy_plan_ctx = ctx_.get_physical_plan_ctx();
+    file_name_ = MY_SPEC.outfile_name_;
+    if (OB_ISNULL(phy_plan_ctx)) {
+      ret = OB_ERR_UNEXPECTED;
+    } else {
+      OZ (ObSQLUtils::get_param_value(MY_SPEC.outfile_name_,
+                                       phy_plan_ctx->get_param_store(),
+                                       file_name_, need_check));
+      ObString path = file_name_.get_varchar();
+      options.path.assign(path.ptr(), path.length());
+    }
+    if (OB_SUCC(ret)) {
+      void *mem = ctx_.get_allocator().alloc(sizeof(file_sql::CsvWriter));
+      if (mem == nullptr) ret = OB_ALLOCATE_MEMORY_FAILED;
+      else {
+        file_copy_writer_ = new (mem) file_sql::CsvWriter();
+        if (!file_copy_writer_->open(options)) {
+          ret = OB_INVALID_ARGUMENT;
+          LOG_USER_ERROR(OB_INVALID_ARGUMENT, file_copy_writer_->error.c_str());
+        } else if (options.header) {
+          std::vector<file_sql::Cell> names;
+          for (int64_t i = 0; i < MY_SPEC.file_copy_headers_.count(); ++i) {
+            const ObString &s = MY_SPEC.file_copy_headers_.at(i);
+            names.emplace_back(std::string(s.ptr(), s.length()));
+          }
+          if (!file_copy_writer_->row(names)) ret = OB_IO_ERROR;
         }
-        if (!file_copy_writer_->row(names)) ret = OB_IO_ERROR;
       }
     }
   }
