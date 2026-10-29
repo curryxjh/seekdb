@@ -3105,7 +3105,7 @@ int ObSelectResolver::resolve_file_copy(const ParseNode *node, ObSelectIntoItem 
       else if (value == nullptr) text = "true";
       else if (value->type_ == T_BOOL) text = value->value_ ? "true" : "false";
       else if (value->type_ == T_INT) text = std::to_string(value->value_);
-      else if (value->type_ == T_IDENT) text.assign(value->str_value_, value->str_len_);
+      else if (value->str_value_ != nullptr) text.assign(value->str_value_, value->str_len_);
       else {
         ObString str;
         OZ (resolve_str_const(*value, str));
@@ -3124,6 +3124,7 @@ int ObSelectResolver::resolve_file_copy(const ParseNode *node, ObSelectIntoItem 
   if (OB_SUCC(ret)) {
     const std::string config = options.encode();
     OZ (ob_write_string(*allocator_, ObString(config.size(), config.data()), into_item.file_copy_options_));
+    into_item.is_file_copy_ = true;
     get_stmt()->get_query_ctx()->get_query_hint_for_update().get_global_hint().plan_cache_policy_ = OB_USE_PLAN_CACHE_NONE;
   }
   if (ret == OB_INVALID_ARGUMENT) LOG_USER_ERROR(OB_INVALID_ARGUMENT, error.empty() ? "invalid COPY option" : error.c_str());

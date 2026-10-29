@@ -482,7 +482,9 @@ private:
       if(++size>MAX_RECORD){error="CSV record exceeds resource limit";return -1;}
       if(quoted){if(c==options.escape){int n=input_.get();if(options.escape==options.quote){if(n==options.quote)text.push_back(n);else{input_.unget(n);quoted=false;closed=true;}}
           else if(n==options.quote||n==options.escape)text.push_back(n);else{error="invalid CSV escape";return -1;}}
-        else if(c==options.quote){quoted=false;closed=true;}else text.push_back(c);continue;}
+        else if(c==options.quote){quoted=false;closed=true;}
+        else if(c=='\r') { int n=input_.get(); if(n!='\n') input_.unget(n); text.push_back('\n'); }
+        else text.push_back(c);continue;}
       if(c==options.delimiter){field();if(out.size()>=MAX_COLUMNS){error="too many CSV columns";return -1;}}
       else if(c=='\n'||c=='\r'){if(c=='\r'){int n=input_.get();if(n!='\n')input_.unget(n);}field();++line_;return validate(out);}
       else if(c==options.quote&&!started){quoted=true;was_quoted=true;started=true;}

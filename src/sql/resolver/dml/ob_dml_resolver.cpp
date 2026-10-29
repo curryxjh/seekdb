@@ -4056,7 +4056,7 @@ int ObDMLResolver::resolve_file_table_item(const ParseNode &parse_tree, TableIte
           case file_sql::Type::BOOLEAN: meta.set_type(ObTinyIntType); break;
           case file_sql::Type::NIL: meta.set_null(); break;
           case file_sql::Type::DATE: meta.set_date(); break;
-          case file_sql::Type::DATETIME: meta.set_datetime(); accuracy.set_scale(6); break;
+          case file_sql::Type::DATETIME: meta.set_datetime(); accuracy.set_scale(0); break;
           default: meta.set_varchar(); meta.set_collation_type(CS_TYPE_UTF8MB4_BIN); accuracy.set_length(file_sql::MAX_RECORD); break;
         }
         ColumnItem *ci = nullptr;

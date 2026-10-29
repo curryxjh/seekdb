@@ -5463,7 +5463,8 @@ int ObStaticEngineCG::generate_spec(ObLogSelectInto &op, ObSelectIntoSpec &spec,
   } else {
     ObString var;
     OZ (ob_write_string(alloc, op.get_file_copy_options(), spec.file_copy_options_));
-    if (OB_SUCC(ret) && !spec.file_copy_options_.empty()) {
+    spec.is_file_copy_ = op.is_file_copy();
+    if (OB_SUCC(ret) && spec.is_file_copy_) {
       const ObSelectStmt *stmt = static_cast<const ObSelectStmt *>(op.get_stmt());
       OZ (spec.file_copy_headers_.init(stmt->get_select_item_size()));
       for (int64_t i = 0; OB_SUCC(ret) && i < stmt->get_select_item_size(); ++i) {

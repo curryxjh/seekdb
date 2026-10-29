@@ -44,7 +44,8 @@ public:
         escaped_cht_(),
         cs_type_(CS_TYPE_INVALID),
         is_overwrite_(false),
-        external_properties_()
+        external_properties_(),
+        is_file_copy_(false)
   {
   }
   virtual ~ObLogSelectInto() {}
@@ -167,6 +168,8 @@ public:
   const common::ObIArray<ObRawExpr*> &get_select_exprs() const { return select_exprs_; }
   common::ObString get_file_copy_options() const { return file_copy_options_; }
   void set_file_copy_options(const common::ObString &options) { file_copy_options_ = options; }
+  bool is_file_copy() const { return is_file_copy_; }
+  void set_is_file_copy(bool is_file_copy) { is_file_copy_ = is_file_copy; }
   common::ObIArray<ObRawExpr*> &get_select_exprs() { return select_exprs_; }
   virtual int est_cost() override;
   virtual int compute_plan_type() override;
@@ -191,6 +194,7 @@ private:
   bool is_overwrite_;
   common::ObString external_properties_;
   common::ObString file_copy_options_;
+  bool is_file_copy_;
 };
 }
 }

@@ -74,7 +74,8 @@ public:
       is_overwrite_(false),
       external_properties_(alloc),
       file_copy_options_(),
-      file_copy_headers_(alloc)
+      file_copy_headers_(alloc),
+      is_file_copy_(false)
   {
   }
 
@@ -96,6 +97,7 @@ public:
   ObExternalFileFormat::StringData external_properties_;
   common::ObString file_copy_options_;
   common::ObFixedArray<common::ObString, common::ObIAllocator> file_copy_headers_;
+  bool is_file_copy_;
   static const int64_t DEFAULT_MAX_FILE_SIZE = 256LL * 1024 * 1024;
   static const int64_t DEFAULT_BUFFER_SIZE = 1LL * 1024 * 1024;
 };
