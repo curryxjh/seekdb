@@ -94,6 +94,8 @@
 #include "sql/resolver/cmd/ob_get_diagnostics_resolver.h"
 #include "sql/resolver/dcl/ob_alter_role_resolver.h"
 #include "sql/pl/ob_pl_package.h"
+#include "sql/parser/ob_parser.h"
+#include "sql/engine/basic/file_scan_utils.h"
 
 namespace oceanbase
 {
@@ -133,6 +135,65 @@ int ObResolver::select_stmt_resolver_func(ObResolverParams &params, const ParseN
     if (OB_FAIL(SMART_CALL(stmt_resolver.resolve(parse_tree)))) {
     }
     stmt = stmt_resolver.get_basic_stmt();
+  }
+  return ret;
+}
+
+static bool contains_file_table(const ParseNode *node, int depth = 0)
+{
+  if (node == nullptr || depth > 256) return false;
+  if (node->type_ == T_TABLE_COLLECTION_EXPRESSION && node->num_child_ == 2) {
+    const ParseNode *f = node->children_[0];
+    if (f != nullptr && f->type_ == T_FUN_SYS && f->num_child_ == 2 && f->children_[0] != nullptr) {
+      const ParseNode *name = f->children_[0];
+      std::string n = file_sql::lower(std::string(name->str_value_, name->str_len_));
+      if (n == "read_csv" || n == "read_json" || n == "read_ndjson" || n == "read_parquet" || n == "glob") return true;
+    }
+  }
+  for (int i = 0; i < node->num_child_; ++i) if (contains_file_table(node->children_[i], depth + 1)) return true;
+  return false;
+}
+
+int ObResolver::resolve_file_describe(const ParseNode &parse_tree, ObStmt *&stmt)
+{
+  int ret = OB_SUCCESS;
+  ObStmt *source = nullptr;
+  OZ (select_stmt_resolver_func<ObSelectResolver>(params_, *parse_tree.children_[4], source));
+  CK (source != nullptr && source->is_select_stmt());
+  ObSqlString query;
+  OZ (query.append("SELECT column_name, column_type, `null`, `key`, `default`, extra FROM ("));
+  if (OB_SUCC(ret)) {
+    const auto *select = static_cast<const ObSelectStmt *>(source);
+    for (int64_t i = 0; OB_SUCC(ret) && i < select->get_select_item_size(); ++i) {
+      const SelectItem &item = select->get_select_item(i);
+      const ObExprResType &type = item.expr_->get_result_type();
+      const char *name = type.is_null() ? "NULL" : type.is_integer_type() ?
+                        (type.get_type() == ObTinyIntType ? "BOOLEAN" : "BIGINT") :
+                        type.get_type() == ObDoubleType ? "DOUBLE" : type.get_type() == ObDateType ? "DATE" :
+                        type.get_type() == ObDateTimeType ? "DATETIME" : ob_sql_type_str(type.get_type());
+      const ObString &label = item.alias_name_.empty() ? item.expr_name_ : item.alias_name_;
+      // Hex literals keep arbitrary UTF-8 names independent of SQL escape modes.
+      std::string hex;
+      static const char digits[] = "0123456789abcdef";
+      for (int32_t j = 0; j < label.length(); ++j) {
+        unsigned char c = label.ptr()[j]; hex += digits[c >> 4]; hex += digits[c & 15];
+      }
+      if (i != 0) OZ (query.append(" UNION ALL "));
+      OZ (query.append_fmt("SELECT CONVERT(X'%s' USING utf8mb4) AS column_name, '%s' AS column_type, "
+                          "'%s' AS `null`, NULL AS `key`, NULL AS `default`, NULL AS extra, %ld AS ordinal",
+                          hex.c_str(), name, (type.get_result_flag() & NOT_NULL_FLAG) ? "NO" : "YES", i));
+    }
+  }
+  OZ (query.append(") AS file_metadata ORDER BY ordinal"));
+  if (OB_SUCC(ret)) {
+    ParseResult parsed;
+    ObParser parser(*params_.allocator_, params_.session_info_->get_sql_mode());
+    OZ (parser.parse(query.string(), parsed));
+    if (OB_SUCC(ret)) {
+      CK (parsed.result_tree_ != nullptr && parsed.result_tree_->num_child_ == 1);
+      if (OB_SUCC(ret)) OZ (select_stmt_resolver_func<ObSelectResolver>(params_, *parsed.result_tree_->children_[0], stmt));
+    }
+    if (OB_SUCC(ret)) params_.query_ctx_->get_query_hint_for_update().get_global_hint().plan_cache_policy_ = OB_USE_PLAN_CACHE_NONE;
   }
   return ret;
 }
@@ -469,7 +530,24 @@ int ObResolver::resolve(IsPrepared if_prepared, const ParseNode &parse_tree, ObS
         break;
       }
       case T_EXPLAIN: {
-        REGISTER_STMT_RESOLVER(Explain);
+        if (parse_tree.num_child_ == 5 && parse_tree.children_[0] != nullptr
+            && parse_tree.children_[0]->type_ == T_INT
+            && parse_tree.children_[4] != nullptr && parse_tree.children_[4]->type_ == T_SELECT
+            && contains_file_table(parse_tree.children_[4])) {
+          ret = resolve_file_describe(parse_tree, stmt);
+        } else {
+          if (parse_tree.num_child_ == 5 && parse_tree.children_[0] != nullptr
+              && parse_tree.children_[0]->type_ == T_INT) {
+            ParseNode explain = parse_tree;
+            ParseNode *children[5];
+            MEMCPY(children, parse_tree.children_, sizeof(children));
+            children[0] = nullptr;
+            explain.children_ = children;
+            ret = stmt_resolver_func<ObExplainResolver>(params_, explain, stmt);
+          } else {
+            REGISTER_STMT_RESOLVER(Explain);
+          }
+        }
         break;
       }
       case T_ALTER_SYSTEM_SET: {

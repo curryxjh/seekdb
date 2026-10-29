@@ -5462,6 +5462,17 @@ int ObStaticEngineCG::generate_spec(ObLogSelectInto &op, ObSelectIntoSpec &spec,
   } else if (OB_FAIL(spec.select_exprs_.init(op.get_select_exprs().count()))) {
   } else {
     ObString var;
+    OZ (ob_write_string(alloc, op.get_file_copy_options(), spec.file_copy_options_));
+    if (OB_SUCC(ret) && !spec.file_copy_options_.empty()) {
+      const ObSelectStmt *stmt = static_cast<const ObSelectStmt *>(op.get_stmt());
+      OZ (spec.file_copy_headers_.init(stmt->get_select_item_size()));
+      for (int64_t i = 0; OB_SUCC(ret) && i < stmt->get_select_item_size(); ++i) {
+        const SelectItem &item = stmt->get_select_item(i);
+        ObString name;
+        OZ (ob_write_string(alloc, item.alias_name_.empty() ? item.expr_name_ : item.alias_name_, name));
+        OZ (spec.file_copy_headers_.push_back(name));
+      }
+    }
     for (int64_t i = 0; OB_SUCC(ret) && i < op.get_user_vars().count(); ++i) {
       var.reset();
       if (OB_FAIL(ob_write_string(alloc, op.get_user_vars().at(i), var))) {
@@ -5511,6 +5522,17 @@ int ObStaticEngineCG::generate_spec(ObLogFunctionTable &op, ObFunctionTableSpec 
   } else {
     spec.has_correlated_expr_ = value_raw_expr->has_flag(CNT_DYNAMIC_PARAM);
     spec.value_expr_ = value_expr;
+    const bool file_scan = value_raw_expr->get_expr_type() == T_FUN_SYS_FILE_SCAN;
+    if (file_scan) {
+      CK (value_raw_expr->get_param_count() == 2);
+      OZ (spec.file_column_ids_.init(op.get_stmt()->get_column_size()));
+      if (OB_SUCC(ret)) {
+        const auto *config = static_cast<const ObConstRawExpr *>(value_raw_expr->get_param_expr(0));
+        const auto *signature = static_cast<const ObConstRawExpr *>(value_raw_expr->get_param_expr(1));
+        OZ (ob_write_string(alloc, config->get_value().get_string(), spec.file_options_));
+        OZ (ob_write_string(alloc, signature->get_value().get_string(), spec.file_signature_));
+      }
+    }
     for (int64_t i = 0; OB_SUCC(ret) && i < op.get_output_exprs().count(); ++i) {
       if (OB_FAIL(mark_expr_self_produced(op.get_output_exprs().at(i)))) {
       }
@@ -5526,6 +5548,9 @@ int ObStaticEngineCG::generate_spec(ObLogFunctionTable &op, ObFunctionTableSpec 
         OZ (mark_expr_self_produced(col_item->expr_));
         OZ (generate_rt_expr(*col_item->expr_, rt_expr));
         OZ (spec.column_exprs_.push_back(rt_expr));
+        if (file_scan) {
+          OZ (spec.file_column_ids_.push_back(col_item->column_id_ - OB_APP_MIN_COLUMN_ID));
+        }
       }
     }
   }

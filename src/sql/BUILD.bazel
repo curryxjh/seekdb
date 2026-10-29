@@ -36,6 +36,18 @@ load(
 
 package(default_visibility = ["//visibility:private"])
 
+_FILE_SQL_HEADERS = [
+    "engine/basic/file_scan_utils.h",
+    "engine/basic/file_copy_utils.h",
+]
+
+cc_library(
+    name = "file_sql_reader_headers",
+    hdrs = _FILE_SQL_HEADERS,
+    includes = [".."],
+    visibility = ["//src/sql:__subpackages__", "//unittest/sql:__subpackages__"],
+)
+
 _SQL_RUNTIME_ONLY_SHARE_DEPS = [
     "//src/share:checksum_persistence",
     "//src/share:cluster_metadata_persistence",
@@ -189,7 +201,7 @@ cc_library(
     hdrs = glob(
         ["**/*.h", "**/*.ipp", "**/*.def"],
         allow_empty = True,
-        exclude = SQL_PUBLIC_HEADER_ROOTS + SQL_INTERFACE_CLOSURE_HEADERS + SQL_COMPOSITION_HEADERS,
+        exclude = SQL_PUBLIC_HEADER_ROOTS + SQL_INTERFACE_CLOSURE_HEADERS + SQL_COMPOSITION_HEADERS + _FILE_SQL_HEADERS,
     ),
     deps = [
         ":sql_retrieval_composition_headers",
@@ -233,6 +245,7 @@ _SQL_RUNTIME_WITHOUT_PASS_UNITY_GROUPS = singleton_unity_groups(
 )
 
 _SQL_RUNTIME_IMPLEMENTATION_DEPS = [
+    ":file_sql_reader_headers",
     "//rust:uuid_generator_headers",
     "//rust:config_headers",
     ":_textual_sql_map_inputs",

@@ -1,0 +1,77 @@
+name: Competition Linux validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-tests:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    env:
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm2cpio cpio m4 libaio1 libnuma1 libatomic1 libunwind8 python3-venv
+          python3 -m venv "$RUNNER_TEMP/competition-python"
+          "$RUNNER_TEMP/competition-python/bin/pip" install pymysql==1.2.3 pyarrow==26.0.0
+      - name: Prepare seekdb dependencies
+        run: python3 build.py init
+      - name: Build and run C++ regressions
+        run: |
+          export PATH="$PWD/deps/3rd/usr/local/oceanbase/devtools/bin:$PATH"
+          python3 build.py build -j2 seekdb
+          python3 build.py test -j2 --test_output=errors \
+            //unittest/sql/parser:test_file_sql_parser \
+            //unittest/sql/engine/basic:test_file_scan_utils
+      - name: Run native SQL and full-text regressions
+        run: |
+          set -euo pipefail
+          TEST_ROOT="$RUNNER_TEMP/competition-instance"
+          mkdir -p "$TEST_ROOT"
+          build/bin/src/observer/seekdb --nodaemon --base-dir="$TEST_ROOT" \
+            --port=12991 --log-level=ERROR \
+            --parameter=memory_budget=2G --parameter=datafile_size=1G \
+            --parameter=log_disk_size=2G > "$RUNNER_TEMP/competition-server.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true; wait "$SERVER_PID" 2>/dev/null || true' EXIT
+          TEST_PYTHON="$RUNNER_TEMP/competition-python/bin/python"
+          "$TEST_PYTHON" - <<'PY'
+          import time
+          import pymysql
+          for attempt in range(120):
+              try:
+                  connection = pymysql.connect(host="127.0.0.1", port=12991, user="root")
+                  connection.close()
+                  break
+              except pymysql.Error:
+                  time.sleep(1)
+          else:
+              raise SystemExit("seekdb did not become ready")
+          PY
+          "$TEST_PYTHON" unittest/sql/engine/basic/file_sql_regression.py --port 12991 --socket "$TEST_ROOT/run/sql.sock"
+          "$TEST_PYTHON" unittest/storage/fts/tokenize_regression.py --port 12991
+          CLIENT="$PWD/deps/3rd/u01/obclient/bin/obclient"
+          export LD_LIBRARY_PATH="$PWD/deps/3rd/u01/obclient/lib:$PWD/deps/3rd/u01/obclient/lib64:${LD_LIBRARY_PATH:-}"
+          export MYSQL="$CLIENT -h127.0.0.1 -P12991 -uroot -N -s -A --default-character-set=utf8mb4"
+          export MYSQL_VERBOSE="$CLIENT -h127.0.0.1 -P12991 -uroot -A --default-character-set=utf8mb4"
+          LABEL=linux-ci ROWS=20000 BATCH=500 ROUNDS=3000 QUERY_ROUNDS=200 \
+            SAMPLES=3 WARMUP=30 SKIP_LOAD=0 OUTPUT="$RUNNER_TEMP/fts-report.txt" \
+            bash tools/benchmark/fts_large_bench.sh
+          python3 tools/benchmark/fts_large_bench_score.py "$RUNNER_TEMP/fts-report.txt"
+      - name: Keep validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: competition-linux-evidence
+          path: |
+            ${{ runner.temp }}/competition-server.log
+            ${{ runner.temp }}/competition-instance/log/
+            ${{ runner.temp }}/fts-report.txt
+            build/testlogs/
+          retention-days: 7

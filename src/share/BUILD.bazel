@@ -87,6 +87,7 @@ cc_library(
 cc_library(
     name = "ai_endpoint_interface",
     hdrs = [
+        "ai_service/ai_column_sql.h",
         "ai_service/ob_ai_model_info.h",
         "ai_service/ob_ai_service_struct.h",
     ],
@@ -1026,12 +1027,18 @@ _CACHE_UNITY_GROUP = select_unity_sources(
     ],
 )
 
+cc_library(
+    name = "cache_types",
+    hdrs = ["cache/ob_cache_type.h"],
+    features = ["layering_check"],
+    visibility = ["//src:__subpackages__"],
+)
+
 grouped_unity_cc_library(
     name = "cache",
     unity_groups = [_CACHE_UNITY_GROUP],
     public_hdrs = [
         "cache/ob_cache_name_define.h",
-        "cache/ob_cache_type.h",
         "cache/ob_cache_utils.h",
         "cache/ob_kv_storecache.h",
         "cache/ob_kvcache_hazard_domain.h",
@@ -1046,6 +1053,7 @@ grouped_unity_cc_library(
         "cache/ob_vtable_event_recycle_buffer.h",
     ],
     deps = [
+        ":cache_types",
         ":core_types",
         ":delegate_interface",
         "//src/oblib/easy:easy",

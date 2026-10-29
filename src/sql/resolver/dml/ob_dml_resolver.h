@@ -616,6 +616,7 @@ protected:
 
   int resolve_function_table_column_item(const TableItem &table_item,
                                          ObIArray<ColumnItem> &col_items);
+  int resolve_file_table_item(const ParseNode &parse_tree, TableItem *&table_item);
 
   int resolve_function_table_column_item(const TableItem &table_item,
                                          const common::ObString &column_name,

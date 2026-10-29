@@ -115,11 +115,13 @@ cc_library(
     textual_hdrs = _PARSER_INTERFACE_CLOSURE,
     deps = [
         "//src/oblib:common_sql_mode",
+        "//src/oblib:oblib_foundation",
         "//src/query:_sql_parser_types",
+        "//src/share:error_codes",
     ],
     includes = ["."],
     tags = ["manual"],
-    visibility = ["//src/sql:__subpackages__"],
+    visibility = ["//src/sql:__subpackages__", "//unittest/sql/parser:__pkg__"],
 )
 
 # The Observer retrieval composition target needs the concrete boolean-query

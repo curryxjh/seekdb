@@ -477,6 +477,7 @@ _SHARE_SEMANTIC_HEADER_TARGETS = {
     ),
     "schema_entities": struct(
         hdrs = [
+            "schema/ai_column_definition.h",
             "schema/ob_col_desc.h",
             "schema/ob_column_schema.h",
             "schema/ob_constraint.h",

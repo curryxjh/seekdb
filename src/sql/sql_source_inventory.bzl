@@ -424,6 +424,7 @@ SQL_UNITY_GROUPS = [
             "src/sql/engine/expr/ob_expr_subquery_ref.cpp",
             "src/sql/engine/expr/ob_expr_substr.cpp",
             "src/sql/engine/expr/ob_expr_generator_func.cpp",
+              "src/sql/engine/expr/ob_expr_file_scan.cpp",
             "src/sql/engine/expr/ob_expr_zipf.cpp",
             "src/sql/engine/expr/ob_expr_uniform.cpp",
             "src/sql/engine/expr/ob_expr_normal.cpp",

@@ -1,0 +1,11 @@
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+cc_test(
+    name = "test_file_scan_utils",
+    srcs = ["test_file_scan_utils.cpp"],
+    defines = ["FILE_SQL_STANDALONE_TEST_MAIN"],
+    linkstatic = True,
+    data = glob(["data/*.b64"]),
+    deps = ["//src/sql:file_sql_reader_headers", "//bazel/third_party:gtest"],
+    target_compatible_with = ["@platforms//os:linux"],
+)

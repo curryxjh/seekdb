@@ -335,7 +335,7 @@ filegroup(
 cc_library(
     name = "_sql_parser_types",
     hdrs = ["api/query/parser/ob_item_type.h", "api/query/parser/parse_node.h"],
-    deps = ["//src/oblib:common_sql_mode"],
+    deps = ["//src/oblib:common_sql_mode", "//src/oblib:oblib_base", "//src/share:cache_types"],
     includes = ["api"],
     visibility = ["//src/sql/parser:__pkg__"],
 )
