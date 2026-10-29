@@ -479,6 +479,7 @@ _SHARE_SEMANTIC_HEADER_TARGETS = {
         hdrs = [
             "schema/ob_col_desc.h",
             "schema/ob_column_schema.h",
+            "schema/ai_column_definition.h",
             "schema/ob_constraint.h",
             "schema/ob_error_info.h",
             "schema/ob_objpriv_mysql_schema_struct.h",
