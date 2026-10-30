@@ -1,0 +1,27 @@
+{
+  "tokenize_statements": 832,
+  "result_rows": 36498,
+  "result_sha256": "11d0423e549442122639d1688508e1a9240da688a3b833b323668764c4bfb635",
+  "sql_sha256": "250159a93a484459a44fa1c43d8a0d099c61bb519c35864f8d316cbd4c39c9bf",
+  "differential_result": "PASS: exact TOKENIZE/frequencies and all MATCH IDs/raw scores",
+  "new_mysqltest": "PASS on original and optimized",
+  "existing_rejects": {
+    "create_fts_index_afterward": {
+      "original": "87a05db8a48f31a73ba1dd044a1fd0fe80c1561a7df251b0d0598ca91306f03f",
+      "optimized": "87a05db8a48f31a73ba1dd044a1fd0fe80c1561a7df251b0d0598ca91306f03f"
+    },
+    "partitioned_simple_query": {
+      "original": "e9ba6652f17fa6883aa15b2d90bb5a0663a002e97675d50b1d6325ac925340b2",
+      "optimized": "e9ba6652f17fa6883aa15b2d90bb5a0663a002e97675d50b1d6325ac925340b2"
+    },
+    "simple_query": {
+      "original": "f014354ad514e75172fb1fb7c4548c9f3a05ce70ec1f070f1c3abe7b2642b064",
+      "optimized": "f014354ad514e75172fb1fb7c4548c9f3a05ce70ec1f070f1c3abe7b2642b064"
+    },
+    "tokenize_function": {
+      "original": "00e3a43487cf659c670d5954c6f84dadafcd4b092389fd8ceb3b9a414f412a6d",
+      "optimized": "00e3a43487cf659c670d5954c6f84dadafcd4b092389fd8ceb3b9a414f412a6d"
+    }
+  },
+  "basic_dml": "Both fail at internal table ID lookup (No such row), before optimization; not counted as passing."
+}

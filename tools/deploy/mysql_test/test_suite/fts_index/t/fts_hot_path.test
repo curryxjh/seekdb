@@ -1,0 +1,57 @@
+# owner group: storage
+# Preserve tokenizer output, frequencies, relevance, and index maintenance
+# across the IK character dispatch / BENG buffer / word grouping optimizations.
+--disable_warnings
+drop database if exists fts_hot_path_regression;
+--enable_warnings
+create database fts_hot_path_regression;
+use fts_hot_path_regression;
+set names utf8mb4;
+set ob_query_timeout = 100000000;
+
+select tokenize('', 'ik') as tokens;
+select tokenize(NULL, 'beng') as tokens;
+select tokenize('全文索引 分词器 OceanBase 数据库优化', 'ik', '[{"output":"all"}]') as tokens;
+select tokenize('中华人民共和国 一百二十三个 2026年10月 3.14kg A-B C++ mail@example.com', 'ik', '[{"output":"all"},{"additional_args":[{"ik_mode":"smart"}]}]') as tokens;
+select tokenize('中华人民共和国 一百二十三个 2026年10月 3.14kg A-B C++ mail@example.com', 'ik', '[{"output":"all"},{"additional_args":[{"ik_mode":"max_word"}]}]') as tokens;
+select tokenize('ＡＢＣ ａｂｃ １２３ 中文 あいう カタカナ 한글 😀 𠀀', 'ik', '[{"output":"all"}]') as tokens;
+select tokenize(concat('数据库 ', char(9 using utf8mb4), ' 全文索引 ', char(10 using utf8mb4), ' 数据库'), 'ik', '[{"output":"all"}]') as tokens;
+select json_length(tokenize('中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。中华人民共和国数据库全文索引优化。', 'ik')) as distinct_tokens;
+select tokenize('Hello HELLO hello world WORLD database DATABASE audit the a', 'beng', '[{"output":"all"}]') as tokens;
+select tokenize('Hello HELLO hello world WORLD', 'space', '[{"output":"all"}]') as tokens;
+select tokenize('!!! ...ABC??? __42-- C++ foo-bar foo_bar foo@bar.com 123.45', 'beng', '[{"output":"all"}]') as tokens;
+select tokenize('ÉCOLE Straße İSTANBUL CAFÉ 中文 ＡＢＣ １２３ 😀', 'beng', '[{"output":"all"}]') as tokens;
+select tokenize('😀 𠀀', 'beng', '[{"output":"all"}]') as tokens;
+select tokenize('𠀀 😀', 'beng', '[{"output":"all"}]') as tokens;
+select tokenize('A BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB z CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC end END', 'beng', '[{"output":"all"}]') as tokens;
+select tokenize('aaa AAA bbbb BBBB ccccc The THE', 'beng', '[{"output":"all"},{"additional_args":[{"min_token_size":4},{"max_token_size":10}]}]') as tokens;
+
+create table docs(id int primary key, cn text, en text, plain text);
+insert into docs values
+  (1, '数据库 全文索引 分词器 数据库', 'Database database performance audit', 'Hello hello HELLO'),
+  (2, '数据库优化 分词器 OceanBase', 'AUDIT performance security', 'hello world'),
+  (3, '中华人民共和国 一百二十三个 全文索引', 'database reliability', 'database audit'),
+  (4, 'ＡＢＣ １２３ 中文 😀', 'C++ foo-bar ÉCOLE', ''),
+  (5, '', '', NULL), (6, NULL, NULL, 'audit audit');
+alter table docs add fulltext index ft_cn(cn) with parser ik;
+alter table docs add fulltext index ft_en(en) with parser beng;
+alter table docs add fulltext index ft_plain(plain) with parser space;
+select id, round(match(cn) against('数据库 全文索引'), 6) as score from docs where match(cn) against('数据库 全文索引') order by id;
+select id, round(match(en) against('database performance audit'), 6) as score from docs where match(en) against('database performance audit') order by id;
+select id from docs where match(en) against('+database -audit' in boolean mode) order by id;
+select id from docs where match(cn) against('不存在的词') order by id;
+select id from docs where match(plain) against('hello') order by id;
+select id from docs where match(cn) against('全文索引') order by id limit 1;
+insert into docs values (7, '全文索引 全文索引 数据库', 'database AUDIT audit', 'HELLO audit');
+update docs set cn = '音乐欣赏', en = 'music only', plain = 'music' where id = 1;
+delete from docs where id = 2;
+select id, round(match(cn) against('数据库 全文索引'), 6) as score from docs where match(cn) against('数据库 全文索引') order by id;
+select id, round(match(en) against('database audit'), 6) as score from docs where match(en) against('database audit') order by id;
+begin;
+update docs set en = 'audit', cn = '全文索引' where id = 1;
+rollback;
+select id from docs where match(en) against('audit') order by id;
+alter table docs drop index ft_cn;
+alter table docs add fulltext index ft_cn(cn) with parser ik parser_properties=(ik_mode='max_word');
+select id from docs where match(cn) against('全文索引 数据库') order by id;
+drop database fts_hot_path_regression;

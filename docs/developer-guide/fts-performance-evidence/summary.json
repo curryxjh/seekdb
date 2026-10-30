@@ -1,0 +1,154 @@
+{
+  "runs_per_variant": 3,
+  "run_order": [
+    "original",
+    "optimized",
+    "optimized",
+    "original",
+    "original",
+    "optimized"
+  ],
+  "metrics": {
+    "build_ik_all_sec": {
+      "original": [
+        10.566,
+        9.104,
+        9.205
+      ],
+      "optimized": [
+        8.802,
+        9.314,
+        9.102
+      ],
+      "original_mean": 9.625,
+      "optimized_mean": 9.072666666666667,
+      "improvement": 0.05738528138528143
+    },
+    "build_ik_content_sec": {
+      "original": [
+        7.493,
+        7.062,
+        7.061
+      ],
+      "optimized": [
+        7.161,
+        7.06,
+        7.062
+      ],
+      "original_mean": 7.205333333333334,
+      "optimized_mean": 7.094333333333333,
+      "improvement": 0.015405255366395365
+    },
+    "build_beng_en_sec": {
+      "original": [
+        4.207,
+        3.751,
+        3.749
+      ],
+      "optimized": [
+        3.749,
+        3.747,
+        3.851
+      ],
+      "original_mean": 3.9023333333333334,
+      "optimized_mean": 3.7823333333333333,
+      "improvement": 0.030750832835055975
+    },
+    "tokenize_ik_avg_ms": {
+      "original": [
+        0.2296,
+        0.2177,
+        0.2147
+      ],
+      "optimized": [
+        0.2128,
+        0.2145,
+        0.2134
+      ],
+      "original_mean": 0.22066666666666668,
+      "optimized_mean": 0.21356666666666665,
+      "improvement": 0.032175226586102834
+    },
+    "tokenize_beng_avg_ms": {
+      "original": [
+        0.1688,
+        0.1671,
+        0.1636
+      ],
+      "optimized": [
+        0.1605,
+        0.1633,
+        0.167
+      ],
+      "original_mean": 0.1665,
+      "optimized_mean": 0.1636,
+      "improvement": 0.017417417417417536
+    },
+    "query_cn_avg_ms": {
+      "original": [
+        1.9972,
+        2.0714,
+        2.1333
+      ],
+      "optimized": [
+        2.1006,
+        2.1967,
+        2.0981
+      ],
+      "original_mean": 2.0673000000000004,
+      "optimized_mean": 2.1318,
+      "improvement": -0.031200116093455188
+    },
+    "query_beng_avg_ms": {
+      "original": [
+        2.8552,
+        2.9844,
+        3.1614
+      ],
+      "optimized": [
+        3.0548,
+        3.0108,
+        3.0884
+      ],
+      "original_mean": 3.0003333333333333,
+      "optimized_mean": 3.0513333333333335,
+      "improvement": -0.016998111320964293
+    },
+    "query_mixed_avg_ms": {
+      "original": [
+        2.0951,
+        2.3207,
+        2.3247
+      ],
+      "optimized": [
+        2.2468,
+        2.2556,
+        2.6278
+      ],
+      "original_mean": 2.2468333333333335,
+      "optimized_mean": 2.376733333333333,
+      "improvement": -0.05781470217342921
+    },
+    "query_limit_avg_ms": {
+      "original": [
+        2.4351,
+        2.6388,
+        2.6937
+      ],
+      "optimized": [
+        2.6014,
+        2.6451,
+        2.6395
+      ],
+      "original_mean": 2.5892,
+      "optimized_mean": 2.6286666666666667,
+      "improvement": -0.015242803439929897
+    }
+  },
+  "category_improvement": {
+    "build": 0.03451378986224426,
+    "tokenize": 0.024796322001760185,
+    "query": -0.030313933256944647
+  },
+  "overall_improvement": 0.009665392869019932
+}

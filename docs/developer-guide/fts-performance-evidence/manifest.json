@@ -1,0 +1,36 @@
+{
+  "base_commit": "9eb94e4cad24c57b9e99172f128ae8cb550f4f31",
+  "source_sha256_lf": {
+    "src/share/text_analysis/ob_token_stream.cpp": {
+      "original": "5f73c83ed4648f2d9cf7b5a136f0b1f806c82e20048587cf22a9daa1d952e0ab",
+      "optimized": "57b0b522993eb5df11182956376069576ee5d90a169f8c93bbeb783917c7938c"
+    },
+    "src/share/text_analysis/ob_token_stream.h": {
+      "original": "db86f9a91d43703ada82a2bc8a9640a694d1afdb63a940249ed94c7f58c1935e",
+      "optimized": "63f8e9425475f230a1bdfb017edd874c8fba4ebd0fa306959e1de598acefc99d"
+    },
+    "src/storage/fts/ik/ob_ik_char_util.h": {
+      "original": "d26f03bfb9eb494a5259e1345744369473d7de0b781831e0492d16add2db6ca8",
+      "optimized": "633d0ff1f465de5e6f29a436b989ee68486998d5bd5deb2cd0aaa01c454ae6c0"
+    },
+    "src/storage/fts/ob_fts_stop_word.cpp": {
+      "original": "467903a9f748d2e7e31aee0840a0cabddfba01932ef8f08ece82a80ac6967009",
+      "optimized": "871ff50cbdf4fecb6f862a44099086a0ab049ad56a50ec6d4bf09e4a4ede99b5"
+    },
+    "src/storage/fts/ob_ik_ft_parser.cpp": {
+      "original": "b9cdf667edccf1ed28bbc1c596995990dea33caabb3ba822a5b2d95fcba2f685",
+      "optimized": "8bb53730ee3aacb70efcc705420ca2cf0327e59824a004a3b834320872ce6519"
+    }
+  },
+  "binary_sha256": {
+    "original": "f457da79251672198c4c4ef6d5b2cc233a59a3df07b07ed6c02ea6025cee7c2d",
+    "optimized": "798786b6d69eb707d46e7e021d874f9bbfce9aa0880e3fae7456d01e9fa26927"
+  },
+  "benchmark_sha256_lf": {
+    "tools/benchmark/fts_large_bench.sh": "596ea5d1c0038e666b78aa94bef22d2dfb87ffc9e84dbc7e2a1da1f746424462",
+    "tools/benchmark/fts_large_bench_baseline.json": "f4e97eddb2e49c982b967fc8047f7cf37177eebe53d648f6746d85aacda91f0c",
+    "tools/benchmark/fts_large_bench_gen.py": "b0c816dd8211ac0471f60b72a37a3fb5c62580357a5b6d7ac95f5a8c2e3f143d",
+    "tools/benchmark/fts_large_bench_score.py": "bea52eb1c68d05693bb3ac5b910ab0e2fa0e70e01582f40466898ee1e2e3ef55",
+    "tools/benchmark/fts_large_bench_setup.sql": "311826751df7f51ac45156fb4284aeca9bd9197370aceb88f4fb92832b458108"
+  }
+}

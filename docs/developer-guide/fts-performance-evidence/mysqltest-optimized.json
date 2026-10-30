@@ -1,0 +1,66 @@
+[
+  {
+    "name": "basic_dml",
+    "return_code": 1
+  },
+  {
+    "name": "basic_dml_sequel",
+    "return_code": 0
+  },
+  {
+    "name": "cn_word",
+    "return_code": 0
+  },
+  {
+    "name": "create_fts_index_afterward",
+    "return_code": 1
+  },
+  {
+    "name": "create_table_with_fts_index",
+    "return_code": 0
+  },
+  {
+    "name": "domain_id_merge_with_compare_null",
+    "return_code": 0
+  },
+  {
+    "name": "drop_index",
+    "return_code": 0
+  },
+  {
+    "name": "fts_hot_path",
+    "return_code": 0
+  },
+  {
+    "name": "index_view",
+    "return_code": 0
+  },
+  {
+    "name": "load_data",
+    "return_code": 0
+  },
+  {
+    "name": "offline_ddl_with_fts_index",
+    "return_code": 0
+  },
+  {
+    "name": "online_ddl_on_table_with_fts_index",
+    "return_code": 0
+  },
+  {
+    "name": "parser_properties",
+    "return_code": 0
+  },
+  {
+    "name": "partitioned_simple_query",
+    "return_code": 1
+  },
+  {
+    "name": "simple_query",
+    "return_code": 1
+  },
+  {
+    "name": "tokenize_function",
+    "return_code": 1
+  }
+]
