@@ -95,6 +95,22 @@ int main(int argc, char** argv)
   }
   if (cudaMemcpy(qd, query, qbytes, cudaMemcpyDefault) != cudaSuccess) { fprintf(stderr, "q memcpy\n"); return 3; }
 
+  /* Upload base to device once; pass kDLCUDA to let NN-Descent run on GPU.
+   * This mirrors the seekdb bridge change and is what we actually want to
+   * measure.  Falls back to kDLCPU silently if alloc/copy fails. */
+  void* base_d = NULL;
+  size_t base_bytes = sizeof(float) * n * dim;
+  int gpu_base = 0;
+  if (cuvsRMMAlloc(res, &base_d, base_bytes) == CUVS_SUCCESS &&
+      cudaMemcpy(base_d, base, base_bytes, cudaMemcpyHostToDevice) == cudaSuccess) {
+    gpu_base = 1;
+    printf("[bench] base uploaded to GPU (%.1f MB)\n", (double)base_bytes / 1048576.0);
+  } else {
+    if (base_d) { cuvsRMMFree(res, base_d, base_bytes); base_d = NULL; }
+    printf("[bench] GPU base upload failed, using CPU\n");
+  }
+  fflush(stdout);
+
   double best_build = 1e30, sum_build = 0.0;
   double best_search = 1e30, sum_search = 0.0;
   double recall = 0.0, recall10 = 0.0;
@@ -108,11 +124,12 @@ int main(int argc, char** argv)
     ip->nn_descent_niter = niter;
     if (cuvsCagraIndexCreate(&idx) != CUVS_SUCCESS) { fprintf(stderr, "idx: %s\n", cuvsGetLastErrorText()); return 4; }
 
-    /* dataset tensor on host: cuVS copies it to the device during build */
+    /* dataset tensor: GPU-resident if uploaded, else host (cuVS copies). */
     DLManagedTensor dset;
     long ds[2] = { n, dim };
-    dset.dl_tensor.data = base;
-    dset.dl_tensor.device.device_type = kDLCPU; dset.dl_tensor.device.device_id = 0;
+    dset.dl_tensor.data = gpu_base ? base_d : base;
+    dset.dl_tensor.device.device_type = gpu_base ? kDLCUDA : kDLCPU;
+    dset.dl_tensor.device.device_id = 0;
     dset.dl_tensor.ndim = 2;
     dset.dl_tensor.dtype.code = kDLFloat; dset.dl_tensor.dtype.bits = 32; dset.dl_tensor.dtype.lanes = 1;
     dset.dl_tensor.shape = ds; dset.dl_tensor.strides = NULL; dset.dl_tensor.byte_offset = 0;
@@ -179,6 +196,8 @@ int main(int argc, char** argv)
     cuvsCagraIndexDestroy(idx);
     cuvsCagraIndexParamsDestroy(ip);
   }
+
+  if (gpu_base && base_d) cuvsRMMFree(res, base_d, base_bytes);
 
   double avg_build = sum_build / reps;
   double avg_search = sum_search / reps;
