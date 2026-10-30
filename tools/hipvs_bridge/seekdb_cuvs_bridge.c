@@ -29,7 +29,7 @@ typedef struct {
   int      niter;
   int      search_width;
   size_t   itopk_floor;
-  int      use_nn_descent;
+  int      build_algo;   /* cuvsCagraGraphBuildAlgo: 0=AUTO, 1=IVF_PQ, 2=NN_DESCENT, 3=ITERATIVE_CAGRA_SEARCH */
 } sk_cuvs_cfg;
 
 static int sk_env_int(const char* name, int dflt)
@@ -49,13 +49,14 @@ static sk_cuvs_cfg sk_cuvs_config(void)
   c.niter               = sk_env_int("SEEKDB_CUVS_NITER", 100);
   c.search_width        = sk_env_int("SEEKDB_CUVS_SEARCH_WIDTH", 4);
   c.itopk_floor         = (size_t)sk_env_int("SEEKDB_CUVS_ITOPK_FLOOR", 512);
-  /* 1 (default) = NN_DESCENT like the baseline; 0 = let cuVS use IVF-PQ build. */
-  c.use_nn_descent      = sk_env_int("SEEKDB_CUVS_NN_DESCENT", 1);
+  /* cuvsCagraGraphBuildAlgo: 0=AUTO_SELECT,1=IVF_PQ,2=NN_DESCENT(default),3=ITERATIVE_CAGRA_SEARCH */
+  c.build_algo          = sk_env_int("SEEKDB_CUVS_BUILD_ALGO", 2);
   if (c.graph_degree <= 0)        c.graph_degree = 128;
-  if (c.intermediate_degree <= 0) c.intermediate_degree = 256;
+  if (c.intermediate_degree <= 0) c.intermediate_degree = 160;
   if (c.intermediate_degree < c.graph_degree) c.intermediate_degree = c.graph_degree;
   if (c.niter < 0)                c.niter = 0;
   if (c.search_width <= 0)        c.search_width = 4;
+  if (c.build_algo < 0 || c.build_algo > 3) c.build_algo = 2;
   return c;
 }
 
@@ -101,13 +102,13 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   {
     sk_cuvs_cfg cfg = sk_cuvs_config();
     if (cuvsCagraIndexParamsCreate(&h->ip) != CUVS_SUCCESS) goto fail_res;
-    h->ip->build_algo = cfg.use_nn_descent ? NN_DESCENT : IVF_PQ;
+    h->ip->build_algo = (enum cuvsCagraGraphBuildAlgo)cfg.build_algo;
     h->ip->graph_degree = cfg.graph_degree;
     h->ip->intermediate_graph_degree = cfg.intermediate_degree;
     h->ip->nn_descent_niter = cfg.niter;
     if (log_on) {
-      fprintf(stderr, "[seekdb_cuvs] build#%llu START n=%ld dim=%ld gd=%d igd=%d niter=%d\n",
-              call_no, n, dim, cfg.graph_degree, cfg.intermediate_degree, cfg.niter);
+      fprintf(stderr, "[seekdb_cuvs] build#%llu START n=%ld dim=%ld gd=%d igd=%d niter=%d algo=%d\n",
+              call_no, n, dim, cfg.graph_degree, cfg.intermediate_degree, cfg.niter, cfg.build_algo);
     }
   }
   if (cuvsCagraIndexCreate(&h->idx)      != CUVS_SUCCESS) goto fail_ip;
