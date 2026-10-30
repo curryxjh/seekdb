@@ -92,28 +92,48 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   if (!h) return NULL;
   if (cuvsResourcesCreate(&h->res) != CUVS_SUCCESS) { free(h); return NULL; }
 
+  /* Upload base vectors to the device so NN-Descent distance kernels run
+   * on the GPU rather than on the host.  The CPU path (%CPU 1331 observed)
+   * appears when cuVS receives kDLCPU and copies internally per-kernel;
+   * passing kDLCUDA lets it use the already-resident buffer directly. */
+  const size_t base_bytes = (size_t)n * (size_t)dim * sizeof(float);
+  void* base_d = NULL;
+  int use_gpu_base = 0;
+  if (cuvsRMMAlloc(h->res, &base_d, base_bytes) == CUVS_SUCCESS &&
+      cudaMemcpy(base_d, base, base_bytes, cudaMemcpyHostToDevice) == cudaSuccess) {
+    use_gpu_base = 1;
+    if (log_on) fprintf(stderr, "[seekdb_cuvs] build#%llu GPU base upload %.1f MB\n",
+                        call_no, (double)base_bytes / 1048576.0);
+  } else {
+    /* Fall back to host tensor on alloc/copy failure. */
+    if (base_d) { cuvsRMMFree(h->res, base_d, base_bytes); base_d = NULL; }
+  }
+
   DLManagedTensor dset; long ds[2] = {n, dim};
-  dset.dl_tensor.data = (void*)base;
-  dset.dl_tensor.device.device_type = kDLCPU; dset.dl_tensor.device.device_id = 0;
+  dset.dl_tensor.data = use_gpu_base ? base_d : (void*)base;
+  dset.dl_tensor.device.device_type = use_gpu_base ? kDLCUDA : kDLCPU;
+  dset.dl_tensor.device.device_id = 0;
   dset.dl_tensor.ndim = 2;
   dset.dl_tensor.dtype.code = kDLFloat; dset.dl_tensor.dtype.bits = 32; dset.dl_tensor.dtype.lanes = 1;
   dset.dl_tensor.shape = ds; dset.dl_tensor.strides = 0; dset.dl_tensor.byte_offset = 0;
 
   {
     sk_cuvs_cfg cfg = sk_cuvs_config();
-    if (cuvsCagraIndexParamsCreate(&h->ip) != CUVS_SUCCESS) goto fail_res;
+    if (cuvsCagraIndexParamsCreate(&h->ip) != CUVS_SUCCESS) goto fail_base;
     h->ip->build_algo = (enum cuvsCagraGraphBuildAlgo)cfg.build_algo;
     h->ip->graph_degree = cfg.graph_degree;
     h->ip->intermediate_graph_degree = cfg.intermediate_degree;
     h->ip->nn_descent_niter = cfg.niter;
     if (log_on) {
-      fprintf(stderr, "[seekdb_cuvs] build#%llu START n=%ld dim=%ld gd=%d igd=%d niter=%d algo=%d\n",
-              call_no, n, dim, cfg.graph_degree, cfg.intermediate_degree, cfg.niter, cfg.build_algo);
+      fprintf(stderr, "[seekdb_cuvs] build#%llu START n=%ld dim=%ld gd=%d igd=%d niter=%d algo=%d base=%s\n",
+              call_no, n, dim, cfg.graph_degree, cfg.intermediate_degree, cfg.niter, cfg.build_algo,
+              use_gpu_base ? "GPU" : "CPU");
     }
   }
   if (cuvsCagraIndexCreate(&h->idx)      != CUVS_SUCCESS) goto fail_ip;
   if (cuvsCagraBuild(h->res, h->ip, &dset, h->idx) != CUVS_SUCCESS) goto fail_idx;
   h->n = n; h->dim = dim;
+  if (use_gpu_base) cuvsRMMFree(h->res, base_d, base_bytes);
   if (log_on) {
     fprintf(stderr, "[seekdb_cuvs] build#%llu DONE  n=%ld dim=%ld in %.3f s\n",
             call_no, n, dim, sk_now() - t0);
@@ -122,6 +142,7 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
 
 fail_idx: cuvsCagraIndexDestroy(h->idx);
 fail_ip:  cuvsCagraIndexParamsDestroy(h->ip);
+fail_base: if (base_d) cuvsRMMFree(h->res, base_d, base_bytes);
 fail_res: cuvsResourcesDestroy(h->res); free(h);
   fprintf(stderr, "[seekdb_cuvs] build failed: %s\n", cuvsGetLastErrorText());
   return NULL;
