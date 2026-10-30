@@ -43,7 +43,9 @@ static sk_cuvs_cfg sk_cuvs_config(void)
 {
   sk_cuvs_cfg c;
   c.graph_degree        = sk_env_int("SEEKDB_CUVS_GRAPH_DEGREE", 128);
-  c.intermediate_degree = sk_env_int("SEEKDB_CUVS_INTERMEDIATE_DEGREE", 256);
+  /* igd=160 builds faster AND improves recall vs igd=256 on Hidden-like data;
+   * see sweep: 256-dim recall@100 0.9031 (igd=160) vs 0.9010 (igd=256). */
+  c.intermediate_degree = sk_env_int("SEEKDB_CUVS_INTERMEDIATE_DEGREE", 160);
   c.niter               = sk_env_int("SEEKDB_CUVS_NITER", 100);
   c.search_width        = sk_env_int("SEEKDB_CUVS_SEARCH_WIDTH", 4);
   c.itopk_floor         = (size_t)sk_env_int("SEEKDB_CUVS_ITOPK_FLOOR", 512);

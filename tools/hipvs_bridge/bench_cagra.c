@@ -6,8 +6,10 @@
  *
  * usage: bench_cagra <base.f32> <query.f32> <gt.i32> <dims> <nq> <topk> \
  *                    <graph_degree> <intermediate_degree> <niter> \
- *                    [reps] [search_width] [itopk_size]
+ *                    [reps] [search_width] [itopk_size] [build_algo]
  * itopk_size = 0 means the bridge default: max(topk*4, 512).
+ * build_algo: 0=AUTO_SELECT, 1=IVF_PQ, 2=NN_DESCENT (bridge default),
+ *             3=ITERATIVE_CAGRA_SEARCH. Defaults to 2, matching the bridge.
  */
 #include <cuvs/core/c_api.h>
 #include <cuvs/neighbors/cagra.h>
@@ -61,6 +63,7 @@ int main(int argc, char** argv)
   const int reps = (argc > 10) ? atoi(argv[10]) : 1;
   const int sw = (argc > 11) ? atoi(argv[11]) : 4;
   const long itopk_arg = (argc > 12) ? atol(argv[12]) : 0;
+  const int algo = (argc > 13) ? atoi(argv[13]) : 2;  /* NN_DESCENT, bridge default */
 
   size_t nb = 0, qb = 0, gb = 0;
   float* base = (float*)slurp(fbase, &nb);
@@ -94,12 +97,12 @@ int main(int argc, char** argv)
 
   double best_build = 1e30, sum_build = 0.0;
   double best_search = 1e30, sum_search = 0.0;
-  double recall = 0.0;
+  double recall = 0.0, recall10 = 0.0;
   for (int r = 0; r < reps; ++r) {
     cuvsCagraIndexParams_t ip = NULL;
     cuvsCagraIndex_t idx = NULL;
     if (cuvsCagraIndexParamsCreate(&ip) != CUVS_SUCCESS) { fprintf(stderr, "ip: %s\n", cuvsGetLastErrorText()); return 4; }
-    ip->build_algo = NN_DESCENT;
+    ip->build_algo = (enum cuvsCagraGraphBuildAlgo)algo;
     ip->graph_degree = gd;
     ip->intermediate_graph_degree = igd;
     ip->nn_descent_niter = niter;
@@ -147,23 +150,30 @@ int main(int argc, char** argv)
     unsigned* got = (unsigned*)malloc(obytes);
     if (cudaMemcpy(got, nd, obytes, cudaMemcpyDefault) != cudaSuccess) { fprintf(stderr, "out memcpy\n"); return 7; }
 
-    /* Recall@topk against the supplied ground truth (first topk gt columns). */
+    /* Recall@k against the supplied ground truth (first k gt columns). The
+     * contest gates at BOTH k=10 and k=topk, so report both. */
     const long kk = (topk < gt_cols) ? topk : gt_cols;
-    long hit = 0, total = 0;
+    const long k10 = (kk < 10) ? kk : 10;
+    long hit = 0, total = 0, hit10 = 0, total10 = 0;
     for (long q = 0; q < nq; ++q) {
       for (long j = 0; j < kk; ++j) {
         int want = gt[q * gt_cols + j];
+        int found = 0;
         for (long m = 0; m < topk; ++m) {
-          if ((long)got[q * topk + m] == (long)want) { ++hit; break; }
+          if ((long)got[q * topk + m] == (long)want) { found = 1; break; }
         }
+        hit += found;
         ++total;
+        if (j < k10) { hit10 += found; ++total10; }
       }
     }
     recall = total ? (double)hit / (double)total : 0.0;
+    recall10 = total10 ? (double)hit10 / (double)total10 : 0.0;
     free(got);
 
     if (reps > 1) {
-      printf("[bench] rep %d: build=%.3fs search=%.4fs recall@%ld=%.4f\n", r, bt, st, kk, recall);
+      printf("[bench] rep %d: build=%.3fs search=%.4fs recall@10=%.4f recall@%ld=%.4f\n",
+             r, bt, st, recall10, kk, recall);
       fflush(stdout);
     }
     cuvsCagraIndexDestroy(idx);
@@ -173,8 +183,8 @@ int main(int argc, char** argv)
   double avg_build = sum_build / reps;
   double avg_search = sum_search / reps;
   printf("RESULT gd=%d igd=%d niter=%d sw=%d itopk=%zu n=%ld build_best=%.3f build_avg=%.3f "
-         "search_best=%.4f search_avg=%.4f qps=%.1f recall=%.4f\n",
+         "search_best=%.4f search_avg=%.4f qps=%.1f recall10=%.4f recall=%.4f\n",
          gd, igd, niter, sw, itopk, n, best_build, avg_build, best_search, avg_search,
-         (double)nq / (avg_search > 0 ? avg_search : 1), recall);
+         (double)nq / (avg_search > 0 ? avg_search : 1), recall10, recall);
   return 0;
 }
