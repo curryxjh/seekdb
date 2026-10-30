@@ -413,8 +413,27 @@ ObTextRetrievalDaaTTokenIter::ObTextRetrievalDaaTTokenIter()
     relevance_(),
     doc_id_(),
     cmp_func_(nullptr),
+    is_binary_str_id_(false),
     is_inited_(false)
 {
+}
+
+// Same result as null_first_cmp_ of a binary-collation string datum
+// (ObNullSafeDatumStrCmp -> ob_strnncollsp_binary), normalized to -1/0/1.
+static OB_INLINE int ft_binary_id_cmp(const ObDatum &l, const ObDatum &r)
+{
+  int cmp = 0;
+  if (OB_UNLIKELY(l.is_null() || r.is_null())) {
+    cmp = (l.is_null() && r.is_null()) ? 0 : (l.is_null() ? -1 : 1);
+  } else {
+    const uint32_t len = OB_MIN(l.len_, r.len_);
+    cmp = (len > 0) ? MEMCMP(l.ptr_, r.ptr_, len) : 0;
+    if (0 == cmp) {
+      cmp = (l.len_ < r.len_) ? -1 : (l.len_ > r.len_ ? 1 : 0);
+    }
+    cmp = cmp > 0 ? 1 : (cmp < 0 ? -1 : 0);
+  }
+  return cmp;
 }
 
 int ObTextRetrievalDaaTTokenIter::init(const ObTextRetrievalScanIterParam &iter_param)
@@ -436,6 +455,7 @@ int ObTextRetrievalDaaTTokenIter::init(const ObTextRetrievalScanIterParam &iter_
       max_batch_size_ = OB_MAX(iter_param.eval_ctx_->max_batch_size_, 1);
       common::ObDatumBasicFuncs *basic_funcs = ObDatumFuncs::get_basic_func(inv_scan_domain_id_col_->datum_meta_.type_, CS_TYPE_BINARY);
       cmp_func_ = basic_funcs->null_first_cmp_;
+      is_binary_str_id_ = (ObVarcharType == inv_scan_domain_id_col_->datum_meta_.type_);
       if (OB_ISNULL(cmp_func_)) {
         ret = OB_ERR_UNEXPECTED;
       } else if (FALSE_IT(relevance_.set_allocator(allocator_))) {
@@ -551,8 +571,12 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
   }
   while (OB_SUCC(ret) && !find) {
     if (cur_idx_ < count_) {
-      if (OB_FAIL(cmp_func_(
+      if (is_binary_str_id_) {
+        result = ft_binary_id_cmp(id_datum, doc_id_[cur_idx_].get_datum());
+      } else if (OB_FAIL(cmp_func_(
               id_datum, doc_id_[cur_idx_].get_datum(), result, nullptr))) {
+      }
+      if (OB_FAIL(ret)) {
       } else if (result <= 0) {
         find = true;
       } else {

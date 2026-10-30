@@ -227,7 +227,13 @@ int oceanbase::storage::ObDDLStorageUtil::report_ddl_sstable_checksum(
         break;
       }
     }
-    ob_usleep(100L * 1000L);
+    // report_ddl_checksum() writes the checksum rows synchronously through the inner
+    // SQL proxy, so a successful report is already durable and visible to the DDL
+    // task. Only back off when every attempt failed (the caller retries); the former
+    // unconditional 100ms sleep added fixed latency to every index tablet build.
+    if (OB_FAIL(ret)) {
+      ob_usleep(100L * 1000L);
+    }
   }
   return ret;
 }

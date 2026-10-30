@@ -51,7 +51,19 @@ private:
   ObObjMeta meta_;
 };
 
-typedef common::hash::ObHashMap<ObFTWord, int64_t> ObFTWordMap;
+// Every word map is owned by a single synchronous segment()/tokenize call and is
+// never shared between threads, so neither the buckets nor the node allocator need
+// latches. Hash function, equality, bucket count and insertion order are unchanged,
+// therefore iteration order (and TOKENIZE output order) stays identical.
+using ObFTWordMapNode = common::hash::HashMapTypes<ObFTWord, int64_t>::AllocType;
+using ObFTWordMapAllocer = common::hash::SimpleAllocer<ObFTWordMapNode,
+    common::hash::NodeNumTraits<ObFTWordMapNode>::NODE_NUM,
+    common::hash::NoPthreadDefendMode>;
+typedef common::hash::ObHashMap<ObFTWord, int64_t,
+    common::hash::NoPthreadDefendMode,
+    common::hash::hash_func<ObFTWord>,
+    common::hash::equal_to<ObFTWord>,
+    ObFTWordMapAllocer> ObFTWordMap;
 
 class ObAddWordFlag final
 {

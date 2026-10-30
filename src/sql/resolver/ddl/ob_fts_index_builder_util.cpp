@@ -22,6 +22,7 @@
 #include "data_plane/fts/dict/ob_gen_dic_loader.h"
 #include "data_plane/fts/dict/ob_dic_lock_service.h"
 #include "share/ob_server_struct.h"
+#include "lib/cpu/ob_cpu_topology.h"
 #include "data_plane/fts/ob_fts_parser_helper.h"
 #include "share/schema/ob_multi_version_schema_service.h"
 #include "share/schema/ob_schema_utils.h"
@@ -1031,6 +1032,15 @@ int ObFtsIndexBuilderUtil::generate_doc_id_column(
   return ret;
 }
 
+int64_t ObFtsIndexBuilderUtil::auto_fts_build_parallelism()
+{
+  // Kept small: the host CPU count may exceed the CPU quota of a container.
+  static constexpr int64_t MAX_AUTO_FTS_BUILD_DOP = 4;
+  // Up to two aux tables (fts index + doc word) tokenize the table concurrently.
+  const int64_t cpu_cnt = common::get_cpu_count();
+  return MIN(MAX(cpu_cnt / 2, 1L), MAX_AUTO_FTS_BUILD_DOP);
+}
+
 int ObFtsIndexBuilderUtil::decide_parallelism(
     const share::schema::ObIndexType index_type,
     const int64_t original_parallelism,
@@ -1047,7 +1057,16 @@ int ObFtsIndexBuilderUtil::decide_parallelism(
       case share::schema::ObIndexType::INDEX_TYPE_DOC_ID_ROWKEY_LOCAL:
       case share::schema::ObIndexType::INDEX_TYPE_FTS_INDEX_LOCAL:
       case share::schema::ObIndexType::INDEX_TYPE_FTS_DOC_WORD_LOCAL:
-        decided_parallelism = MAX(original_parallelism / 3, 1L);
+        if (1 == original_parallelism) {
+          // No parallel hint, no forced/table DOP: the FTS aux tables used to be built
+          // serially. Tokenization dominates their build cost and the aux tables
+          // (fts index, doc word, optional doc->rowkey) are complemented concurrently,
+          // so give each of them an even share of the server CPUs, capped to keep DDL
+          // from monopolizing the PX pool. Explicit DOP settings keep the old rule.
+          decided_parallelism = auto_fts_build_parallelism();
+        } else {
+          decided_parallelism = MAX(original_parallelism / 3, 1L);
+        }
         break;
       case share::schema::ObIndexType::INDEX_TYPE_NORMAL_MULTIVALUE_LOCAL:
       case share::schema::ObIndexType::INDEX_TYPE_UNIQUE_MULTIVALUE_LOCAL:

@@ -54,6 +54,9 @@ private:
   }
 private:
   common::ObDatumCmpFuncType cmp_func_;
+  // true when ids are VARCHAR/VARBINARY with binary collation: null_first_cmp_ for
+  // that type is memcmp + length difference, evaluated inline in cmp().
+  bool is_binary_str_id_;
   // TODO: if memory lifetime of docid datum is guaranteed by dim_iters, we can use pointer to datum directly
   //       and avoid deep copy into merge heap here
   const ObFixedArray<const ObDatum *, ObIAllocator> *iter_ids_;
@@ -105,6 +108,9 @@ protected:
   ObFixedArray<double, ObIAllocator> buffered_relevances_;
   ObFixedArray<int64_t, ObIAllocator> next_round_iter_idxes_;
   int64_t next_round_cnt_;
+  // filter_expr_ is exactly BOOL(relevance_proj_expr_) on a DOUBLE relevance:
+  // its result equals (relevance != 0), so the expression evaluation is skipped.
+  bool filter_is_relevance_truth_test_;
   void (*set_datum_func_)(ObDatum &, const ObDocIdExt &);
 private:
   DISALLOW_COPY_AND_ASSIGN(ObSRDaaTIterImpl);

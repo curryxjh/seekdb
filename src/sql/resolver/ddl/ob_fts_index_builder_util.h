@@ -159,6 +159,8 @@ public:
         const share::schema::ObIndexType index_type,
         const int64_t original_parallelism,
         int64_t &decided_parallelism);
+  // DOP for one FTS aux table build when the user did not request any parallelism.
+  static int64_t auto_fts_build_parallelism();
 private:
   static int build_fts_aux_index_name(
     const ObIndexType type,

@@ -156,6 +156,9 @@ private:
   ObFixedArray<double, ObIAllocator> relevance_; // when ~ObFixedArray(), wikll destory itself
   ObFixedArray<ObDocIdExt, ObIAllocator> doc_id_;
   common::ObDatumCmpFuncType cmp_func_;
+  // doc id is VARCHAR/VARBINARY compared with CS_TYPE_BINARY: memcmp + length,
+  // evaluated inline in advance_to().
+  bool is_binary_str_id_;
   bool is_inited_;
   DISALLOW_COPY_AND_ASSIGN(ObTextRetrievalDaaTTokenIter);
 };
