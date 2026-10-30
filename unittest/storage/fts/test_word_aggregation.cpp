@@ -16,10 +16,14 @@
 
 
 #include <gtest/gtest.h>
+#include <atomic>
+#include <thread>
+#include <vector>
 #include "lib/allocator/ob_allocator.h"
 #include "lib/charset/ob_charset.h"
 #include "storage/fts/ob_fts_stop_word.h"
 #include "data_plane/fts/ob_fts_parser_property.h"
+#include "storage/fts/ik/ob_ik_char_util.h"
 
 namespace oceanbase
 {
@@ -147,6 +151,69 @@ TEST(StopWords, charset_conversion_and_dictionary_collation)
   meta.set_collation_type(CS_TYPE_LATIN1_SWEDISH_CI);
   EXPECT_EQ(OB_INVALID_ARGUMENT, checker.check_stopword(ObFTWord(3, "the", meta), found));
   EXPECT_EQ(OB_INVALID_ARGUMENT, checker.check_stopword(ObFTWord(), found));
+}
+
+TEST(StopWords, concurrent_readers_preserve_collation)
+{
+  ObStopWordChecker checker;
+  ASSERT_EQ(OB_SUCCESS, checker.init());
+  std::atomic<int> failures{0};
+  std::vector<std::thread> readers;
+  for (int i = 0; i < 8; ++i) {
+    readers.emplace_back([&]() {
+      ObObjMeta meta;
+      meta.set_varchar();
+      meta.set_collation_type(CS_TYPE_UTF8MB4_BIN);
+      const char *terms[] = {"the", "THE", "thé", "with", "database", "数据库", "theory"};
+      for (int round = 0; round < 2000; ++round) {
+        for (int j = 0; j < 7; ++j) {
+          bool found = false;
+          if (OB_SUCCESS != checker.check_stopword(ObFTWord(STRLEN(terms[j]), terms[j], meta), found)
+              || found != (j < 4)) {
+            ++failures;
+          }
+        }
+      }
+    });
+  }
+  for (auto &reader : readers) { reader.join(); }
+  EXPECT_EQ(0, failures.load());
+}
+
+TEST(IKCharacters, classification_boundaries_and_invalid_utf8)
+{
+  using Type = ObFTCharUtil::CharType;
+  const struct { const char *text; Type type; } cases[] = {
+      {"A", Type::ENGLISH_LETTER}, {"z", Type::ENGLISH_LETTER},
+      {"Ａ", Type::ENGLISH_LETTER}, {"ｚ", Type::ENGLISH_LETTER},
+      {"0", Type::ARABIC_LETTER}, {"９", Type::ARABIC_LETTER},
+      {"中", Type::CHINESE}, {"㐀", Type::CHINESE}, {"豈", Type::CHINESE},
+      {"あ", Type::OTHER_CJK}, {"カ", Type::OTHER_CJK}, {"한", Type::OTHER_CJK},
+      {"＠", Type::OTHER_CJK}, {"é", Type::USELESS}, {"😀", Type::USELESS},
+      {"𠀀", Type::USELESS}, {" ", Type::USELESS}, {"@", Type::USELESS}};
+  for (const auto &item : cases) {
+    Type actual = Type::USELESS;
+    SCOPED_TRACE(item.text);
+    ASSERT_EQ(OB_SUCCESS, ObFTCharUtil::classify_first_char(
+        CS_TYPE_UTF8MB4_BIN, item.text, STRLEN(item.text), actual));
+    EXPECT_EQ(item.type, actual);
+  }
+  Type type;
+  const char truncated[] = {static_cast<char>(0xe4), static_cast<char>(0xb8)};
+  EXPECT_EQ(OB_UNEXPECT_INTERNAL_ERROR, ObFTCharUtil::classify_first_char(
+      CS_TYPE_UTF8MB4_BIN, truncated, sizeof(truncated), type));
+  EXPECT_EQ(OB_INVALID_ARGUMENT, ObFTCharUtil::classify_first_char(
+      CS_TYPE_UTF8MB4_BIN, nullptr, 1, type));
+}
+
+TEST(IKCharacters, chinese_number_membership)
+{
+  const std::u32string expected = U"一二两三四五六七八九十零壹贰叁肆伍陆柒捌玖拾百千万亿佰仟萬億兆卅廿";
+  for (ob_wc_t code = 0; code <= 0xffff; ++code) {
+    ASSERT_EQ(expected.find(code) != std::u32string::npos,
+              ObUnicodeBlockUtils::is_unicode_cn_number(code)) << code;
+  }
+  EXPECT_FALSE(ObUnicodeBlockUtils::is_unicode_cn_number(0x20000));
 }
 } // namespace storage
 } // namespace oceanbase

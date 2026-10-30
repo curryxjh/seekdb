@@ -82,6 +82,7 @@ ObSRDaaTIterImpl::ObSRDaaTIterImpl()
     buffered_relevances_(),
     next_round_iter_idxes_(),
     next_round_cnt_(0),
+    filter_is_relevance_truth_test_(false),
     set_datum_func_(nullptr)
 {
 }
@@ -102,6 +103,11 @@ int ObSRDaaTIterImpl::init(
     iter_param_ = &iter_param;
     dim_iters_ = &dim_iters;
     relevance_collector_ = &relevance_collector;
+    const ObExpr *filter = iter_param.filter_expr_;
+    const ObExpr *relevance = iter_param.relevance_proj_expr_;
+    filter_is_relevance_truth_test_ = nullptr != filter && nullptr != relevance
+        && T_OP_BOOL == filter->type_ && 1 == filter->arg_cnt_
+        && filter->args_[0] == relevance && ObDoubleType == relevance->datum_meta_.type_;
     const int64_t max_batch_size = OB_MAX(iter_param_->eval_ctx_->max_batch_size_, iter_param_->max_batch_size_);
     if (iter_param_->id_proj_expr_->datum_meta_.type_ == common::ObUInt64Type) {
       set_datum_func_ = ObISparseRetrievalMergeIter::set_datum_int;
@@ -156,6 +162,7 @@ void ObSRDaaTIterImpl::reset()
   buffered_relevances_.reset();
   next_round_iter_idxes_.reset();
   next_round_cnt_ = 0;
+  filter_is_relevance_truth_test_ = false;
   input_row_cnt_ = 0;
   output_row_cnt_ = 0;
   is_inited_ = false;
@@ -356,6 +363,11 @@ int ObSRDaaTIterImpl::filter_on_demand(const int64_t count, const double relevan
 
   if (!iter_param_->need_filter()) {
     need_project = true;
+  } else if (filter_is_relevance_truth_test_) {
+    // BOOL(score) on a produced non-NULL double is exactly score != 0.
+    // Other predicates still go through expression evaluation. Results and
+    // evaluated flags are published together by project_results().
+    need_project = (0.0 != relevance);
   } else if (eval_ctx->is_vectorized()) {
     if (OB_UNLIKELY(count >= eval_ctx->max_batch_size_)) {
       ret = OB_ERR_UNEXPECTED;
@@ -417,22 +429,23 @@ int ObSRDaaTIterImpl::project_results(const int64_t count)
 
   if (eval_ctx->is_vectorized()) {
     sql::ObBitVector &id_evaluated_flags = id_proj_expr->get_evaluated_flags(*eval_ctx);
+    const bool id_is_batch = id_proj_expr->is_batch_result();
+    ObDatum *id_datums = id_proj_expr->locate_datums_for_update(*eval_ctx, id_is_batch ? count : 1);
     for (int64_t i = 0; i < count; ++i) {
-      guard.set_batch_idx(i);
-      ObDatum &id_proj_datum = id_proj_expr->locate_datum_for_write(*eval_ctx);
-      set_datum_func_(id_proj_datum, buffered_domain_ids_[i]);
+      set_datum_func_(id_datums[id_is_batch ? i : 0], buffered_domain_ids_[i]);
       id_evaluated_flags.set(i);
-      id_proj_expr->set_evaluated_projected(*eval_ctx);
     }
+    id_proj_expr->set_evaluated_projected(*eval_ctx);
     if (iter_param_->need_project_relevance()) {
       sql::ObBitVector &relevance_evaluated_flags = relevance_proj_expr->get_evaluated_flags(*eval_ctx);
+      const bool relevance_is_batch = relevance_proj_expr->is_batch_result();
+      ObDatum *relevance_datums = relevance_proj_expr->locate_datums_for_update(
+          *eval_ctx, relevance_is_batch ? count : 1);
       for (int64_t i = 0; i < count; ++i) {
-        guard.set_batch_idx(i);
-        ObDatum &relevance_proj_datum = relevance_proj_expr->locate_datum_for_write(*eval_ctx);
-        relevance_proj_datum.set_double(buffered_relevances_[i]);
+        relevance_datums[relevance_is_batch ? i : 0].set_double(buffered_relevances_[i]);
         relevance_evaluated_flags.set(i);
-        relevance_proj_expr->set_evaluated_projected(*eval_ctx);
       }
+      relevance_proj_expr->set_evaluated_projected(*eval_ctx);
     }
   } else if (OB_UNLIKELY(1 != count)) {
     ret = OB_ERR_UNEXPECTED;

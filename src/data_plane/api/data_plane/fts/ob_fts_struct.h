@@ -51,7 +51,15 @@ private:
   ObObjMeta meta_;
 };
 
-typedef common::hash::ObHashMap<ObFTWord, int64_t> ObFTWordMap;
+// Each map belongs to one synchronous segment() invocation. Neither its
+// buckets nor its node allocator are shared by concurrent parsing tasks.
+using FTWordMapNode = common::hash::HashMapTypes<ObFTWord, int64_t>::AllocType;
+using FTWordMapAllocator = common::hash::SimpleAllocer<FTWordMapNode,
+    common::hash::NodeNumTraits<FTWordMapNode>::NODE_NUM,
+    common::hash::NoPthreadDefendMode>;
+typedef common::hash::ObHashMap<ObFTWord, int64_t,
+    common::hash::NoPthreadDefendMode, common::hash::hash_func<ObFTWord>,
+    common::hash::equal_to<ObFTWord>, FTWordMapAllocator> ObFTWordMap;
 
 class ObAddWordFlag final
 {

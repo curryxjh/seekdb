@@ -82,7 +82,10 @@ public:
 
 private:
   static const int64_t DEFAULT_STOPWORD_BUCKET_NUM = 37L;
-  typedef common::hash::ObHashSet<storage::ObFTWord> StopWordSet;
+  // Published after init and immutable until global parser shutdown. Readers
+  // share the dictionary, but do not mutate its buckets or allocate nodes.
+  typedef common::hash::ObHashSet<storage::ObFTWord,
+      common::hash::NoPthreadDefendMode> StopWordSet;
 
   StopWordSet stopword_set_;
   ObObjMeta stopword_type_;

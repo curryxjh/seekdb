@@ -64,9 +64,40 @@ def token_results(args, texts):
     return result
 
 
+def filter_results(cur):
+    """Exercise the native BOOL(score) path and expression-evaluation fallback."""
+    def capture_query(sql, params):
+        try:
+            cur.execute(sql, params)
+            return [list(row) for row in cur.fetchall()]
+        except pymysql.MySQLError as error:
+            # Some Boolean operators are not supported by this branch. Their
+            # original rejection is part of the baseline contract as well.
+            if error.args[0] not in (1149, 1235):
+                raise
+            return {"error": list(error.args)}
+
+    result = []
+    for mode in ("IN NATURAL LANGUAGE MODE", "IN BOOLEAN MODE"):
+        for query in ("database", "database audit", "+database -audit", "~database audit", "missingnotfound"):
+            match = "MATCH(title,body) AGAINST(%s " + mode + ")"
+            for condition in (match, match + " > 0", match + " > 0.2",
+                              match + " BETWEEN 0.1 AND 100", "NOT (" + match + ")"):
+                result.append(capture_query("SELECT id," + match + " AS score FROM docs WHERE " +
+                                            condition + " ORDER BY id", (query, query)))
+                result.append(capture_query("SELECT COUNT(*) FROM docs WHERE " + condition, (query,)))
+            result.append(capture_query("SELECT id," + match + " AS score FROM docs WHERE " + match +
+                                        " ORDER BY score DESC,id LIMIT 3 OFFSET 2", (query, query)))
+            # The same expression may also be projected above the scan. Make
+            # sure bypassing the filter evaluator leaves no stale flags/data.
+            result.append(capture_query("SELECT id, (" + match + ") IS TRUE FROM docs WHERE " +
+                                        match + " ORDER BY id", (query, query)))
+    return result
+
+
 def capture(args):
     texts = corpus()
-    output = {"format": 1, "corpus": texts, "tokens": token_results(args, texts)}
+    output = {"format": 2, "corpus": texts, "tokens": token_results(args, texts)}
     # Independent connections exercise dictionary sharing and parser lifetimes.
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
         parallel = list(pool.map(lambda _: token_results(args, texts[:24]), range(4)))
@@ -80,6 +111,7 @@ def capture(args):
             cur.execute("USE " + name)
             cur.execute("SET ob_query_timeout=1000000000")
             output["queries"] = {}
+            output["filters"] = {}
             for parser in ("ik", "beng"):
                 cur.execute("CREATE TABLE docs (id BIGINT PRIMARY KEY, title TEXT, body TEXT)")
                 rows = [(i, text, texts[(i + 7) % len(texts)])
@@ -87,6 +119,7 @@ def capture(args):
                 cur.executemany("INSERT INTO docs VALUES (%s,%s,%s)", rows)
                 cur.execute("CREATE FULLTEXT INDEX ft ON docs(title,body) WITH PARSER " + parser)
                 stages = {}
+                filter_stages = {}
                 for stage in ("build", "dml", "rebuild"):
                     if stage == "dml":
                         cur.execute("UPDATE docs SET body='数据库 database audit' WHERE MOD(id,7)=0")
@@ -105,12 +138,14 @@ def capture(args):
                                             match + " ORDER BY score DESC,id" + limit, (query, query))
                                 results.append([list(row) for row in cur.fetchall()])
                     stages[stage] = results
+                    filter_stages[stage] = filter_results(cur)
                 # Rebuilding can refresh corpus statistics and hence scores.
                 # Compare the complete baseline for each stage separately.
                 for before, after in zip(stages["dml"][::2], stages["rebuild"][::2]):
                     if sorted(row[0] for row in before) != sorted(row[0] for row in after):
                         raise AssertionError("DML and rebuilt index memberships differ")
                 output["queries"][parser] = stages
+                output["filters"][parser] = filter_stages
                 cur.execute("DROP TABLE docs")
         finally:
             cur.execute("DROP DATABASE " + name)
