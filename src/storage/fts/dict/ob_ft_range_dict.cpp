@@ -382,15 +382,16 @@ int ObFTRangeDict::find_first_char_range(const ObString &single_word, ObIFTDict 
 {
   int ret = OB_SUCCESS;
   bool found = false;
+  // UTF8MB4_BIN's strnncoll compares bytes and then lengths. These range
+  // endpoints are already validated dictionary characters; avoid charset
+  // dispatch and temporary ObStrings for every character of every document.
+  const auto compare = [&single_word](const ObFTSingleWord &boundary) {
+    const int64_t length = MIN(static_cast<int64_t>(boundary.word_len), single_word.length());
+    const int result = length == 0 ? 0 : MEMCMP(boundary.word, single_word.ptr(), length);
+    return result != 0 ? result : static_cast<int>(boundary.word_len) - single_word.length();
+  };
   for (int i = 0; OB_SUCC(ret) && !found && i < range_dicts_.size(); ++i) {
-    if (ObCharset::strcmp(ObCollationType::CS_TYPE_UTF8MB4_BIN,
-                          range_dicts_[i].start_.get_word(),
-                          single_word)
-            <= 0
-        && ObCharset::strcmp(ObCollationType::CS_TYPE_UTF8MB4_BIN,
-                             range_dicts_[i].end_.get_word(),
-                             single_word)
-               >= 0) {
+    if (compare(range_dicts_[i].start_) <= 0 && compare(range_dicts_[i].end_) >= 0) {
       dict = range_dicts_[i].dict_;
       found = true;
     }

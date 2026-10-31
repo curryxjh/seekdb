@@ -75,7 +75,7 @@ private:
 class ObSysDDLLocalBuilderUtil
 {
 public:
-  static int push_task(ObAsyncTask &task);
+  static int push_task(ObAsyncTask &task, const bool independent_fts_forward = false);
 private:
   DISALLOW_COPY_AND_ASSIGN(ObSysDDLLocalBuilderUtil);
 };// end ObSysDDLLocalBuilderUtil

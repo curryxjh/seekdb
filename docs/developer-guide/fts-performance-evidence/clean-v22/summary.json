@@ -1,0 +1,58 @@
+{
+  "reference": "same-machine clean-base-4",
+  "candidate": "clean-candidate-22",
+  "metrics": {
+    "build_ik_all_sec": {
+      "original": 9.928,
+      "candidate": 4.705,
+      "improvement": 0.5260878323932313
+    },
+    "build_ik_content_sec": {
+      "original": 8.18,
+      "candidate": 3.049,
+      "improvement": 0.6272616136919316
+    },
+    "build_beng_en_sec": {
+      "original": 4.459,
+      "candidate": 1.845,
+      "improvement": 0.586230096434178
+    },
+    "tokenize_ik_avg_ms": {
+      "original": 0.3228,
+      "candidate": 0.2079,
+      "improvement": 0.3559479553903345
+    },
+    "tokenize_beng_avg_ms": {
+      "original": 0.2125,
+      "candidate": 0.1768,
+      "improvement": 0.16799999999999993
+    },
+    "query_cn_avg_ms": {
+      "original": 2.3729,
+      "candidate": 0.61,
+      "improvement": 0.7429305912596401
+    },
+    "query_beng_avg_ms": {
+      "original": 3.3434,
+      "candidate": 0.8043,
+      "improvement": 0.7594365017646707
+    },
+    "query_mixed_avg_ms": {
+      "original": 2.597,
+      "candidate": 0.621,
+      "improvement": 0.7608779360800924
+    },
+    "query_limit_avg_ms": {
+      "original": 2.8399,
+      "candidate": 0.3041,
+      "improvement": 0.8929187647452375
+    }
+  },
+  "category_improvement": {
+    "build": 0.579859847506447,
+    "tokenize": 0.2619739776951672,
+    "query": 0.7890409484624101
+  },
+  "overall_improvement": 0.5436249245546748,
+  "note": "One adjacent complete pair; preliminary, not a stable 50% claim. Fixed benchmark baseline is substantially slower than this machine."
+}

@@ -3681,7 +3681,17 @@ int ObStaticEngineCG::generate_normal_tsc(ObLogTableScan &op, ObTableScanSpec &s
       } else if (ddl_table_schema->is_fts_index_aux() || ddl_table_schema->is_fts_doc_word_aux()) {
         spec.is_fts_ddl_ = true;
         spec.is_fts_index_aux_ = ddl_table_schema->is_fts_index_aux();
-        spec.max_batch_size_ = 0; // TODO: @jinzhu, remove me later after support post-building fts index vectorization.
+        // Partition routing and hidden-table replacement also consume source
+        // columns whose row lifetime is scalar. Keep those paths scalar until
+        // all their source columns can be projected for every posting.
+        const schema::ObTableSchema *fts_source_schema = nullptr;
+        if (OB_FAIL(schema_guard->get_table_schema(op.get_ref_table_id(), fts_source_schema))) {
+        } else if (OB_ISNULL(fts_source_schema)) {
+          ret = OB_ERR_UNEXPECTED;
+        } else if (ddl_table_schema->is_partitioned_table()
+                   || fts_source_schema->is_user_hidden_table()) {
+          spec.max_batch_size_ = 0;
+        }
         if (OB_UNLIKELY(ddl_table_schema->get_parser_name_str().empty())) {
           ret = OB_ERR_UNEXPECTED;
         } else {

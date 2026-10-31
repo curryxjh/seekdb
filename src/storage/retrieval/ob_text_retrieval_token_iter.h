@@ -132,6 +132,9 @@ public:
   virtual int advance_to(const ObDatum &id_datum) override;
   virtual int get_curr_score(double &score) const override;
   virtual int get_curr_id(const ObDatum *&id_datum) const override;
+  // The returned arrays remain valid until this iterator loads another batch.
+  // Batch consumers must finish the whole view before requesting another one.
+  int next_batch_view(const ObDocIdExt *&ids, const double *&scores, int64_t &count);
 public:
   int get_token_doc_cnt(int64_t &token_doc_cnt) const { return token_iter_->get_token_doc_cnt(token_doc_cnt); }
   virtual int get_dim_max_score(double &score) override {
@@ -184,6 +187,8 @@ public:
   virtual bool in_shallow_status() const override;
   // currently, for text retrieval, total_doc_cnt and token_doc_cnt is required before block max calculation
   int init_block_max_iter(const int64_t total_doc_cnt, const double avg_doc_token_cnt);
+  int next_batch_view(const ObDocIdExt *&ids, const double *&scores, int64_t &count)
+  { return token_iter_.next_batch_view(ids, scores, count); }
 private:
   int calc_dim_max_score(
       const ObBlockMaxScoreIterParam &block_max_iter_param,

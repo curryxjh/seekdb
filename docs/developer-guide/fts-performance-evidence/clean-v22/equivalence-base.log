@@ -1,0 +1,10 @@
+stopping previous pid 47234
+seekdb started pid=47611 port=2883 base=/home/beaten/fts-runtime-v9
+seekdb ready after 7s
+Recorded /home/beaten/fts-results/v4/clean-candidate-22-verify_sql_equivalence.py.json
+result_sha256: 67c251367c3577c8d8e63bd73b7c96b4085ea5291776aec6ed61ef605bdaa29a
+result_rows: 388723
+PASS: aggregate result rows: 395
+sha256: a0f9c61c71764cbb27b8684ee0cd673eb5183c4fc81fb9bfe004c469632d3afd
+PASS: shared sort result rows: 361800
+sha256: c91dd6edfff71dafbd587c960c5c5f3582634c5dddd4b41ac6e62e3f540f0307

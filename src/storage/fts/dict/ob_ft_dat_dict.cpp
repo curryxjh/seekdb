@@ -302,15 +302,18 @@ ObArrayHashMap *ObFTDAT::get_map() { return reinterpret_cast<ObArrayHashMap *>(b
 int ObArrayHashMap::find(const ObFTSingleWord &word, ObFTWordCode &code) const
 {
   int ret = OB_ENTRY_NOT_EXIST;
-  uint64_t hash = word.get_word().hash();
+  uint64_t hash = ObString(word.word_len, word.word).hash();
   uint64_t index = hash % header_.capacity_;
   while (header_.data[index].used) {
-    if (header_.data[index].word == word) {
+    const ObFTSingleWord &candidate = header_.data[index].word;
+    if (candidate.word_len == word.word_len
+        && 0 == MEMCMP(candidate.word, word.word, word.word_len)) {
       code = header_.data[index].code;
       ret = OB_SUCCESS;
       break;
     } else {
-      index = (index + 3) % header_.capacity_;
+      index += 3;
+      if (index >= header_.capacity_) { index -= header_.capacity_; }
     }
   }
   return ret;
@@ -322,7 +325,8 @@ int ObArrayHashMap::insert(const ObString &key, ObFTWordCode code)
   uint64_t hash = key.hash();
   uint64_t index = hash % header_.capacity_;
   while (header_.data[index].used) {
-    index = (index + 3) % header_.capacity_;
+    index += 3;
+    if (index >= header_.capacity_) { index -= header_.capacity_; }
   }
 
   header_.data[index].code = code;

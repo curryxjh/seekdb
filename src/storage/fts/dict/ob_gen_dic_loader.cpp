@@ -125,7 +125,19 @@ int ObGenDicLoader::get_dic_loader(const ObString &parser_name,
     ret = OB_INVALID_ARGUMENT;
   } else if (OB_FAIL(dic_loader_key.init(parser_name, charset))) {
   } else {
+    {
+      // Existing loaders are immutable entries owned by this registry. Hold
+      // a shared lock until the returned handle has acquired its reference.
+      TCRLockGuard guard(lock_);
+      ret = dic_loader_map_.get_refactored(dic_loader_key, dic_loader);
+      if (OB_SUCCESS == ret) {
+        return loader_handle.set_loader(dic_loader);
+      } else if (OB_HASH_NOT_EXIST != ret) {
+        return OB_ERR_UNEXPECTED;
+      }
+    }
     TCWLockGuard guard(lock_);
+    // Another caller may have installed the loader before lock promotion.
     if (OB_FAIL(dic_loader_map_.get_refactored(dic_loader_key, dic_loader))) {
       if (OB_HASH_NOT_EXIST == ret) {
         if (OB_FAIL(gen_dic_loader(dic_loader_key, dic_loader))) {

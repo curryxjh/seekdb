@@ -43,7 +43,70 @@ int ObFTDictHub::init()
 int ObFTDictHub::destroy()
 {
   int ret = OB_SUCCESS;
+  // Runtime teardown stops parser workers before destroying the hub.
+  builtin_ready_.store(false, std::memory_order_release);
+  reset_builtin_dicts();
+  dict_map_.destroy();
   is_inited_ = false;
+  return ret;
+}
+
+void ObFTDictHub::reset_builtin_dicts()
+{
+  for (int i = 0; i < 3; ++i) {
+    if (nullptr != builtin_dicts_[i]) {
+      builtin_dicts_[i]->~ObFTRangeDict();
+      builtin_dicts_[i] = nullptr;
+    }
+    if (nullptr != builtin_ranges_[i]) {
+      builtin_ranges_[i]->~ObFTCacheRangeContainer();
+      builtin_ranges_[i] = nullptr;
+    }
+  }
+  builtin_allocator_.reset();
+}
+
+int ObFTDictHub::get_builtin_ik_dicts(ObIFTDict *&main, ObIFTDict *&quan, ObIFTDict *&stop)
+{
+  int ret = OB_SUCCESS;
+  if (!is_inited_) {
+    ret = OB_NOT_INIT;
+  } else if (!builtin_ready_.load(std::memory_order_acquire)) {
+    std::lock_guard<std::mutex> guard(builtin_mutex_);
+    if (!builtin_ready_.load(std::memory_order_relaxed)) {
+      const ObFTDictDesc descs[] = {
+          {"main_dict", ObFTDictType::DICT_IK_MAIN, CHARSET_UTF8MB4, CS_TYPE_UTF8MB4_BIN},
+          {"quan_dict", ObFTDictType::DICT_IK_QUAN, CHARSET_UTF8MB4, CS_TYPE_UTF8MB4_BIN},
+          {"stopword", ObFTDictType::DICT_IK_STOP, CHARSET_UTF8MB4, CS_TYPE_UTF8MB4_BIN}};
+      for (int i = 0; OB_SUCC(ret) && i < 3; ++i) {
+        if (OB_ISNULL(builtin_ranges_[i] = OB_NEWx(ObFTCacheRangeContainer,
+                                                  &builtin_allocator_, builtin_allocator_))) {
+          ret = OB_ALLOCATE_MEMORY_FAILED;
+        } else {
+          ret = load_cache(descs[i], *builtin_ranges_[i]);
+          if (OB_ENTRY_NOT_EXIST == ret) {
+            ret = build_cache(descs[i], *builtin_ranges_[i]);
+          }
+          if (OB_FAIL(ret)) {
+          } else if (OB_ISNULL(builtin_dicts_[i] = OB_NEWx(ObFTRangeDict,
+              &builtin_allocator_, builtin_allocator_, builtin_ranges_[i], descs[i]))) {
+            ret = OB_ALLOCATE_MEMORY_FAILED;
+          } else if (OB_FAIL(builtin_dicts_[i]->init())) {
+          }
+        }
+      }
+      if (OB_SUCC(ret)) {
+        builtin_ready_.store(true, std::memory_order_release);
+      } else {
+        reset_builtin_dicts();
+      }
+    }
+  }
+  if (OB_SUCC(ret)) {
+    main = builtin_dicts_[0];
+    quan = builtin_dicts_[1];
+    stop = builtin_dicts_[2];
+  }
   return ret;
 }
 int ObFTDictHub::build_cache(const ObFTDictDesc &desc, ObFTCacheRangeContainer &container)

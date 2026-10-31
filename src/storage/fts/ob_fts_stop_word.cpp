@@ -164,6 +164,25 @@ int ObAddWord::casedown_word(const ObFTWord &src, ObFTWord &dst)
   if (OB_UNLIKELY(src.empty())) {
     ret = OB_INVALID_ARGUMENT;
   } else if (flag_.casedown()) {
+    const ObString input = src.get_word().get_string();
+    const ObCharsetInfo *cs = ObCharset::get_charset(word_meta_.get_collation_type());
+    char folded[256];
+    if (nullptr != cs && cs->cset == &ob_charset_utf8mb4_handler
+        && cs->casedn_multiply == 1 && input.length() <= sizeof(folded)) {
+      const size_t size = cs->cset->casedn(cs, const_cast<char *>(input.ptr()),
+                                        input.length(), folded, input.length());
+      if (size == input.length() && 0 == MEMCMP(input.ptr(), folded, size)) {
+        // IK tokens borrow the document until this document's word map is
+        // consumed. Unchanged Unicode casing needs no retained allocation.
+        dst = src;
+        return ret;
+      }
+      char *buffer = static_cast<char *>(allocator_.alloc(size));
+      if (nullptr == buffer) { return OB_ALLOCATE_MEMORY_FAILED; }
+      MEMCPY(buffer, folded, size);
+      dst = ObFTWord(size, buffer, word_meta_);
+      return ret;
+    }
     ObString dst_str;
     if (OB_FAIL(ObCharset::tolower(
                     word_meta_.get_collation_type(),
@@ -198,20 +217,21 @@ int ObAddWord::check_stopword(const ObFTWord &ft_word, bool &is_stopword)
 int ObAddWord::groupby_word(const ObFTWord &word, const int64_t word_freq)
 {
   int ret = OB_SUCCESS;
-  int64_t word_count = 0;
   if (OB_UNLIKELY(word.empty() || word_freq <= 0)) {
     ret = OB_INVALID_ARGUMENT;
   } else if (!flag_.groupby_word()) {
     if (OB_FAIL(word_map_.set_refactored(word, 1/*word count*/))) {
     }
-  } else if (OB_FAIL(word_map_.get_refactored(word, word_count)) && OB_HASH_NOT_EXIST != ret) {
   } else {
-    if (OB_HASH_NOT_EXIST == ret) {
-      word_count = 1;
-    } else {
-      word_count += word_freq;
-    }
-    if (OB_FAIL(word_map_.set_refactored(word, word_count, 1/*overwrite*/))) {
+    auto add_frequency = [&word, word_freq](common::hash::HashMapPair<ObFTWord, int64_t> &entry) {
+      // Collation-equivalent words can have different bytes. The old
+      // overwrite retained the latest spelling, so replace the key as well.
+      entry.first = word;
+      entry.second += word_freq;
+    };
+    // Keep the existing first-occurrence count (one), and update duplicates
+    // in place with one hash calculation and one bucket traversal.
+    if (OB_FAIL(word_map_.set_or_update(word, 1, add_frequency))) {
     }
   }
   return ret;

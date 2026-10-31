@@ -679,6 +679,7 @@ ObTableScanOp::ObTableScanOp(ObExecContext &exec_ctx, const ObOpSpec &spec, ObOp
     in_rescan_(false),
     domain_index_(),
     fts_index_(),
+    fts_output_exprs_{},
     output_   (nullptr),
     fold_iter_(nullptr),
     iter_tree_(nullptr),
@@ -2199,7 +2200,10 @@ ERRSIM_POINT_DEF(EN_TABLE_SCAN_RETRY_WAIT_EVENT_ERRSIM);
 int ObTableScanOp::inner_get_next_batch(const int64_t max_row_cnt)
 {
   int ret = OB_SUCCESS;
-  if (OB_UNLIKELY(rand_scan_processor_.use_rand_scan())) {
+  if (OB_UNLIKELY(MY_SPEC.is_fts_ddl_ && nullptr == tsc_rtdef_.scan_rtdef_.sample_info_
+                  && !rand_scan_processor_.use_rand_scan())) {
+    ret = inner_get_next_fts_index_batch(max_row_cnt);
+  } else if (OB_UNLIKELY(rand_scan_processor_.use_rand_scan())) {
     if (OB_FAIL(rand_scan_processor_.inner_get_next_batch(max_row_cnt))) {
     }
   } else if (OB_FAIL(inner_get_next_batch_for_tsc(max_row_cnt))) {
@@ -3624,6 +3628,48 @@ int ObTableScanOp::fill_generated_cellid_mbr(
   return ret;
 }
 
+int ObTableScanOp::inner_get_next_fts_index_batch(const int64_t max_row_cnt)
+{
+  int ret = OB_SUCCESS;
+  clear_evaluated_flag();
+  brs_.size_ = 0;
+  brs_.end_ = false;
+  ObEvalCtx::BatchInfoScopeGuard guard(eval_ctx_);
+  guard.set_batch_size(1);
+  guard.set_batch_idx(0);
+  blocksstable::ObDatumRow *row = nullptr;
+  if (OB_FAIL(fts_index_.get_next_row(row))) {
+    if (OB_ITER_END == ret) {
+      if (OB_FAIL(fetch_next_fts_index_rows())) {
+        if (OB_ITER_END == ret) {
+          ret = OB_SUCCESS;
+          brs_.end_ = true;
+        }
+      } else {
+        ret = fts_index_.get_next_row(row);
+      }
+    }
+  }
+  // Do not cross a document boundary: the parser's word buffer and the
+  // source document ID must stay alive until the parent consumes the batch.
+  const int64_t capacity = MIN(max_row_cnt, MY_SPEC.max_batch_size_);
+  guard.set_batch_size(capacity);
+  while (OB_SUCC(ret) && !brs_.end_ && brs_.size_ < capacity) {
+    guard.set_batch_idx(brs_.size_);
+    if (OB_FAIL(fill_generated_fts_cols(row))) {
+    } else {
+      ++brs_.size_;
+      if (brs_.size_ < capacity && OB_FAIL(fts_index_.get_next_row(row))) {
+        if (OB_ITER_END == ret) {
+          ret = OB_SUCCESS;
+          break;
+        }
+      }
+    }
+  }
+  return ret;
+}
+
 int ObTableScanOp::inner_get_next_fts_index_row()
 {
   int ret = OB_SUCCESS;
@@ -3703,6 +3749,9 @@ int ObTableScanOp::fill_generated_fts_cols(blocksstable::ObDatumRow *row)
         } else {
           eval_info.evaluated_ = true;
           eval_info.projected_ = true;
+          if (expr->is_batch_result()) {
+            expr->get_evaluated_flags(eval_ctx_).set(eval_ctx_.get_batch_idx());
+          }
         }
       }
     }
@@ -3716,6 +3765,18 @@ int ObTableScanOp::get_output_fts_col_expr_by_type(
 {
   int ret = OB_SUCCESS;
   expr = nullptr;
+  int64_t cache_idx = -1;
+  switch (type) {
+    case T_FUN_SYS_WORD_SEGMENT: cache_idx = 0; break;
+    case T_FUN_SYS_DOC_ID: cache_idx = 1; break;
+    case T_FUN_SYS_WORD_COUNT: cache_idx = 2; break;
+    case T_FUN_SYS_DOC_LENGTH: cache_idx = 3; break;
+    default: break;
+  }
+  if (cache_idx >= 0 && nullptr != fts_output_exprs_[cache_idx]) {
+    expr = fts_output_exprs_[cache_idx];
+    return ret;
+  }
   if (OB_UNLIKELY(T_FUN_SYS_WORD_SEGMENT != type
                && T_FUN_SYS_DOC_ID != type
                && T_FUN_SYS_WORD_COUNT != type
@@ -3747,6 +3808,9 @@ int ObTableScanOp::get_output_fts_col_expr_by_type(
   }
   if (OB_SUCC(ret) && OB_ISNULL(expr)) {
     ret = OB_ERR_UNEXPECTED;
+  }
+  if (OB_SUCC(ret)) {
+    fts_output_exprs_[cache_idx] = expr;
   }
   return ret;
 }

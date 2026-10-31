@@ -743,6 +743,20 @@ int ObIndexBuildTask::send_local_build_request(
     }
     execution_id_ = new_task_execution_id;
     if (OB_SUCC(ret)) {
+      bool independent_fts_forward = false;
+      if (!create_index_arg_.is_offline_rebuild_
+          && share::schema::is_fts_doc_word_aux(create_index_arg_.index_type_)) {
+        ObSchemaGetterGuard guard;
+        const ObTableSchema *source_schema = nullptr;
+        if (OB_FAIL(GCTX.schema_service_->get_runtime_schema_guard(guard))) {
+        } else if (OB_FAIL(guard.get_table_schema(object_id_, source_schema))) {
+        } else if (OB_ISNULL(source_schema)) {
+          ret = OB_TABLE_NOT_EXIST;
+        } else {
+          independent_fts_forward = !source_schema->is_user_hidden_table()
+                                   && !source_schema->is_partitioned_table();
+        }
+      }
       ObIndexSSTableBuildTask task(
           task_id_,
           object_id_,
@@ -754,9 +768,16 @@ int ObIndexBuildTask::send_local_build_request(
           parallelism,
           is_partitioned_local_index_task,
           is_retryable_ddl_);
-      if (OB_FAIL(task.set_addition_info(index_partition_ids))) {
+      if (OB_FAIL(ret)) {
+      } else if (OB_FAIL(task.set_addition_info(index_partition_ids))) {
+      } else if (independent_fts_forward) {
+        // Only this online auxiliary build is independent of the serial
+        // backfill pipeline. Offline replacement and ordinary DDL retain
+        // their original queue ordering in mini mode.
+        ret = ObSysDDLLocalBuilderUtil::push_task(task, true);
       } else if (OB_FAIL(local_management_service_->submit_ddl_local_build_task(task))) {
-      } else {
+      }
+      if (OB_SUCC(ret)) {
         is_sstable_complete_task_submitted_ = true;
         sstable_complete_request_time_ = ObTimeUtility::current_time();
       }

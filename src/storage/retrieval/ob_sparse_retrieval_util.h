@@ -25,6 +25,35 @@ namespace oceanbase
 namespace storage
 {
 
+inline int compare_binary_doc_ids(const ObDatum &lhs, const ObDatum &rhs, int &cmp_ret,
+                                  const ObDatumAccessContext *)
+{
+  if (lhs.is_null() || rhs.is_null()) {
+    cmp_ret = lhs.is_null() ? (rhs.is_null() ? 0 : -1) : 1;
+  } else {
+    const int64_t common_len = MIN(lhs.len_, rhs.len_);
+    // Fixed-size document IDs are common. A constant length lets the compiler
+    // compare them inline rather than calling the general memcmp routine.
+    int cmp = 0;
+    if (common_len == 16) {
+      for (int64_t offset = 0; cmp == 0 && offset < 16; offset += 8) {
+        uint64_t left = 0, right = 0;
+        MEMCPY(&left, lhs.ptr_ + offset, 8);
+        MEMCPY(&right, rhs.ptr_ + offset, 8);
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        left = __builtin_bswap64(left);
+        right = __builtin_bswap64(right);
+#endif
+        cmp = (left > right) - (left < right);
+      }
+    } else if (common_len > 0) {
+      cmp = MEMCMP(lhs.ptr_, rhs.ptr_, common_len);
+    }
+    cmp_ret = cmp != 0 ? (cmp > 0 ? 1 : -1) : (lhs.len_ > rhs.len_) - (lhs.len_ < rhs.len_);
+  }
+  return OB_SUCCESS;
+}
+
 class ObDomainIdCmp
 {
 public:
@@ -51,7 +80,8 @@ int ObDomainIdCmp::init(const ObObjMeta &obj_meta)
       ret = OB_ERR_UNEXPECTED;
       STORAGE_LOG(WARN,"failed to get basic functions", K(ret), K(obj_meta));
     } else {
-      cmp_func_ = id_basic_funcs->null_first_cmp_;
+      cmp_func_ = ObVarcharType == obj_meta.get_type() && CS_TYPE_BINARY == obj_meta.get_collation_type()
+                  ? compare_binary_doc_ids : id_basic_funcs->null_first_cmp_;
     }
   }
   return ret;

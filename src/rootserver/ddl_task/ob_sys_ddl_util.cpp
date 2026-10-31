@@ -24,7 +24,7 @@ namespace oceanbase
 {
 namespace rootserver
 {
-int ObSysDDLLocalBuilderUtil::push_task(ObAsyncTask &task)
+int ObSysDDLLocalBuilderUtil::push_task(ObAsyncTask &task, const bool independent_fts_forward)
 {
   int ret = OB_SUCCESS;
   rootserver::ObDDLScheduler *sys_ddl_scheduler =
@@ -35,7 +35,7 @@ int ObSysDDLLocalBuilderUtil::push_task(ObAsyncTask &task)
     ret = OB_STATE_NOT_MATCH;
   } else {
     SERVER_MODULE_SCOPE {
-      if (OB_FAIL(sys_ddl_scheduler->get_ddl_builder().push_task(task))) {
+      if (OB_FAIL(sys_ddl_scheduler->get_ddl_builder().push_task(task, independent_fts_forward))) {
       }
     }
   }

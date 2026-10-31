@@ -1,0 +1,29 @@
+[==========] Running 9 tests from 2 test cases.
+[----------] Global test environment set-up.
+[----------] 1 test from StringDiffBatchTest
+[ RUN      ] StringDiffBatchTest.gathered_rows_match_scalar_decoding_and_source_bytes
+[       OK ] StringDiffBatchTest.gathered_rows_match_scalar_decoding_and_source_bytes (1 ms)
+[----------] 1 test from StringDiffBatchTest (1 ms total)
+
+[----------] 8 tests from FtsHotPathTest
+[ RUN      ] FtsHotPathTest.character_classes_and_encoding_boundaries
+[       OK ] FtsHotPathTest.character_classes_and_encoding_boundaries (0 ms)
+[ RUN      ] FtsHotPathTest.arbitration_keeps_overlapping_and_adjacent_chains
+[       OK ] FtsHotPathTest.arbitration_keeps_overlapping_and_adjacent_chains (0 ms)
+[ RUN      ] FtsHotPathTest.grouped_frequency_preserves_first_occurrence_and_errors
+[       OK ] FtsHotPathTest.grouped_frequency_preserves_first_occurrence_and_errors (0 ms)
+[ RUN      ] FtsHotPathTest.dictionary_code_lookup_preserves_bytes_and_lengths
+[       OK ] FtsHotPathTest.dictionary_code_lookup_preserves_bytes_and_lengths (0 ms)
+[ RUN      ] FtsHotPathTest.collation_equivalent_words_retain_latest_spelling
+[       OK ] FtsHotPathTest.collation_equivalent_words_retain_latest_spelling (0 ms)
+[ RUN      ] FtsHotPathTest.binary_id_comparison_matches_datum_comparator
+[       OK ] FtsHotPathTest.binary_id_comparison_matches_datum_comparator (0 ms)
+[ RUN      ] FtsHotPathTest.parsed_properties_match_json_roundtrip
+[       OK ] FtsHotPathTest.parsed_properties_match_json_roundtrip (0 ms)
+[ RUN      ] FtsHotPathTest.ik_case_folding_matches_charset_conversion
+[       OK ] FtsHotPathTest.ik_case_folding_matches_charset_conversion (0 ms)
+[----------] 8 tests from FtsHotPathTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 9 tests from 2 test cases ran. (2 ms total)
+[  PASSED  ] 9 tests.

@@ -160,19 +160,71 @@ int ObStringDiffDecoder::batch_decode(
     // Fill string data
     const uint16_t string_size = header_->string_size_;
     const static uint16_t min_buf_size = 128;
-    const int64_t buf_size = std::max(string_size, min_buf_size);
+    const int64_t buf_size = header_->is_hex_packing()
+        ? std::max(string_size, min_buf_size) : std::max<uint16_t>(string_size, 1);
     char *buf = nullptr;
     if (OB_FAIL(ret)) {
     } else if (OB_ISNULL(buf = static_cast<char *>(ctx.allocator_->alloc(buf_size * row_cap)))) {
       ret = OB_ALLOCATE_MEMORY_FAILED;
     } else {
-      for (int64_t i = 0; i < row_cap; ++i) {
+      if (string_size <= min_buf_size && row_cap > 1) {
+        // Decode the shared bytes once. Short keys otherwise repeat the
+        // descriptor walk and several tiny memcpy calls for every row.
+        char common[min_buf_size] = {};
         header_->copy_string(ObStringDiffHeader::LeftToRight(), std::logical_not<uint8_t>(),
-            header_->common_data(), buf + i * buf_size);
+            header_->common_data(), common);
+        for (int64_t i = 0; i < row_cap; ++i) {
+          if (string_size == 16) {
+            MEMCPY(buf + i * buf_size, common, 16);
+          } else {
+            MEMCPY(buf + i * buf_size, common, string_size);
+          }
+        }
+      } else {
+        for (int64_t i = 0; i < row_cap; ++i) {
+          header_->copy_string(ObStringDiffHeader::LeftToRight(), std::logical_not<uint8_t>(),
+              header_->common_data(), buf + i * buf_size);
+        }
       }
     }
 
     if (OB_FAIL(ret)) {
+    } else if (ctx.is_fix_length() && !header_->is_hex_packing()) {
+      // The descriptor layout is shared by the whole batch. Walk it once,
+      // and copy each varying run across the selected rows with a fixed-size
+      // copy where possible, instead of interpreting it for every value.
+      int64_t source_pos = 0;
+      int64_t target_pos = 0;
+      for (int64_t desc = 0; desc < header_->diff_desc_cnt_; ++desc) {
+        const int64_t length = header_->diff_descs_[desc].count_;
+        if (header_->diff_descs_[desc].diff_) {
+          auto copy_rows = [&](auto copy) {
+            for (int64_t i = 0; i < row_cap; ++i) {
+              if (!ctx.has_extend_value() || !datums[i].is_null()) {
+                copy(col_data + data_offset + row_ids[i] * header_->length_ + source_pos,
+                     buf + i * buf_size + target_pos);
+              }
+            }
+          };
+          switch (length) {
+            case 1: copy_rows([](const void *s, void *d) { MEMCPY(d, s, 1); }); break;
+            case 2: copy_rows([](const void *s, void *d) { MEMCPY(d, s, 2); }); break;
+            case 3: copy_rows([](const void *s, void *d) { MEMCPY(d, s, 3); }); break;
+            case 4: copy_rows([](const void *s, void *d) { MEMCPY(d, s, 4); }); break;
+            case 8: copy_rows([](const void *s, void *d) { MEMCPY(d, s, 8); }); break;
+            case 16: copy_rows([](const void *s, void *d) { MEMCPY(d, s, 16); }); break;
+            default: copy_rows([&](const void *s, void *d) { MEMCPY(d, s, length); }); break;
+          }
+          source_pos += length;
+        }
+        target_pos += length;
+      }
+      for (int64_t i = 0; i < row_cap; ++i) {
+        if (!ctx.has_extend_value() || !datums[i].is_null()) {
+          datums[i].pack_ = string_size;
+          datums[i].ptr_ = buf + i * buf_size;
+        }
+      }
     } else if (ctx.is_fix_length()) {
       int64_t row_id = 0;
       const unsigned char *cell_data = nullptr;
@@ -191,8 +243,18 @@ int ObStringDiffDecoder::batch_decode(
                 static_cast<void (ObHexStringUnpacker::*)(unsigned char &)>(&ObHexStringUnpacker::unpack),
                 reinterpret_cast<unsigned char *>(str_ptr));
           } else {
+            auto copy = [](const unsigned char *source, char *target, const int64_t length) {
+              switch (length) {
+                case 1: *target = *source; break;
+                case 2: MEMCPY(target, source, 2); break;
+                case 4: MEMCPY(target, source, 4); break;
+                case 8: MEMCPY(target, source, 8); break;
+                case 16: MEMCPY(target, source, 16); break;
+                default: MEMCPY(target, source, length); break;
+              }
+            };
             header_->copy_string(
-              ObStringDiffHeader::LeftToRight(),
+              copy,
               ObStringDiffHeader::LogicTrue<uint8_t>(),
               cell_data, str_ptr);
           }

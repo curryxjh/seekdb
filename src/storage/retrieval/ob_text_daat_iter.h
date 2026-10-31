@@ -55,18 +55,32 @@ public:
   ObTextDaaTIter() : ObSRDaaTIterImpl(),
       bm25_param_estimator_(),
       mode_flag_(sql::ObMatchAgainstMode::NATURAL_LANGUAGE_MODE),
-      function_lookup_mode_(false) {}
+      function_lookup_mode_(false),
+      batch_merge_(false),
+      batch_cursors_{} {}
   virtual ~ObTextDaaTIter() { reset(); }
 
   int init(const ObTextDaaTParam &param);
+  virtual int get_next_rows(const int64_t capacity, int64_t &count) override;
   virtual void reuse(const bool switch_tablet = false) override;
   virtual void reset() override;
 protected:
   virtual int pre_process() override;
+  virtual int do_one_merge_round(int64_t &count) override;
 protected:
   ObBM25ParamEstimator bm25_param_estimator_;
   sql::ObMatchAgainstMode mode_flag_;
   bool function_lookup_mode_;
+  struct BatchCursor
+  {
+    const ObDocIdExt *ids_ = nullptr;
+    const double *scores_ = nullptr;
+    int64_t pos_ = 0;
+    int64_t count_ = 0;
+    bool ended_ = false;
+  };
+  bool batch_merge_;
+  BatchCursor batch_cursors_[ObSRSimpleMerger::USE_SIMPLE_MERGER_MAX_TABLE_CNT];
 private:
   DISALLOW_COPY_AND_ASSIGN(ObTextDaaTIter);
 };
@@ -83,8 +97,10 @@ public:
 protected:
   virtual int get_next_rows(const int64_t capacity, int64_t &count) override;
   virtual int init_before_wand_process() override;
+  int scan_batches_for_top_k();
 protected:
   ObBM25ParamEstimator bm25_param_estimator_;
+  bool batch_top_k_ = false;
 private:
   DISALLOW_COPY_AND_ASSIGN(ObTextBMWIter);
 };

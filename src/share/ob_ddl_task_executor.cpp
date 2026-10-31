@@ -242,7 +242,9 @@ void ObDDLTaskExecutor::run1()
 ObDDLLocalBuilder::ObDDLLocalBuilder()
   : is_thread_started_(false),
     is_stopped_(true),
-    task_queue_()
+    parallel_fts_enabled_(false),
+    task_queue_(),
+    fts_forward_queue_()
 {
 
 }
@@ -259,14 +261,20 @@ int ObDDLLocalBuilder::init()
             K(is_thread_started_), K(is_stopped_));
   if (OB_UNLIKELY(is_thread_started_)) {
     ret = OB_STATE_NOT_MATCH;
-  } else if (OB_FAIL(task_queue_.init(get_thread_cnt_(), 4 << 10, "DdlBuild"))) {
+  } else if (FALSE_IT(parallel_fts_enabled_ = lib::is_mini_mode() && get_thread_cnt_() > 1)) {
+  } else if (OB_FAIL(task_queue_.init(lib::is_mini_mode() ? 1 : get_thread_cnt_(), 4 << 10, "DdlBuild"))) {
+  } else if (parallel_fts_enabled_
+             && OB_FAIL(fts_forward_queue_.init(1, 4 << 10, "FtsForward"))) {
   } else if (OB_FAIL(task_queue_.start())) {
+  } else if (parallel_fts_enabled_ && OB_FAIL(fts_forward_queue_.start())) {
   } else {
     is_thread_started_ = true;
     is_stopped_ = true;
   }
   if (OB_FAIL(ret)) {
+    fts_forward_queue_.destroy();
     task_queue_.destroy();
+    parallel_fts_enabled_ = false;
   }
   FLOG_INFO("[DDL_LOCAL_BUILDER] finish init ddl local builder",
             KR(ret), K(is_thread_started_), K(is_stopped_));
@@ -305,6 +313,7 @@ void ObDDLLocalBuilder::server_module_thread_stop()
             K(is_thread_started_), K(is_stopped_));
   if (is_thread_started_) {
     task_queue_.stop();
+    if (parallel_fts_enabled_) { fts_forward_queue_.stop(); }
   }
   FLOG_INFO("[DDL_LOCAL_BUILDER] finish server_module_thread_stop ddl local builder",
             K(is_thread_started_), K(is_stopped_));
@@ -316,6 +325,7 @@ void ObDDLLocalBuilder::server_module_thread_wait()
             K(is_thread_started_), K(is_stopped_));
   if (is_thread_started_) {
     task_queue_.wait();
+    if (parallel_fts_enabled_) { fts_forward_queue_.wait(); }
   }
   FLOG_INFO("[DDL_LOCAL_BUILDER] finish server_module_thread_wait ddl local builder",
             K(is_thread_started_), K(is_stopped_));
@@ -328,7 +338,9 @@ void ObDDLLocalBuilder::destroy()
   {
     if (is_thread_started_) {
       is_stopped_ = true;
+      if (parallel_fts_enabled_) { fts_forward_queue_.destroy(); }
       task_queue_.destroy();
+      parallel_fts_enabled_ = false;
       is_thread_started_ = false;
     }
   }
@@ -336,13 +348,15 @@ void ObDDLLocalBuilder::destroy()
             K(is_thread_started_), K(is_stopped_));
 }
 
-int ObDDLLocalBuilder::push_task(ObAsyncTask &task)
+int ObDDLLocalBuilder::push_task(ObAsyncTask &task, const bool independent_fts_forward)
 {
   int ret = OB_SUCCESS;
   if (OB_UNLIKELY(!is_thread_started_)) {
     ret = OB_ERR_SYS;
   } else if (is_stopped_) {
     ret = OB_STATE_NOT_MATCH;
+  } else if (independent_fts_forward && parallel_fts_enabled_) {
+    ret = fts_forward_queue_.push(task);
   } else if (OB_FAIL(task_queue_.push(task))) {
   }
   return ret;
@@ -350,7 +364,17 @@ int ObDDLLocalBuilder::push_task(ObAsyncTask &task)
 
 int64_t ObDDLLocalBuilder::get_thread_cnt_() const
 {
-  return lib::is_mini_mode() ? 1 : 16;
+  if (!lib::is_mini_mode()) { return 16; }
+  const auto *runtime = server_runtime();
+  // A full-text build submits independent inverted and forward index jobs.
+  // A single SQL-building worker serializes them even when each job has a
+  // DOP of one. Permit two jobs on a runtime with spare CPU and memory; keep
+  // at least one CPU for foreground work and retain serial execution on
+  // smaller instances. Each SQL job still uses normal PX/memory admission.
+  if (nullptr == runtime || runtime->memory_size() < 2L * 1024 * 1024 * 1024) {
+    return 1;
+  }
+  return MIN(2L, MAX(1L, static_cast<int64_t>(runtime->min_cpu()) - 1));
 }
 
 }  // end namespace share

@@ -21,6 +21,7 @@
 #include "query/engine/basic/ob_encoded_sort_row.h"
 #include "data_plane/encoding/ob_cpu_features.h"
 #include "sql/engine/px/p2p_datahub/ob_pushdown_topn_filter_msg.h"
+#include "lib/hash/ob_hashmap.h"
 
 namespace oceanbase
 {
@@ -356,7 +357,8 @@ int ObSortOpImpl::ObAdaptiveQS::compare_vals(int64_t l, int64_t r,
 
 ObSortOpImpl::Compare::Compare()
   : ret_(OB_SUCCESS), sort_collations_(nullptr), sort_cmp_funs_(nullptr),
-    exec_ctx_(nullptr), access_ctx_(nullptr), cmp_count_(0), cmp_start_(0), cmp_end_(0)
+    exec_ctx_(nullptr), access_ctx_(nullptr), cmp_count_(0), cmp_start_(0), cmp_end_(0),
+    binary_string_cmp_mask_(0)
 {
 }
 
@@ -380,6 +382,13 @@ int ObSortOpImpl::Compare::init(
     cmp_start_ = 0;
     cmp_end_ = sort_cmp_funs_->count();
     enable_encode_sortkey_ = enable_encode_sortkey;
+    const auto *binary_funcs = ObDatumFuncs::get_basic_func(ObVarcharType, CS_TYPE_BINARY);
+    for (int64_t i = 0; nullptr != binary_funcs && i < MIN(cnt_, 64); ++i) {
+      const auto func = sort_cmp_funs_->at(i).cmp_func_;
+      if (func == binary_funcs->null_first_cmp_ || func == binary_funcs->null_last_cmp_) {
+        binary_string_cmp_mask_ |= uint64_t(1) << i;
+      }
+    }
   }
   return ret;
 }
@@ -420,8 +429,32 @@ bool ObSortOpImpl::Compare::operator()(
     for (int64_t i = cmp_start_; 0 == cmp && i < cmp_end_ && OB_SUCC(ret); i++) {
       const ObSortFieldCollation& sort_collation = sort_collations_->at(i);
       const int64_t idx = sort_collation.field_idx_;
-      if (OB_FAIL(
-              sort_cmp_funs_->at(i).cmp_func_(lcells[idx], rcells[idx], cmp, access_ctx_))) {
+      if (i < 64 && (binary_string_cmp_mask_ & (uint64_t(1) << i))
+          && !lcells[idx].is_null() && !rcells[idx].is_null()) {
+        // Only the exact binary VARCHAR comparator is eligible. Other
+        // types, collations, LOBs and NULLs keep their registered function.
+        const ObDatum &left = lcells[idx];
+        const ObDatum &right = rcells[idx];
+        const int64_t len = MIN(left.len_, right.len_);
+        if (len == 16) {
+          for (int64_t offset = 0; cmp == 0 && offset < 16; offset += 8) {
+            uint64_t lkey = 0, rkey = 0;
+            MEMCPY(&lkey, left.ptr_ + offset, 8);
+            MEMCPY(&rkey, right.ptr_ + offset, 8);
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+            lkey = __builtin_bswap64(lkey);
+            rkey = __builtin_bswap64(rkey);
+#endif
+            cmp = (lkey > rkey) - (lkey < rkey);
+          }
+        } else {
+          cmp = len == 0 ? 0 : MEMCMP(left.ptr_, right.ptr_, len);
+        }
+        if (cmp == 0) { cmp = (left.len_ > right.len_) - (left.len_ < right.len_); }
+      } else {
+        ret = sort_cmp_funs_->at(i).cmp_func_(lcells[idx], rcells[idx], cmp, access_ctx_);
+      }
+      if (OB_FAIL(ret)) {
       } else if (cmp < 0) {
         less = sort_collation.is_ascending_;
       } else if (cmp > 0) {
@@ -1833,6 +1866,222 @@ int ObSortOpImpl::part_topn_heap_next(int64_t &cur_heap_idx,
   return ret;
 }
 
+static int sort_binary_suffix(ObIArray<ObChunkDatumStore::StoredRow *> &rows,
+                             const int64_t begin, const int64_t end,
+                             ObSortOpImpl::Compare &comp, ObIAllocator &allocator,
+                             bool &sorted)
+{
+  int ret = OB_SUCCESS;
+  sorted = false;
+  const int64_t key = comp.cmp_start_;
+  if (end - begin < 1024 || comp.cmp_end_ != key + 1 || key >= 64
+      || !(comp.binary_string_cmp_mask_ & (uint64_t(1) << key))) {
+    return ret;
+  }
+  const auto &coll = comp.sort_collations_->at(key);
+  const int64_t field = coll.field_idx_;
+  uint64_t reference[2] = {}, varied[2] = {};
+  for (int64_t i = begin; i < end; ++i) {
+    const ObDatum &datum = rows.at(i)->cells()[field];
+    if (datum.is_null() || datum.len_ != 16) { return ret; }
+    uint64_t value[2];
+    MEMCPY(value, datum.ptr_, 16);
+    if (i == begin) { MEMCPY(reference, value, 16); }
+    varied[0] |= value[0] ^ reference[0];
+    varied[1] |= value[1] ^ reference[1];
+    if (((i - begin) & 8191) == 8191 && OB_FAIL(comp.exec_ctx_->check_status())) {
+      return ret;
+    }
+  }
+  ObArray<ObChunkDatumStore::StoredRow *> buffer;
+  buffer.set_block_allocator(ModulePageAllocator(allocator));
+  if (OB_FAIL(buffer.prepare_allocate(end - begin))) {
+  } else {
+    // The binary comparator orders unsigned bytes. Stable counting passes
+    // give exactly that ordering and skip bytes common to the whole group.
+    const auto *varying_bytes = reinterpret_cast<const unsigned char *>(varied);
+    for (int64_t byte = 15; OB_SUCC(ret) && byte >= 0; --byte) {
+      if (varying_bytes[byte] == 0) { continue; }
+      int64_t offsets[256] = {};
+      const unsigned char invert = coll.is_ascending_ ? 0 : 255;
+      for (int64_t i = begin; i < end; ++i) {
+        const auto *data = reinterpret_cast<const unsigned char *>(rows.at(i)->cells()[field].ptr_);
+        ++offsets[data[byte] ^ invert];
+      }
+      int64_t next = 0;
+      for (auto &offset : offsets) {
+        const int64_t size = offset;
+        offset = next;
+        next += size;
+      }
+      for (int64_t i = begin; i < end; ++i) {
+        auto *row = rows.at(i);
+        const auto *data = reinterpret_cast<const unsigned char *>(row->cells()[field].ptr_);
+        buffer.at(offsets[data[byte] ^ invert]++) = row;
+      }
+      for (int64_t i = begin; i < end; ++i) { rows.at(i) = buffer.at(i - begin); }
+      ret = comp.exec_ctx_->check_status();
+    }
+    sorted = OB_SUCC(ret);
+  }
+  return ret;
+}
+
+int ObSortOpImpl::sort_grouped_keys(bool &sorted)
+{
+  int ret = OB_SUCCESS;
+  sorted = false;
+  const int64_t count = rows_->count();
+  if (count < 4096 || comp_.get_cnt() < 2 || use_heap_sort_ || need_imms()) {
+    return ret;
+  }
+  // A scan can already group rows by its leading sort key while producing
+  // the remaining keys out of order. Validate the whole input before making
+  // any changes, then sort only inside each group.
+  ObArray<int64_t> ends;
+  ends.set_block_allocator(ModulePageAllocator(mem_context_->get_malloc_allocator()));
+  comp_.set_cmp_range(0, 1);
+  for (int64_t i = 1; OB_SUCC(ret) && i < count; ++i) {
+    if (comp_(rows_->at(i), rows_->at(i - 1))) {
+      comp_.set_cmp_range(0, comp_.get_cnt());
+      return comp_.ret_;
+    } else if (comp_(rows_->at(i - 1), rows_->at(i))) {
+      ret = ends.push_back(i);
+    }
+    if (OB_SUCCESS != comp_.ret_) { ret = comp_.ret_; }
+  }
+  if (OB_SUCC(ret)) { ret = ends.push_back(count); }
+  comp_.set_cmp_range(1, comp_.get_cnt());
+  int64_t begin = 0;
+  for (int64_t i = 0; OB_SUCC(ret) && i < ends.count(); ++i) {
+    const int64_t end = ends.at(i);
+    bool binary_sorted = false;
+    if (OB_FAIL(sort_binary_suffix(*rows_, begin, end, comp_,
+                                   mem_context_->get_malloc_allocator(), binary_sorted))) {
+    } else if (!binary_sorted) {
+      lib::ob_sort(&rows_->at(begin), &rows_->at(0) + end, CopyableComparer(comp_));
+      ret = comp_.ret_;
+    }
+    begin = end;
+  }
+  comp_.set_cmp_range(0, comp_.get_cnt());
+  sorted = OB_SUCC(ret);
+  return ret;
+}
+
+int ObSortOpImpl::sort_repeated_string_keys(bool &sorted)
+{
+  int ret = OB_SUCCESS;
+  sorted = false;
+  const int64_t count = rows_->count();
+  if (count < 4096 || comp_.get_cnt() < 1 || use_heap_sort_ || need_imms()) {
+    return ret;
+  }
+  const auto &first = sort_collations_->at(0);
+  if (first.cs_type_ != CS_TYPE_UTF8MB4_GENERAL_CI
+      && first.cs_type_ != CS_TYPE_UTF8MB4_UNICODE_CI
+      && first.cs_type_ != CS_TYPE_UTF8MB4_BIN
+      && first.cs_type_ != CS_TYPE_BINARY) {
+    return ret;
+  }
+  // Repeated text keys otherwise pay the collation cost at every level of
+  // comparison sorting. Sort their distinct representations once and attach
+  // an order-preserving rank to each row. Equal collation values share a rank.
+  // Keys refer to the stable datum store; no string contents are copied.
+  hash::ObHashMap<ObString, int64_t, hash::NoPthreadDefendMode> dictionary;
+  struct RankedRow { ObChunkDatumStore::StoredRow *row_; int64_t key_; };
+  ObArray<RankedRow> ranked;
+  ObArray<RankedRow> keys;
+  ObArray<int64_t> ranks;
+  auto &allocator = mem_context_->get_malloc_allocator();
+  ranked.set_block_allocator(ModulePageAllocator(allocator));
+  keys.set_block_allocator(ModulePageAllocator(allocator));
+  ranks.set_block_allocator(ModulePageAllocator(allocator));
+  if (OB_FAIL(dictionary.create(4096, ObMemAttr("SortKeyDict")))) {
+  } else {
+    for (int64_t i = 0; OB_SUCC(ret) && i < count; ++i) {
+      const ObDatum &datum = rows_->at(i)->cells()[first.field_idx_];
+      if (datum.is_null() || datum.len_ > 256) {
+        return OB_SUCCESS;
+      }
+      const ObString key = datum.get_string();
+      int64_t index = 0;
+      ret = dictionary.get_refactored(key, index);
+      if (OB_HASH_NOT_EXIST == ret) {
+        ret = OB_SUCCESS;
+        index = keys.count();
+        if (OB_FAIL(dictionary.set_refactored(key, index))) {
+        } else if (OB_FAIL(keys.push_back({rows_->at(i), index}))) {
+        }
+      }
+      if (OB_SUCC(ret) && OB_FAIL(ranked.push_back({rows_->at(i), index}))) {
+      }
+      // Do not add a rank array for high-cardinality workloads. Check early,
+      // and cap the dictionary if cardinality rises later in the input.
+      if ((i == 4095 && keys.count() > 512)
+          || keys.count() > MIN(count / 4, 65536L)) {
+        return OB_SUCCESS;
+      }
+      if (OB_SUCC(ret) && (i & 8191) == 8191) {
+        ret = exec_ctx_->check_status();
+      }
+    }
+  }
+  if (OB_SUCC(ret)) {
+    comp_.set_cmp_range(0, 1);
+    lib::ob_sort(keys.begin(), keys.end(), [&](const RankedRow &l, const RankedRow &r) {
+      return comp_(l.row_, r.row_);
+    });
+    ret = comp_.ret_;
+    if (OB_SUCC(ret) && OB_FAIL(ranks.prepare_allocate(keys.count()))) {
+    }
+    int64_t rank = 0;
+    for (int64_t i = 0; OB_SUCC(ret) && i < keys.count(); ++i) {
+      int cmp = 0;
+      if (i > 0 && OB_FAIL(sort_cmp_funs_->at(0).cmp_func_(
+          keys.at(i - 1).row_->cells()[first.field_idx_],
+          keys.at(i).row_->cells()[first.field_idx_], cmp, comp_.access_ctx_))) {
+      } else {
+        rank += cmp != 0;
+        ranks.at(keys.at(i).key_) = rank;
+      }
+    }
+    if (OB_SUCC(ret)) {
+      ObArray<int64_t> offsets;
+      offsets.set_block_allocator(ModulePageAllocator(allocator));
+      if (OB_FAIL(offsets.prepare_allocate(rank + 2))) {
+      } else {
+        MEMSET(offsets.get_data(), 0, offsets.count() * sizeof(int64_t));
+        for (auto &row : ranked) {
+          row.key_ = ranks.at(row.key_);
+          ++offsets.at(row.key_ + 1);
+        }
+        for (int64_t i = 1; i < offsets.count(); ++i) {
+          offsets.at(i) += offsets.at(i - 1);
+        }
+        // Scatter by rank in linear time, then compare only the remaining
+        // keys inside each equal-collation group.
+        for (const auto &row : ranked) { rows_->at(offsets.at(row.key_)++) = row.row_; }
+        comp_.set_cmp_range(1, comp_.get_cnt());
+        int64_t begin = 0;
+        for (int64_t i = 0; OB_SUCC(ret) && i <= rank; ++i) {
+          const int64_t end = offsets.at(i);
+          bool binary_sorted = false;
+          if (OB_FAIL(sort_binary_suffix(*rows_, begin, end, comp_, allocator, binary_sorted))) {
+          } else if (!binary_sorted) {
+            lib::ob_sort(&rows_->at(begin), &rows_->at(0) + end, CopyableComparer(comp_));
+            ret = comp_.ret_;
+          }
+          begin = end;
+        }
+        sorted = OB_SUCC(ret);
+      }
+    }
+    comp_.set_cmp_range(0, comp_.get_cnt());
+  }
+  return ret;
+}
+
 int ObSortOpImpl::sort_inmem_data()
 {
   int ret = OB_SUCCESS;
@@ -1862,7 +2111,12 @@ int ObSortOpImpl::sort_inmem_data()
           lib::ob_sort(&rows_->at(begin), &rows_->at(0) + rows_->count(), CopyableComparer(comp_));
         }
       } else {
-        lib::ob_sort(&rows_->at(begin), &rows_->at(0) + rows_->count(), CopyableComparer(comp_));
+        bool ranked = false;
+        if (OB_FAIL(sort_grouped_keys(ranked))) {
+        } else if (!ranked && OB_FAIL(sort_repeated_string_keys(ranked))) {
+        } else if (!ranked) {
+          lib::ob_sort(&rows_->at(begin), &rows_->at(0) + rows_->count(), CopyableComparer(comp_));
+        }
       }
       if (OB_SUCCESS != comp_.ret_) {
         ret = comp_.ret_;

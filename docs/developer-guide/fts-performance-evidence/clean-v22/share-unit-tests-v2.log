@@ -1,0 +1,14 @@
+[==========] Running 3 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 3 tests from EnglishNormalizerTest
+[ RUN      ] EnglishNormalizerTest.charset_conversion_buffer_growth_and_lifecycle
+[       OK ] EnglishNormalizerTest.charset_conversion_buffer_growth_and_lifecycle (0 ms)
+[ RUN      ] EnglishNormalizerTest.trims_punctuation_and_skips_non_alphanumeric_tokens
+[       OK ] EnglishNormalizerTest.trims_punctuation_and_skips_non_alphanumeric_tokens (0 ms)
+[ RUN      ] EnglishNormalizerTest.whitespace_ascii_utf8_and_invalid_boundaries
+[       OK ] EnglishNormalizerTest.whitespace_ascii_utf8_and_invalid_boundaries (0 ms)
+[----------] 3 tests from EnglishNormalizerTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 3 tests from 1 test case ran. (0 ms total)
+[  PASSED  ] 3 tests.

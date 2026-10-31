@@ -32,6 +32,56 @@ namespace oceanbase
 using namespace common;
 namespace sql
 {
+// A scalar aggregate with no column references observes only the cardinality
+// of its input view. Remove plain-column projections before adding implicit
+// orderings, so a discarded full-text score does not become a top-k request.
+static int prune_cardinality_only_view(ObIArray<ObParentDMLStmt> &parents,
+                                      ObDMLStmt &stmt, ObTransformerCtx *ctx,
+                                      bool &happened)
+{
+  int ret = OB_SUCCESS;
+  happened = false;
+  if (parents.empty() || !stmt.is_select_stmt()) { return ret; }
+  ObDMLStmt *parent = parents.at(parents.count() - 1).stmt_;
+  ObSelectStmt &child = static_cast<ObSelectStmt &>(stmt);
+  if (nullptr == parent || !parent->is_select_stmt()
+      || !static_cast<ObSelectStmt *>(parent)->is_scala_group_by()
+      || parent->get_table_size() != 1 || parent->get_from_item_size() != 1
+      || parent->has_subquery() || child.is_set_stmt() || child.has_distinct()
+      || child.has_group_by() || child.get_aggr_item_size() != 0
+      || child.has_window_function() || child.has_for_update()
+      || child.get_select_item_size() == 0
+      || nullptr != child.get_stmt_hint().get_no_rewrite_hint()
+      || child.get_stmt_hint().query_hint_->has_outline_data()) {
+    return ret;
+  }
+  TableItem *view = parent->get_table_item(0);
+  if (nullptr == view || !view->is_generated_table() || view->ref_query_ != &child) {
+    return ret;
+  }
+  for (int64_t i = 0; i < child.get_select_item_size(); ++i) {
+    // Do not discard expressions with evaluation errors or side effects.
+    const ObRawExpr *expr = child.get_select_item(i).expr_;
+    if (!expr->is_column_ref_expr()
+        || static_cast<const ObColumnRefRawExpr *>(expr)->is_generated_column()) { return ret; }
+  }
+  ObSEArray<ObRawExpr *, 8> expressions;
+  if (OB_FAIL(parent->get_relation_exprs(expressions))) {
+  } else {
+    for (int64_t i = 0; i < expressions.count(); ++i) {
+      if (expressions.at(i)->has_flag(CNT_COLUMN)
+          || expressions.at(i)->has_flag(CNT_SUB_QUERY)) { return ret; }
+    }
+    child.get_select_items().reuse();
+    if (OB_FAIL(ObTransformUtils::create_dummy_select_item(child, ctx))) {
+    } else if (OB_FAIL(parent->remove_column_item(view->table_id_))) {
+    } else {
+      happened = true;
+    }
+  }
+  return ret;
+}
+
 int ObTransformPreProcess::transform_one_stmt(common::ObIArray<ObParentDMLStmt> &parent_stmts,
                                               ObDMLStmt *&stmt,
                                               bool &trans_happened)
@@ -173,6 +223,12 @@ int ObTransformPreProcess::transform_one_stmt(common::ObIArray<ObParentDMLStmt> 
     }
     if (OB_SUCC(ret)) {
       if (OB_FAIL(transform_for_last_insert_id(stmt, is_happened))) {
+      } else {
+        trans_happened |= is_happened;
+      }
+    }
+    if (OB_SUCC(ret)) {
+      if (OB_FAIL(prune_cardinality_only_view(parent_stmts, *stmt, ctx_, is_happened))) {
       } else {
         trans_happened |= is_happened;
       }
@@ -3796,8 +3852,18 @@ int ObTransformPreProcess::preserve_order_for_fulltext_search(ObDMLStmt *stmt, b
   trans_happened = false;
   TableItem *table_item = NULL;
   ObRawExpr *match_expr = nullptr;
+  bool constant_projection = stmt != nullptr && stmt->is_select_stmt();
+  if (constant_projection) {
+    const auto &items = static_cast<ObSelectStmt *>(stmt)->get_select_items();
+    for (int64_t i = 0; constant_projection && i < items.count(); ++i) {
+      constant_projection = items.at(i).expr_->is_const_expr();
+    }
+  }
   if (OB_ISNULL(stmt)) {
     ret = OB_ERR_UNEXPECTED;
+  } else if (constant_projection) {
+    // Every projected row is identical, so implicit score ordering is
+    // unobservable even with LIMIT/OFFSET. Explicit ORDER BY is untouched.
   } else if (stmt->get_table_items().count() != 1 || stmt->get_order_item_size() != 0) {
     // do nothing
   } else if (stmt->is_select_stmt() && 

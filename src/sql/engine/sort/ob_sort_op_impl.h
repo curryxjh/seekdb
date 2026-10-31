@@ -480,6 +480,7 @@ public:
     int64_t cmp_count_;
     int64_t cmp_start_;
     int64_t cmp_end_;
+    uint64_t binary_string_cmp_mask_;
   private:
     int64_t cnt_;
     DISALLOW_COPY_AND_ASSIGN(Compare);
@@ -683,6 +684,8 @@ protected:
            && rows_->count() > datum_store_.get_row_cnt();
   }
   int sort_inmem_data();
+  int sort_repeated_string_keys(bool &sorted);
+  int sort_grouped_keys(bool &sorted);
   int do_dump();
   int inner_dump_part_topn_heap();
 

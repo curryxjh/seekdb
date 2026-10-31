@@ -1,0 +1,63 @@
+drop database if exists fts_ddl_postings_regression;
+create database fts_ddl_postings_regression;
+use fts_ddl_postings_regression;
+set names utf8mb4;
+set ob_query_timeout = 100000000;
+create table docs(id int primary key, en varchar(400), cn text)
+partition by hash(id) partitions 2;
+insert into docs values
+(1, 'database', '数据库'),
+(2, 'database audit audit', '数据库 检索 检索'),
+(3, 'performance database database', '性能 数据库 数据库'),
+(4, 'audit performance', '检索 性能'),
+(5, 'archive archive archive', '归档 归档 归档');
+alter table docs add fulltext index ft_en(en) with parser beng;
+alter table docs add fulltext index ft_cn(cn) with parser ik;
+select id, round(match(en) against('database audit'), 6) as score
+from docs where match(en) against('database audit') order by id;
+id	score
+1	0.395683
+2	0.778334
+3	0.428016
+4	0.371622
+select id, round(match(cn) against('数据库 检索'), 6) as score
+from docs where match(cn) against('数据库 检索') order by id;
+id	score
+1	0.395683
+2	0.778334
+3	0.428016
+4	0.371622
+select id from docs partition(p0) where match(en) against('database audit') order by id;
+id
+2
+4
+select id from docs partition(p1) where match(en) against('database audit') order by id;
+id
+1
+3
+update docs set en='archive', cn='归档' where id=2;
+delete from docs where id=3;
+select id from docs where match(en) against('database audit') order by id;
+id
+1
+4
+alter table docs modify column en varchar(500);
+select id from docs where match(cn) against('数据库 检索') order by id;
+id
+1
+4
+create table heap_docs(id int, body text, fulltext index ft(body));
+insert into heap_docs values (1,'database audit audit'),(2,'archive'),(3,'performance database');
+delete from heap_docs where id=2;
+alter table heap_docs add column seq int auto_increment;
+select id, round(match(body) against('database audit'), 6) as score
+from heap_docs where match(body) against('database audit') order by id;
+id	score
+1	0.778334
+3	0.371622
+insert into heap_docs(id,body) values(4,'audit');
+select id from heap_docs where match(body) against('audit') order by id;
+id
+1
+4
+drop database fts_ddl_postings_regression;

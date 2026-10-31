@@ -12038,7 +12038,9 @@ int ObLogPlan::prepare_text_retrieval_scan(const ObIArray<ObRawExpr *> &scan_mat
   } else {
     ObTextRetrievalInfo &tr_info = table_scan->get_text_retrieval_info();
     tr_info.match_expr_ = match_against;
-    tr_info.pushdown_match_filter_ = match_pred;
+    // A membership-only aggregate needs the matching IDs, while score
+    // predicates and projected scores retain the normal relevance path.
+    tr_info.pushdown_match_filter_ = tr_info.need_calc_relevance_ ? match_pred : nullptr;
     // The mapping table is absent when the data-table rowkey is used as the document ID.
     table_scan->set_doc_id_index_table_id(tr_info.doc_id_idx_tid_);
     if (table_scan->is_vec_adaptive_scan() || table_scan->is_vec_idx_scan_post_filter()) {
@@ -12251,18 +12253,47 @@ int ObLogPlan::prepare_text_retrieval_info(const uint64_t ref_table_id,
     }
   }
   if (OB_SUCC(ret)) {
-    /*
-    if (OB_FAIL(ObTransformUtils::check_need_calc_match_score(get_optimizer_context().get_exec_ctx(),
-                                                              get_stmt(),
-                                                              match_against,
-                                                              need_calc_relevance,
-                                                              constraints))) {
-      LOG_WARN("failed to check need calc relevance", K(ret));
-    } else if (!need_calc_relevance &&
-               OB_FAIL(append_array_no_dup(get_optimizer_context().get_query_ctx()->all_expr_constraints_, constraints))) {
-      LOG_WARN("failed to append array no dup", K(ret));
+    // Scalar aggregates and literal-only projections have no observable
+    // implicit relevance ordering. In natural
+    // language mode, a bare MATCH predicate only needs posting membership:
+    // all matching terms have positive BM25 contributions. Restrict this
+    // path to aggregates and inspect every semantic expression so a score
+    // projection, HAVING or score predicate keeps the original calculation.
+    const ObSelectStmt *select = get_stmt()->is_select_stmt()
+        ? static_cast<const ObSelectStmt *>(get_stmt()) : nullptr;
+    bool constant_projection = nullptr != select && !select->has_group_by()
+        && !select->has_window_function() && !select->has_distinct()
+        && !select->is_fetch_with_ties();
+    for (int64_t i = 0; constant_projection && i < select->get_select_item_size(); ++i) {
+      constant_projection = select->get_select_item(i).expr_->is_const_expr();
     }
-    */
+    if (nullptr != select
+        && NATURAL_LANGUAGE_MODE == match_against->get_mode_flag()
+        && (select->is_scala_group_by() || constant_projection)
+        && !select->has_order_by()) {
+      ObSEArray<ObRawExpr *, 16> expressions;
+      if (OB_FAIL(get_stmt()->get_relation_exprs(expressions))) {
+      } else {
+        need_calc_relevance = false;
+        for (int64_t i = 0; OB_SUCC(ret) && !need_calc_relevance && i < expressions.count(); ++i) {
+          ObRawExpr *expr = expressions.at(i);
+          if (expr == match_against) {
+            need_calc_relevance = true;
+          } else if (T_OP_BOOL == expr->get_expr_type() && expr->get_param_count() == 1
+                     && expr->get_param_expr(0) == match_against) {
+            // A bare predicate only asks whether at least one posting exists.
+          } else if (expr->has_flag(CNT_COLUMN)) {
+            // Base-row expressions can require a lookup whose projection
+            // still depends on the relevance output. Keep that path intact.
+            need_calc_relevance = true;
+          } else if (expr->has_flag(CNT_MATCH_EXPR)) {
+            for (int64_t j = 0; OB_SUCC(ret) && j < expr->get_param_count(); ++j) {
+              ret = expressions.push_back(expr->get_param_expr(j));
+            }
+          }
+        }
+      }
+    }
     tr_info.match_expr_ = match_against;
     tr_info.inv_idx_tid_ = inv_idx_tid;
     tr_info.fwd_idx_tid_ = fwd_idx_tid;
