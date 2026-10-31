@@ -1,0 +1,4 @@
+stopping previous pid 3848
+seekdb started pid=6413 port=2883 base=/home/beaten/fts-runtime-v2
+seekdb ready after 6s
+VERIFIED {"label": "final-correctness", "pid": 6413, "executable": "/home/beaten/fts-results/v3/seekdb-candidate", "binary_sha256": "3f8f78d970ce9b25cff2d4b73b95104d8fa2ca7a299603463aaf1b49e3048b01"}

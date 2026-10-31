@@ -1,0 +1,26 @@
+[2026-10-31 10:51:47] mysqltest: At line 1598: query 'SELECT column_name, is_hidden FROM oceanbase.__all_column WHERE table_id = $rowkey_doc_table_id' failed: 1064: You have an error in your SQL syntax; check the manual that corresponds to your OceanBase version for the right syntax to use near 'such row' at line 1
+
+The result from queries just before the failure was:
+< snip >
+| __word_segment_*_*                 |         0 |
+| __word_count_*_*                   |         0 |
+| __doc_length_*_*                   |         0 |
++------------------------------------+-----------+
+SELECT column_name, is_hidden FROM oceanbase.__all_column WHERE *;
++------------------------------------+-----------+
+| column_name                        | is_hidden |
++------------------------------------+-----------+
+| __doc_id_*                         |         0 |
+| __word_segment_*_*                 |         0 |
+| __word_count_*_*                   |         0 |
+| __doc_length_*_*                   |         0 |
++------------------------------------+-----------+
+DROP TABLE fts_parser_name_test;
+CREATE TABLE fts_parser_name_test (
+    title VARCHAR(200),
+    content TEXT,
+    FULLTEXT INDEX ctx(title, content)
+);
+SELECT column_name, is_hidden FROM oceanbase.__all_column WHERE table_id = No such row;
+
+More results from queries before failure can be found in /home/beaten/fts-results/mysqltest-exact-advance-final/basic_dml/basic_dml.log

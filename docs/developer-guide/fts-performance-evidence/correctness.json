@@ -23,5 +23,6 @@
       "optimized": "00e3a43487cf659c670d5954c6f84dadafcd4b092389fd8ceb3b9a414f412a6d"
     }
   },
-  "basic_dml": "Both fail at internal table ID lookup (No such row), before optimization; not counted as passing."
+  "basic_dml": "Both fail at internal table ID lookup (No such row), before optimization; not counted as passing.",
+  "evidence_status": "INVALIDATED: external launcher ignored BIN; does not establish candidate A/B behavior. Retained only for audit history."
 }

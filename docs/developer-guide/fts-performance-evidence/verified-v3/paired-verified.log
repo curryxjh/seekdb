@@ -1,0 +1,104 @@
+START verified-1-original
+stopping previous pid 6413
+seekdb started pid=6932 port=2883 base=/home/beaten/fts-runtime-v2
+seekdb ready after 9s
+VERIFIED {"label": "verified-1-original", "pid": 6932, "executable": "/home/beaten/fts-results/seekdb-original-exact", "binary_sha256": "f457da79251672198c4c4ef6d5b2cc233a59a3df07b07ed6c02ea6025cee7c2d"}
+bench exit=0 report=/home/beaten/fts-results/v3/report_verified-1-original.txt log=/home/beaten/fts-results/v3/bench_verified-1-original.log
+FTS Large Benchmark Score
+=========================
+score: 100.00 / 100
+mean_improvement: 75.17%
+full_score_improvement: 50.00%
+
+build_improvement: 73.32%
+  build_ik_all_sec: baseline=35.2836, current=9.518, improvement=73.02%
+  build_ik_content_sec: baseline=28.3764, current=7.465, improvement=73.69%
+  build_beng_en_sec: baseline=14.7578, current=3.95, improvement=73.23%
+tokenize_improvement: 65.59%
+  tokenize_ik_avg_ms: baseline=0.76478, current=0.2261, improvement=70.44%
+  tokenize_beng_avg_ms: baseline=0.42262, current=0.1659, improvement=60.74%
+query_improvement: 86.59%
+  query_cn_avg_ms: baseline=16.6628, current=2.0183, improvement=87.89%
+  query_beng_avg_ms: baseline=24.3042, current=2.9706, improvement=87.78%
+  query_mixed_avg_ms: baseline=17.5593, current=2.2806, improvement=87.01%
+  query_limit_avg_ms: baseline=16.2334, current=2.6479, improvement=83.69%
+PASS: binary identity and all sample clocks verified
+COMPLETE verified-1-original
+START verified-2-candidate
+stopping previous pid 6932
+seekdb started pid=7318 port=2883 base=/home/beaten/fts-runtime-v2
+seekdb ready after 8s
+VERIFIED {"label": "verified-2-candidate", "pid": 7318, "executable": "/home/beaten/fts-results/v3/seekdb-candidate", "binary_sha256": "3f8f78d970ce9b25cff2d4b73b95104d8fa2ca7a299603463aaf1b49e3048b01"}
+bench exit=0 report=/home/beaten/fts-results/v3/report_verified-2-candidate.txt log=/home/beaten/fts-results/v3/bench_verified-2-candidate.log
+FTS Large Benchmark Score
+=========================
+score: 100.00 / 100
+mean_improvement: 76.44%
+full_score_improvement: 50.00%
+
+build_improvement: 74.17%
+  build_ik_all_sec: baseline=35.2836, current=9.106, improvement=74.19%
+  build_ik_content_sec: baseline=28.3764, current=7.263, improvement=74.40%
+  build_beng_en_sec: baseline=14.7578, current=3.85, improvement=73.91%
+tokenize_improvement: 66.04%
+  tokenize_ik_avg_ms: baseline=0.76478, current=0.2313, improvement=69.76%
+  tokenize_beng_avg_ms: baseline=0.42262, current=0.1592, improvement=62.33%
+query_improvement: 89.10%
+  query_cn_avg_ms: baseline=16.6628, current=1.5326, improvement=90.80%
+  query_beng_avg_ms: baseline=24.3042, current=2.0944, improvement=91.38%
+  query_mixed_avg_ms: baseline=17.5593, current=1.6715, improvement=90.48%
+  query_limit_avg_ms: baseline=16.2334, current=2.6407, improvement=83.73%
+PASS: binary identity and all sample clocks verified
+COMPLETE verified-2-candidate
+START verified-3-candidate
+stopping previous pid 7318
+seekdb started pid=7718 port=2883 base=/home/beaten/fts-runtime-v2
+seekdb ready after 9s
+VERIFIED {"label": "verified-3-candidate", "pid": 7718, "executable": "/home/beaten/fts-results/v3/seekdb-candidate", "binary_sha256": "3f8f78d970ce9b25cff2d4b73b95104d8fa2ca7a299603463aaf1b49e3048b01"}
+bench exit=0 report=/home/beaten/fts-results/v3/report_verified-3-candidate.txt log=/home/beaten/fts-results/v3/bench_verified-3-candidate.log
+FTS Large Benchmark Score
+=========================
+score: 100.00 / 100
+mean_improvement: 76.86%
+full_score_improvement: 50.00%
+
+build_improvement: 73.96%
+  build_ik_all_sec: baseline=35.2836, current=9.313, improvement=73.61%
+  build_ik_content_sec: baseline=28.3764, current=7.265, improvement=74.40%
+  build_beng_en_sec: baseline=14.7578, current=3.853, improvement=73.89%
+tokenize_improvement: 67.42%
+  tokenize_ik_avg_ms: baseline=0.76478, current=0.2179, improvement=71.51%
+  tokenize_beng_avg_ms: baseline=0.42262, current=0.155, improvement=63.32%
+query_improvement: 89.20%
+  query_cn_avg_ms: baseline=16.6628, current=1.4591, improvement=91.24%
+  query_beng_avg_ms: baseline=24.3042, current=2.1942, improvement=90.97%
+  query_mixed_avg_ms: baseline=17.5593, current=1.6688, improvement=90.50%
+  query_limit_avg_ms: baseline=16.2334, current=2.5803, improvement=84.10%
+PASS: binary identity and all sample clocks verified
+COMPLETE verified-3-candidate
+START verified-4-original
+stopping previous pid 7718
+seekdb started pid=8111 port=2883 base=/home/beaten/fts-runtime-v2
+seekdb ready after 8s
+VERIFIED {"label": "verified-4-original", "pid": 8111, "executable": "/home/beaten/fts-results/seekdb-original-exact", "binary_sha256": "f457da79251672198c4c4ef6d5b2cc233a59a3df07b07ed6c02ea6025cee7c2d"}
+bench exit=0 report=/home/beaten/fts-results/v3/report_verified-4-original.txt log=/home/beaten/fts-results/v3/bench_verified-4-original.log
+FTS Large Benchmark Score
+=========================
+score: 100.00 / 100
+mean_improvement: 75.04%
+full_score_improvement: 50.00%
+
+build_improvement: 73.36%
+  build_ik_all_sec: baseline=35.2836, current=9.712, improvement=72.47%
+  build_ik_content_sec: baseline=28.3764, current=7.47, improvement=73.68%
+  build_beng_en_sec: baseline=14.7578, current=3.849, improvement=73.92%
+tokenize_improvement: 65.24%
+  tokenize_ik_avg_ms: baseline=0.76478, current=0.2323, improvement=69.63%
+  tokenize_beng_avg_ms: baseline=0.42262, current=0.1654, improvement=60.86%
+query_improvement: 86.51%
+  query_cn_avg_ms: baseline=16.6628, current=2.0248, improvement=87.85%
+  query_beng_avg_ms: baseline=24.3042, current=3.0022, improvement=87.65%
+  query_mixed_avg_ms: baseline=17.5593, current=2.2914, improvement=86.95%
+  query_limit_avg_ms: baseline=16.2334, current=2.6652, improvement=83.58%
+PASS: binary identity and all sample clocks verified
+COMPLETE verified-4-original

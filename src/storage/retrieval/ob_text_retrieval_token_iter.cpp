@@ -435,7 +435,9 @@ int ObTextRetrievalDaaTTokenIter::init(const ObTextRetrievalScanIterParam &iter_
       inv_scan_domain_id_col_ = iter_param.inv_scan_domain_id_col_;
       max_batch_size_ = OB_MAX(iter_param.eval_ctx_->max_batch_size_, 1);
       common::ObDatumBasicFuncs *basic_funcs = ObDatumFuncs::get_basic_func(inv_scan_domain_id_col_->datum_meta_.type_, CS_TYPE_BINARY);
-      cmp_func_ = basic_funcs->null_first_cmp_;
+      // This iterator has always compared document IDs with binary collation.
+      cmp_func_ = ObVarcharType == inv_scan_domain_id_col_->datum_meta_.type_
+                  ? compare_binary_doc_ids : basic_funcs->null_first_cmp_;
       if (OB_ISNULL(cmp_func_)) {
         ret = OB_ERR_UNEXPECTED;
       } else if (FALSE_IT(relevance_.set_allocator(allocator_))) {
@@ -557,6 +559,28 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
         find = true;
       } else {
         ++cur_idx_;
+        // Adjacent pivots use the next loop iteration. For a longer jump,
+        // locate the first cached ID >= target in logarithmic comparisons.
+        if (count_ - cur_idx_ > 8) {
+          if (OB_FAIL(cmp_func_(id_datum, doc_id_[cur_idx_].get_datum(), result, nullptr))) {
+          } else if (result <= 0) {
+            find = true;
+          } else {
+            int64_t left = cur_idx_ + 1;
+            int64_t right = count_;
+            while (OB_SUCC(ret) && left < right) {
+              const int64_t middle = left + (right - left) / 2;
+              if (OB_FAIL(cmp_func_(id_datum, doc_id_[middle].get_datum(), result, nullptr))) {
+              } else if (result <= 0) {
+                right = middle;
+              } else {
+                left = middle + 1;
+              }
+            }
+            cur_idx_ = left;
+            find = OB_SUCC(ret) && cur_idx_ < count_;
+          }
+        }
       }
     } else if (OB_FAIL(token_iter_->advance_to(id_datum))) {
     } else if (OB_FAIL(get_next_row())) {

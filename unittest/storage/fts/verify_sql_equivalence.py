@@ -29,6 +29,14 @@ def queries(include_benchmark):
         length = rng.choice([1, 2, 7, 31, 64, 257, 1024])
         documents.append("".join(rng.choice(alphabet) for _ in range(length)))
     result = []
+    # Default properties take a direct path; an explicit empty argument
+    # object still exercises the validated JSON path for every parser.
+    for parser in ["ik", "beng", "space", "ngram", "ngram2"]:
+        for props in ['[{"output":"all"}]',
+                      '[{"output":"all"},{"additional_args":[]}]']:
+            result.append("SELECT %d AS case_id, TOKENIZE(%s,%s,%s);" %
+                          (len(result), literal("数据库 HELLO hello ÉCOLE 😀 𠀀"),
+                           literal(parser), literal(props)))
     for text in documents:
         for parser, props in [
             ("ik", '[{"output":"all"},{"additional_args":[{"ik_mode":"smart"}]}]'),
@@ -43,6 +51,26 @@ def queries(include_benchmark):
                               ("content", "倒排索引 tokenizer")]:
             match = "MATCH(%s) AGAINST(%s)" % (columns, literal(text))
             # Capture every matching ID and score, with deterministic row order.
+            result.append("SELECT id, %s AS score FROM fts_large_bench.docs "
+                          "WHERE %s ORDER BY id;" % (match, match))
+        # Exercise the short-query merge (one to three terms), the general
+        # merge, Boolean collectors, score predicates, ties, and offsets.
+        for columns, texts in [
+            ("title_en, content_en", ["database", "database audit", "database performance audit",
+                                      "database performance audit security reliability"]),
+            ("title, content", ["数据库", "数据库 索引", "OceanBase 稳定 database",
+                                "全文索引 分词器 数据库 检索 性能 优化"]),
+        ]:
+            for text in texts:
+                match = "MATCH(%s) AGAINST(%s)" % (columns, literal(text))
+                for predicate in [match, match + " > 0.01", match + " > 1.0"]:
+                    result.append("SELECT id, %s AS score FROM fts_large_bench.docs "
+                                  "WHERE %s ORDER BY id;" % (match, predicate))
+                result.append("SELECT id, %s AS score FROM fts_large_bench.docs "
+                              "WHERE %s ORDER BY score DESC, id LIMIT 23 OFFSET 7;" % (match, match))
+        for text in ["+database -audit", "+database +performance", "database audit",
+                     "+database +(performance audit)"]:
+            match = "MATCH(title_en, content_en) AGAINST(%s IN BOOLEAN MODE)" % literal(text)
             result.append("SELECT id, %s AS score FROM fts_large_bench.docs "
                           "WHERE %s ORDER BY id;" % (match, match))
     return result
@@ -62,7 +90,9 @@ def main():
     run = subprocess.run([args.client, "-h" + args.host, "-P" + str(args.port),
                           "-u" + args.user, "--batch", "--raw", "--skip-column-names",
                           "--default-character-set=utf8mb4"], input=sql.encode(),
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if run.returncode:
+        raise SystemExit(run.stderr.decode("utf-8", errors="replace"))
     actual = {"sql_sha256": hashlib.sha256(sql.encode()).hexdigest(),
               "results": run.stdout.decode("utf-8")}
     if args.record:

@@ -1,0 +1,23 @@
+[==========] Running 6 tests from 2 test cases.
+[----------] Global test environment set-up.
+[----------] 4 tests from AiColumnSchemaTest
+[ RUN      ] AiColumnSchemaTest.definition_copy_owns_all_serialized_strings
+[       OK ] AiColumnSchemaTest.definition_copy_owns_all_serialized_strings (0 ms)
+[ RUN      ] AiColumnSchemaTest.rejects_truncated_or_invalid_definitions
+[       OK ] AiColumnSchemaTest.rejects_truncated_or_invalid_definitions (0 ms)
+[ RUN      ] AiColumnSchemaTest.remapping_is_complete_and_failure_is_atomic
+[       OK ] AiColumnSchemaTest.remapping_is_complete_and_failure_is_atomic (0 ms)
+[ RUN      ] AiColumnSchemaTest.execution_scopes_restore_nested_prompts
+[       OK ] AiColumnSchemaTest.execution_scopes_restore_nested_prompts (0 ms)
+[----------] 4 tests from AiColumnSchemaTest (0 ms total)
+
+[----------] 2 tests from EnglishNormalizerTest
+[ RUN      ] EnglishNormalizerTest.charset_conversion_buffer_growth_and_lifecycle
+[       OK ] EnglishNormalizerTest.charset_conversion_buffer_growth_and_lifecycle (1 ms)
+[ RUN      ] EnglishNormalizerTest.trims_punctuation_and_skips_non_alphanumeric_tokens
+[       OK ] EnglishNormalizerTest.trims_punctuation_and_skips_non_alphanumeric_tokens (0 ms)
+[----------] 2 tests from EnglishNormalizerTest (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 6 tests from 2 test cases ran. (1 ms total)
+[  PASSED  ] 6 tests.

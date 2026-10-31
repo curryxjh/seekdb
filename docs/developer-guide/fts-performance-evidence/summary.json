@@ -150,5 +150,6 @@
     "tokenize": 0.024796322001760185,
     "query": -0.030313933256944647
   },
-  "overall_improvement": 0.009665392869019932
+  "overall_improvement": 0.009665392869019932,
+  "evidence_status": "INVALIDATED: external launcher ignored BIN; does not establish candidate A/B behavior. Retained only for audit history."
 }

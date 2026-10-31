@@ -1,0 +1,159 @@
+{
+  "statement_count": 882,
+  "result_rows": 258355,
+  "sql_sha256": "f72c4813b7a25993cee02d3400322332401af9c16164b00309f2a2773e0cdc1b",
+  "result_sha256": "4f4f4ff5d25bcd3dcc827c9bb61cee36250a07466610ae727efa24e9a11a0f84",
+  "differential_result": "PASS: exact TOKENIZE JSON, frequencies, MATCH IDs and raw scores",
+  "mysqltest": {
+    "original": [
+      {
+        "name": "basic_dml",
+        "return_code": 1
+      },
+      {
+        "name": "basic_dml_sequel",
+        "return_code": 0
+      },
+      {
+        "name": "cn_word",
+        "return_code": 0
+      },
+      {
+        "name": "create_fts_index_afterward",
+        "return_code": 1
+      },
+      {
+        "name": "create_table_with_fts_index",
+        "return_code": 0
+      },
+      {
+        "name": "domain_id_merge_with_compare_null",
+        "return_code": 0
+      },
+      {
+        "name": "drop_index",
+        "return_code": 0
+      },
+      {
+        "name": "fts_hot_path",
+        "return_code": 0
+      },
+      {
+        "name": "index_view",
+        "return_code": 0
+      },
+      {
+        "name": "load_data",
+        "return_code": 0
+      },
+      {
+        "name": "offline_ddl_with_fts_index",
+        "return_code": 0
+      },
+      {
+        "name": "online_ddl_on_table_with_fts_index",
+        "return_code": 0
+      },
+      {
+        "name": "parser_properties",
+        "return_code": 0
+      },
+      {
+        "name": "partitioned_simple_query",
+        "return_code": 1
+      },
+      {
+        "name": "simple_query",
+        "return_code": 1
+      },
+      {
+        "name": "tokenize_function",
+        "return_code": 1
+      }
+    ],
+    "candidate": [
+      {
+        "name": "basic_dml",
+        "return_code": 1
+      },
+      {
+        "name": "basic_dml_sequel",
+        "return_code": 0
+      },
+      {
+        "name": "cn_word",
+        "return_code": 0
+      },
+      {
+        "name": "create_fts_index_afterward",
+        "return_code": 1
+      },
+      {
+        "name": "create_table_with_fts_index",
+        "return_code": 0
+      },
+      {
+        "name": "domain_id_merge_with_compare_null",
+        "return_code": 0
+      },
+      {
+        "name": "drop_index",
+        "return_code": 0
+      },
+      {
+        "name": "fts_hot_path",
+        "return_code": 0
+      },
+      {
+        "name": "index_view",
+        "return_code": 0
+      },
+      {
+        "name": "load_data",
+        "return_code": 0
+      },
+      {
+        "name": "offline_ddl_with_fts_index",
+        "return_code": 0
+      },
+      {
+        "name": "online_ddl_on_table_with_fts_index",
+        "return_code": 0
+      },
+      {
+        "name": "parser_properties",
+        "return_code": 0
+      },
+      {
+        "name": "partitioned_simple_query",
+        "return_code": 1
+      },
+      {
+        "name": "simple_query",
+        "return_code": 1
+      },
+      {
+        "name": "tokenize_function",
+        "return_code": 1
+      }
+    ]
+  },
+  "existing_reject_sha256": {
+    "create_fts_index_afterward": {
+      "original": "87a05db8a48f31a73ba1dd044a1fd0fe80c1561a7df251b0d0598ca91306f03f",
+      "candidate": "87a05db8a48f31a73ba1dd044a1fd0fe80c1561a7df251b0d0598ca91306f03f"
+    },
+    "partitioned_simple_query": {
+      "original": "e9ba6652f17fa6883aa15b2d90bb5a0663a002e97675d50b1d6325ac925340b2",
+      "candidate": "e9ba6652f17fa6883aa15b2d90bb5a0663a002e97675d50b1d6325ac925340b2"
+    },
+    "simple_query": {
+      "original": "f014354ad514e75172fb1fb7c4548c9f3a05ce70ec1f070f1c3abe7b2642b064",
+      "candidate": "f014354ad514e75172fb1fb7c4548c9f3a05ce70ec1f070f1c3abe7b2642b064"
+    },
+    "tokenize_function": {
+      "original": "00e3a43487cf659c670d5954c6f84dadafcd4b092389fd8ceb3b9a414f412a6d",
+      "candidate": "00e3a43487cf659c670d5954c6f84dadafcd4b092389fd8ceb3b9a414f412a6d"
+    }
+  }
+}

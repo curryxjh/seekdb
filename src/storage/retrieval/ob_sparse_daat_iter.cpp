@@ -26,6 +26,7 @@ namespace storage
 ObSRMergeCmp::ObSRMergeCmp()
   : cmp_func_(nullptr),
     iter_ids_(nullptr),
+    binary_id_(false),
     is_inited_(false)
 {
 }
@@ -39,6 +40,7 @@ int ObSRMergeCmp::init(
     ret = OB_ERR_UNEXPECTED;
   } else {
     iter_ids_ = iter_ids;
+    binary_id_ = ObVarcharType == id_meta.type_ && CS_TYPE_BINARY == id_meta.cs_type_;
     common::ObDatumBasicFuncs *basic_funcs = ObDatumFuncs::get_basic_func(id_meta.type_, id_meta.cs_type_);
     cmp_func_ = basic_funcs->null_first_cmp_;
     if (OB_ISNULL(cmp_func_)) {
@@ -58,6 +60,17 @@ int ObSRMergeCmp::cmp(
   int ret = OB_SUCCESS;
   if (IS_NOT_INIT) {
     ret = OB_NOT_INIT;
+  } else if (binary_id_) {
+    const ObDatum &left = get_id_datum(l.iter_idx_);
+    const ObDatum &right = get_id_datum(r.iter_idx_);
+    if (left.is_null() || right.is_null()) {
+      cmp_ret = left.is_null() ? (right.is_null() ? 0 : -1) : 1;
+    } else {
+      // Binary document IDs have byte ordering. Avoid charset lookup and
+      // trailing-space comparison in the generic string comparator.
+      const int cmp = MEMCMP(left.ptr_, right.ptr_, MIN(left.len_, right.len_));
+      cmp_ret = 0 != cmp ? cmp : (left.len_ > right.len_) - (left.len_ < right.len_);
+    }
   } else {
     int tmp_ret = 0;
     if (OB_FAIL(cmp_func_(
@@ -82,7 +95,8 @@ ObSRDaaTIterImpl::ObSRDaaTIterImpl()
     buffered_relevances_(),
     next_round_iter_idxes_(),
     next_round_cnt_(0),
-    set_datum_func_(nullptr)
+    set_datum_func_(nullptr),
+    filter_is_relevance_bool_(false)
 {
 }
 
@@ -102,6 +116,12 @@ int ObSRDaaTIterImpl::init(
     iter_param_ = &iter_param;
     dim_iters_ = &dim_iters;
     relevance_collector_ = &relevance_collector;
+    const ObExpr *filter = iter_param_->filter_expr_;
+    const ObExpr *relevance = iter_param_->relevance_proj_expr_;
+    filter_is_relevance_bool_ = iter_param_->eval_ctx_->is_vectorized()
+        && nullptr != filter && nullptr != relevance
+        && T_OP_BOOL == filter->type_ && 1 == filter->arg_cnt_
+        && filter->args_[0] == relevance && ObDoubleType == relevance->datum_meta_.type_;
     const int64_t max_batch_size = OB_MAX(iter_param_->eval_ctx_->max_batch_size_, iter_param_->max_batch_size_);
     if (iter_param_->id_proj_expr_->datum_meta_.type_ == common::ObUInt64Type) {
       set_datum_func_ = ObISparseRetrievalMergeIter::set_datum_int;
@@ -349,6 +369,12 @@ int ObSRDaaTIterImpl::process_collected_row(const ObDatum &id_datum, const doubl
 int ObSRDaaTIterImpl::filter_on_demand(const int64_t count, const double relevance, bool &need_project)
 {
   int ret = OB_SUCCESS;
+  if (filter_is_relevance_bool_) {
+    // The merge has already computed this non-NULL double. This is exactly
+    // BOOL(double)'s zero test; general predicates still use the evaluator.
+    need_project = 0.0 != relevance;
+    return ret;
+  }
   ObExpr *filter_expr = iter_param_->filter_expr_;
   ObExpr *relevance_proj_expr = iter_param_->relevance_proj_expr_;
   ObEvalCtx *eval_ctx = iter_param_->eval_ctx_;
@@ -415,7 +441,25 @@ int ObSRDaaTIterImpl::project_results(const int64_t count)
   ObEvalCtx *eval_ctx = iter_param_->eval_ctx_;
   ObEvalCtx::BatchInfoScopeGuard guard(*eval_ctx);
 
-  if (eval_ctx->is_vectorized()) {
+  if (eval_ctx->is_vectorized() && id_proj_expr->is_batch_result()
+      && (!iter_param_->need_project_relevance() || relevance_proj_expr->is_batch_result())) {
+    ObDatum *ids = id_proj_expr->locate_datums_for_update(*eval_ctx, count);
+    const ObDocIdExt *cached_ids = buffered_domain_ids_.get_data();
+    for (int64_t i = 0; i < count; ++i) {
+      set_datum_func_(ids[i], cached_ids[i]);
+    }
+    id_proj_expr->get_evaluated_flags(*eval_ctx).set_all(count);
+    id_proj_expr->set_evaluated_projected(*eval_ctx);
+    if (iter_param_->need_project_relevance()) {
+      ObDatum *scores = relevance_proj_expr->locate_datums_for_update(*eval_ctx, count);
+      const double *cached_scores = buffered_relevances_.get_data();
+      for (int64_t i = 0; i < count; ++i) {
+        scores[i].set_double(cached_scores[i]);
+      }
+      relevance_proj_expr->get_evaluated_flags(*eval_ctx).set_all(count);
+      relevance_proj_expr->set_evaluated_projected(*eval_ctx);
+    }
+  } else if (eval_ctx->is_vectorized()) {
     sql::ObBitVector &id_evaluated_flags = id_proj_expr->get_evaluated_flags(*eval_ctx);
     for (int64_t i = 0; i < count; ++i) {
       guard.set_batch_idx(i);

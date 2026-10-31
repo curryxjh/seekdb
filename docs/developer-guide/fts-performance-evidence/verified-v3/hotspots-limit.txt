@@ -1,0 +1,46 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 12K of event 'cycles:P'
+# Event count (approx.): 72272707175
+#
+# Overhead  Command          Shared Object          Symbol
+# ........  ...............  .....................  .........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+     4.19%  ReqWorker        seekdb-original-exact  [.] oceanbase::blocksstable::ObStringDiffDecoder::batch_decode(oceanbase::blocksstable::ObColumnDecoderCtx const&, oceanbase::blocksstable::ObIRowIndex const*, int const*, char const**, long, oceanbase::common::ObDatum*) const
+     4.04%  ReqWorker        libc.so.6              [.] __memmove_evex_unaligned_erms
+     3.95%  ReqWorker        seekdb-original-exact  [.] oceanbase::common::ObIArrayWrap<oceanbase::common::hash::ObHashSet<unsigned long, oceanbase::common::hash::NoPthreadDefendMode, oceanbase::common::hash::hash_func<unsigned long>, oceanbase::common::hash::equal_to<unsigned long>, oceanbase::common::hash::SimpleAllocer<oceanbase::common::hash::ObHashTableNode<oceanbase::common::hash::HashMapPair<unsigned long, oceanbase::common::hash::HashNullObj> >, 108, oceanbase::common::hash::SpinMutexDefendMode, oceanbase::common::hash::DefaultSimpleAllocerAllocator>, oceanbase::common::hash::NormalPointer, oceanbase::common::ObMalloc, 1l>*>::at(long)
+     3.31%  ReqWorker        seekdb-original-exact  [.] oceanbase::sql::ObExprBM25::eval_batch_bm25_relevance_expr(oceanbase::sql::ObExpr const&, oceanbase::sql::ObEvalCtx&, oceanbase::sql::ObBitVectorImpl<unsigned long> const&, long)
+     3.13%  ReqWorker        libc.so.6              [.] __memcmp_evex_movbe
+     2.88%  ReqWorker        seekdb-original-exact  [.] oceanbase::common::ObCharset::strcmpsp(oceanbase::common::ObCollationType, char const*, long, char const*, long, bool)
+     2.83%  ReqWorker        seekdb-original-exact  [.] oceanbase::common::ObNullSafeDatumStrCmp<(oceanbase::common::ObCollationType)63, false, true>::cmp(oceanbase::common::ObDatum const&, oceanbase::common::ObDatum const&, int&, oceanbase::common::ObDatumAccessContext const*)
+     2.22%  ReqWorker        seekdb-original-exact  [.] oceanbase::common::ObCharset::is_argument_valid(oceanbase::common::ObCollationType const&, char const*, long, char const*, long)
+     2.08%  ReqWorker        seekdb-original-exact  [.] ob_strnncollsp_binary(ObCharsetInfo const*, unsigned char const*, unsigned long, unsigned char const*, unsigned long, bool)
+     1.91%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObSimpleRowsMerger<oceanbase::storage::ObSRMergeItem, oceanbase::storage::ObSRMergeCmp>::push(oceanbase::storage::ObSRMergeItem const&)
+     1.78%  ReqWorker        seekdb-original-exact  [.] oceanbase::common::ObIArrayWrap<int (*)(oceanbase::common::ObDatum const&, oceanbase::common::ObDatum const&, int&, oceanbase::common::ObDatumAccessContext const*)>::at(long) const
+     1.67%  ReqWorker        seekdb-original-exact  [.] oceanbase::common::ObCharset::get_charset(oceanbase::common::ObCollationType)
+     1.45%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObTextRetrievalDaaTTokenIter::save_relevances_and_docids()
+     1.43%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObSimpleRowsMerger<oceanbase::storage::ObBlockStatIterator::ObBlockStatKeyItem, oceanbase::storage::ObBlockStatIterator::ObBlockStatKeyCmp>::empty() const
+     1.38%  ReqWorker        seekdb-original-exact  [.] oceanbase::sql::ObBitVectorImpl<unsigned long>::at(long) const
+     1.33%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObSRBMWIterImpl::advance_dim_iters_for_next_round(oceanbase::common::ObDatum const&, bool)
+     1.31%  ReqWorker        seekdb-original-exact  [.] oceanbase::keybtree::GetHandle<oceanbase::memtable::ObStoreRowkeyWrapper, oceanbase::memtable::ObMvccRow*>::get(oceanbase::keybtree::BtreeNode<oceanbase::memtable::ObStoreRowkeyWrapper, oceanbase::memtable::ObMvccRow*>*, oceanbase::memtable::ObStoreRowkeyWrapper, oceanbase::memtable::ObMvccRow*&, oceanbase::memtable::ObStoreRowkeyWrapper**)
+     1.21%  ReqWorker        seekdb-original-exact  [.] memcpy@plt
+     1.17%  ReqWorker        seekdb-original-exact  [.] oceanbase::common::ObCharset::get_charset_uninit(oceanbase::common::ObCollationType)
+     1.13%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObSRBMWIterImpl::next_pivot(long&)
+     1.12%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObTextRetrievalDaaTTokenIter::advance_to(oceanbase::common::ObDatum const&)
+     0.96%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObSRDaaTIterImpl::fill_merge_heap()
+     0.94%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObSRBMWIterImpl::evaluate_pivot_range(long, bool&)
+     0.93%  ReqWorker        seekdb-original-exact  [.] oceanbase::common::ObIArrayWrap<oceanbase::data_plane::ObSparseRetrievalId>::at(long)
+     0.90%  ReqWorker        seekdb-original-exact  [.] oceanbase::sql::ObDocIdExt::from_datum(oceanbase::common::ObDatum const&)
+     0.88%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObSRDaaTIterImpl::collect_dims_by_id(oceanbase::common::ObDatum const*&, double&, bool&)
+     0.82%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObSimpleRowsMerger<oceanbase::storage::ObSRMergeItem, oceanbase::storage::ObSRMergeCmp>::pop()
+     0.75%  ReqWorker        seekdb-original-exact  [.] oceanbase::storage::ObSRMergeCmp::get_id_datum(long)
+     0.72%  ReqWorker        seekdb-original-exact  [.] ob_strnncollsp_utf8mb4(ObCharsetInfo const*, unsigned char const*, unsigned long, unsigned char const*, unsigned long, bool)
+     0.71%  ReqWorker        seekdb-original-exact  [.] oceanbase::blocksstable::batch_load_data_to_datum(oceanbase::common::ObObjType const&, char const**, long, long, oceanbase::common::ObDatum*)
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

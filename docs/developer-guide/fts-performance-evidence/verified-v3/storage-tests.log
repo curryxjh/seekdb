@@ -1,0 +1,18 @@
+[==========] Running 5 tests from 1 test case.
+[----------] Global test environment set-up.
+[----------] 5 tests from FtsHotPathTest
+[ RUN      ] FtsHotPathTest.character_classes_and_encoding_boundaries
+[       OK ] FtsHotPathTest.character_classes_and_encoding_boundaries (0 ms)
+[ RUN      ] FtsHotPathTest.grouped_frequency_preserves_first_occurrence_and_errors
+[       OK ] FtsHotPathTest.grouped_frequency_preserves_first_occurrence_and_errors (0 ms)
+[ RUN      ] FtsHotPathTest.collation_equivalent_words_retain_latest_spelling
+[       OK ] FtsHotPathTest.collation_equivalent_words_retain_latest_spelling (0 ms)
+[ RUN      ] FtsHotPathTest.binary_id_comparison_matches_datum_comparator
+[       OK ] FtsHotPathTest.binary_id_comparison_matches_datum_comparator (0 ms)
+[ RUN      ] FtsHotPathTest.parsed_properties_match_json_roundtrip
+[       OK ] FtsHotPathTest.parsed_properties_match_json_roundtrip (1 ms)
+[----------] 5 tests from FtsHotPathTest (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 5 tests from 1 test case ran. (1 ms total)
+[  PASSED  ] 5 tests.

@@ -1,0 +1,32 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 9K of event 'cycles:P'
+# Event count (approx.): 82015487517
+#
+# Overhead  Command          Shared Object           Symbol
+# ........  ...............  ......................  .........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+     5.86%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::storage::ObArrayHashMap::find(oceanbase::storage::ObFTSingleWord const&, int&) const
+     4.28%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::storage::ObFTDATReader<void>::match_with_hit(oceanbase::common::ObString const&, oceanbase::storage::ObDATrieHit const&, oceanbase::storage::ObDATrieHit&) const
+     4.23%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::storage::ObFTDATBuilder<void>::build_from_trie(oceanbase::storage::ObFTTrie<void>&)
+     1.99%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::common::TCRWLock::wrlock(long)
+     1.64%  ReqWorker        libc.so.6               [.] __memcmp_evex_movbe
+     1.39%  ReqWorker        libc.so.6               [.] __memmove_evex_unaligned_erms
+     1.02%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::common::ObLatch::unlock(unsigned int const*)
+     0.99%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::common::PageArena<char, oceanbase::common::ModulePageAllocator>::_alloc_aligned(long, long)
+     0.90%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::common::ObLatch::wrlock(unsigned int, long, unsigned int const*)
+     0.79%  ReqWorker        libc.so.6               [.] __strlen_evex
+     0.72%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::common::ObArenaAllocator::alloc(long, oceanbase::lib::ObMemAttr const&)
+     0.70%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::common::ObKVCacheMap::get(long, oceanbase::common::ObIKVCacheKey const&, oceanbase::common::ObIKVCacheValue const*&, oceanbase::common::HazptrHolder&)
+     0.69%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::common::ObCharset::get_charset(oceanbase::common::ObCollationType)
+     0.63%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::common::ObCharset::strcmp(oceanbase::common::ObCollationType, oceanbase::common::ObString const&, oceanbase::common::ObString const&)
+     0.57%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::storage::ObFTRangeDict::find_first_char_range(oceanbase::common::ObString const&, oceanbase::storage::ObIFTDict*&) const
+     0.51%  ReqWorker        seekdb-optimized-exact  [.] oceanbase::storage::ObAddWord::groupby_word(oceanbase::storage::ObFTWord const&, long)
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

@@ -90,7 +90,7 @@ int ObExprTokenize::tokenize_fulltext(const TokenizeParam &param,
 
   if (TokenizeParam::OUTPUT_MODE::DEFAULT != mode && TokenizeParam::OUTPUT_MODE::ALL != mode) {
     ret = OB_INVALID_ARGUMENT;
-  } else if (OB_FAIL(tokenize_helper.init(&allocator, param.parser_name_, param.properties_))) {
+  } else if (OB_FAIL(tokenize_helper.init(&allocator, param.parser_name_, param.parser_property_))) {
   } else if (OB_FAIL(token_map.create(ft_word_bkt_cnt, common::ObMemAttr("FTWordMap")))) {
   } else if (
       (0 != param.fulltext_.length())
@@ -376,14 +376,28 @@ int ObExprTokenize::TokenizeParam::reform_parser_properties(const ObString &prop
 {
   int ret = OB_SUCCESS;
   storage::ObFTParserJsonProps parser_properties;
+  storage::ObFTParser parser;
 
-  if (OB_FAIL(parser_properties.init())) {
+  if (OB_FAIL(parser.parse_from_str(parser_name_.ptr(), parser_name_.length()))) {
+  } else if (properties.empty()) {
+    // With no additional arguments the property constructor already holds
+    // the DDL defaults. IK also needs the same dictionary placeholders used
+    // by parse_for_parser_helper; no JSON tree is needed for these defaults.
+    parser_property_ = storage::ObFTParserProperty();
+    if (parser.is_ik()) {
+      parser_property_.dict_table_ = ObString(storage::ObFTSLiteral::CONFIG_NAME_DICT_TABLE);
+      parser_property_.stopword_table_ = ObString(storage::ObFTSLiteral::CONFIG_NAME_STOPWORD_TABLE);
+      parser_property_.quantifier_table_ = ObString(storage::ObFTSLiteral::CONFIG_NAME_QUANTIFIER_TABLE);
+    }
+  } else if (OB_FAIL(parser_properties.init())) {
   } else if (OB_FAIL(parser_properties.parse_from_valid_str(properties))) {
     LOG_USER_ERROR(OB_INVALID_ARGUMENT, "parser properties invalid.");
   } else if (OB_FAIL(parser_properties.rebuild_props_for_ddl(parser_name_,
                                                              ObCollationType::CS_TYPE_UTF8MB4_BIN,
                                                              true))) {
-  } else if (OB_FAIL(parser_properties.to_format_json(allocator_, properties_))) {
+  } else if (OB_FAIL(parser_property_.parse_for_parser_helper(parser, parser_properties))) {
+    // Consume the validated properties directly, without serializing and
+    // parsing the same configuration a second time in ObFTParseHelper.
   }
 
   return ret;

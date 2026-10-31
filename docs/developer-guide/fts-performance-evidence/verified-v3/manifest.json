@@ -1,0 +1,86 @@
+{
+  "base_commit": "9eb94e4cad24c57b9e99172f128ae8cb550f4f31",
+  "source_sha256_lf": {
+    "src/data_plane/api/data_plane/fts/ob_fts_parser_helper.h": {
+      "original": "3c3a8bbb09e369d2d396a14bfc391282657573d581be67b6def5048f6c1211dc",
+      "candidate": "509eb6c68ef8020721522320302ddec1f471ef976ebc96ab18ac7243f646b67f"
+    },
+    "src/data_plane/api/data_plane/fts/ob_fts_parser_property.h": {
+      "original": "f4adba5d5b855246b21f4aadfe3bd88b30e135e626d8a0383333d895b8882bf0",
+      "candidate": "6147ca6c95dd42ed7570aaa0f843d733b08340ae94252bce96e9aec7f3190dcf"
+    },
+    "src/share/text_analysis/ob_token_stream.cpp": {
+      "original": "5f73c83ed4648f2d9cf7b5a136f0b1f806c82e20048587cf22a9daa1d952e0ab",
+      "candidate": "57b0b522993eb5df11182956376069576ee5d90a169f8c93bbeb783917c7938c"
+    },
+    "src/share/text_analysis/ob_token_stream.h": {
+      "original": "db86f9a91d43703ada82a2bc8a9640a694d1afdb63a940249ed94c7f58c1935e",
+      "candidate": "63f8e9425475f230a1bdfb017edd874c8fba4ebd0fa306959e1de598acefc99d"
+    },
+    "src/sql/engine/expr/ob_expr_tokenize.cpp": {
+      "original": "c722685d91119a41ca1f1e5cdbd047b612c1932f26a6ff2aef25adfc9cb169af",
+      "candidate": "f6ede85d9c1eb96858f03752bc35c01a4e7f57c5154539b43506aa1a9b881d7e"
+    },
+    "src/sql/engine/expr/ob_expr_tokenize.h": {
+      "original": "ceb2855de71304de72206e99eef3985026ccc7b12ce7816fd98e3c491cacd6f9",
+      "candidate": "15fe5ffc1bf419a3286989b3baf0713507cdd83d88bbc3fa2c29fd277ef1aa4a"
+    },
+    "src/storage/fts/ik/ob_ik_char_util.h": {
+      "original": "d26f03bfb9eb494a5259e1345744369473d7de0b781831e0492d16add2db6ca8",
+      "candidate": "633d0ff1f465de5e6f29a436b989ee68486998d5bd5deb2cd0aaa01c454ae6c0"
+    },
+    "src/storage/fts/ob_fts_parser_helper.cpp": {
+      "original": "deef82c8ce2e0fd123d823bb91b784f99f6d4e92998838f98c4438880308f11c",
+      "candidate": "c93389f06c7663dd051164a6d4315c5892987c0672abf07271fd1235f4047a25"
+    },
+    "src/storage/fts/ob_fts_parser_property.cpp": {
+      "original": "7c6177631fbf684423115cbe2790d1ed4a76b68ecb51128cdc274c74641df834",
+      "candidate": "45c16c49187a6363e0bd628642157bd65c7b7c5864adef8cf49d60d46d16b62c"
+    },
+    "src/storage/fts/ob_fts_stop_word.cpp": {
+      "original": "467903a9f748d2e7e31aee0840a0cabddfba01932ef8f08ece82a80ac6967009",
+      "candidate": "871ff50cbdf4fecb6f862a44099086a0ab049ad56a50ec6d4bf09e4a4ede99b5"
+    },
+    "src/storage/fts/ob_ik_ft_parser.cpp": {
+      "original": "b9cdf667edccf1ed28bbc1c596995990dea33caabb3ba822a5b2d95fcba2f685",
+      "candidate": "8bb53730ee3aacb70efcc705420ca2cf0327e59824a004a3b834320872ce6519"
+    },
+    "src/storage/retrieval/ob_sparse_daat_iter.cpp": {
+      "original": "7a3cb2763d02a1fbeb4429dc63d0a9ce9f5e7e632080de89091fcdadab18d37e",
+      "candidate": "23547f9e6e4e48f51ea918577c270d084488f974d280109628a5434b4b2250be"
+    },
+    "src/storage/retrieval/ob_sparse_daat_iter.h": {
+      "original": "c30b762ccc50bdb52343f1aba700be29ec64f95374b7492f75cc9644e73cbd70",
+      "candidate": "e3d5a16bccafd3fbf6ce0b6ad861766f4a8c25036d8adf871f9fabcb64790944"
+    },
+    "src/storage/retrieval/ob_sparse_retrieval_util.h": {
+      "original": "baeb5109c64808a7792de88e1dacd47d8cb181bdfff2d2fb4602a38d7e701b1e",
+      "candidate": "18c353c7bfc5150fcb19be2bf75206e237460ded7cd8bf24b47eece18ade2a71"
+    },
+    "src/storage/retrieval/ob_text_daat_iter.cpp": {
+      "original": "17590000c1f5422bb8cad665debf67df8d4093a00edd5bc840ace1527b2ceabb",
+      "candidate": "888108fed0fbb56a45d830d048b3ea6b258a10d2ffd3a97672831bda344e0c47"
+    },
+    "src/storage/retrieval/ob_text_daat_iter.h": {
+      "original": "4c52cfba4d5890e8f88d13180bf6caa92f0d2525de4edf7d1bf48e2ffaa9c03b",
+      "candidate": "04576e7e88b365a189f61f613d2619dfd94ecc2abdf4fbc5f23f9be4ccc2b593"
+    },
+    "src/storage/retrieval/ob_text_retrieval_token_iter.cpp": {
+      "original": "537a63f0cb1bc697f4aefcb3108a478ff20045ce29bf57f4dabb2de6f4e63804",
+      "candidate": "a48e2bf94227173636a62f791e14568ebfeab2d8f645a71d7044f68407c62045"
+    }
+  },
+  "binary_sha256": {
+    "original": "f457da79251672198c4c4ef6d5b2cc233a59a3df07b07ed6c02ea6025cee7c2d",
+    "candidate": "3f8f78d970ce9b25cff2d4b73b95104d8fa2ca7a299603463aaf1b49e3048b01"
+  },
+  "benchmark_sha256_lf": {
+    "tools/benchmark/fts_large_bench.sh": "596ea5d1c0038e666b78aa94bef22d2dfb87ffc9e84dbc7e2a1da1f746424462",
+    "tools/benchmark/fts_large_bench_baseline.json": "f4e97eddb2e49c982b967fc8047f7cf37177eebe53d648f6746d85aacda91f0c",
+    "tools/benchmark/fts_large_bench_gen.py": "b0c816dd8211ac0471f60b72a37a3fb5c62580357a5b6d7ac95f5a8c2e3f143d",
+    "tools/benchmark/fts_large_bench_score.py": "bea52eb1c68d05693bb3ac5b910ab0e2fa0e70e01582f40466898ee1e2e3ef55",
+    "tools/benchmark/fts_large_bench_setup.sql": "311826751df7f51ac45156fb4284aeca9bd9197370aceb88f4fb92832b458108"
+  },
+  "build_revision_note": "WSL build copy has stale generated revision; normalized source hashes establish content.",
+  "clock": "hyperv_clocksource_tsc_page; timesyncd stopped; 50ms offset monitor; no step over 20ms"
+}
