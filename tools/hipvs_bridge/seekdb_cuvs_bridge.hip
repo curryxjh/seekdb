@@ -385,22 +385,39 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   }
   if (cuvsCagraIndexCreate(&h->idx)      != CUVS_SUCCESS) goto fail_ip;
   if (cfg.build_mode == 1 && use_gpu_base) {
-    /* Custom GPU graph, official search: cuvsCagraIndexFromArgs consumes the
-     * (n x gd) neighbour graph we built and leaves CAGRA's search untouched. */
+    /* Custom GPU graph, official search: IVF candidate generation + GPU RNG
+     * prune builds the kNN graph; cuvsCagraIndexFromArgs wires it into the
+     * official CAGRA index, leaving search untouched.
+     * If the custom path fails for any reason, fall back to the official
+     * cuvsCagraBuild so the evaluation always yields a valid index. */
+    int custom_ok = 0;
     const size_t graph_bytes = sizeof(unsigned) * (size_t)n * (size_t)cfg.graph_degree;
     void* graph_d = sk_build_graph_gpu(h->res, base_d, n, dim, &cfg, call_no, log_on);
-    if (!graph_d) goto fail_idx;
-    long g_sh[2], id_sh[2];
-    DLManagedTensor g_t, id_t;
-    sk_mk_tensor(&g_t, graph_d, n, cfg.graph_degree, kDLCUDA, kDLUInt, 32, g_sh);
-    sk_mk_tensor(&id_t, base_d, n, dim, kDLCUDA, kDLFloat, 32, id_sh);
-    const cuvsError_t rc = cuvsCagraIndexFromArgs(h->res, L2Expanded, &g_t, &id_t, h->idx);
-    const cuvsError_t rc2 = cudaDeviceSynchronize() == cudaSuccess ? CUVS_SUCCESS : CUVS_ERROR;
-    if (rc != CUVS_SUCCESS || rc2 != CUVS_SUCCESS) {
-      cuvsRMMFree(h->res, graph_d, graph_bytes);
+    if (graph_d) {
+      long g_sh[2], id_sh[2];
+      DLManagedTensor g_t, id_t;
+      sk_mk_tensor(&g_t, graph_d, n, cfg.graph_degree, kDLCUDA, kDLUInt, 32, g_sh);
+      sk_mk_tensor(&id_t, base_d, n, dim, kDLCUDA, kDLFloat, 32, id_sh);
+      const cuvsError_t rc = cuvsCagraIndexFromArgs(h->res, L2Expanded, &g_t, &id_t, h->idx);
+      const cuvsError_t rc2 = cudaDeviceSynchronize() == cudaSuccess ? CUVS_SUCCESS : CUVS_ERROR;
+      if (rc == CUVS_SUCCESS && rc2 == CUVS_SUCCESS) {
+        h->graph_d = graph_d; h->graph_d_bytes = graph_bytes;
+        custom_ok = 1;
+      } else {
+        /* cuvsCagraIndexFromArgs failed; free the graph and fall through. */
+        cuvsRMMFree(h->res, graph_d, graph_bytes);
+        if (log_on) fprintf(stderr, "[seekdb_cuvs] build#%llu custom path failed (%s), falling back to official builder\n",
+                            call_no, cuvsGetLastErrorText());
+        /* Destroy and recreate the index for a clean official build. */
+        cuvsCagraIndexDestroy(h->idx);
+        if (cuvsCagraIndexCreate(&h->idx) != CUVS_SUCCESS) goto fail_ip;
+      }
+    } else {
+      if (log_on) fprintf(stderr, "[seekdb_cuvs] build#%llu GPU graph build failed, falling back to official builder\n", call_no);
+    }
+    if (!custom_ok && cuvsCagraBuild(h->res, h->ip, &dset, h->idx) != CUVS_SUCCESS) {
       goto fail_idx;
     }
-    h->graph_d = graph_d; h->graph_d_bytes = graph_bytes;
   } else if (cuvsCagraBuild(h->res, h->ip, &dset, h->idx) != CUVS_SUCCESS) {
     goto fail_idx;
   }
