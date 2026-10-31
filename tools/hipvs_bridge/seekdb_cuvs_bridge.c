@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <time.h>
 
 typedef struct {
@@ -27,9 +28,10 @@ typedef struct {
   void*  graph_d;  size_t graph_d_bytes;
 } sk_cuvs_index;
 
-/* Build/quality knobs. Defaults reproduce the frozen V5 baseline exactly; they
- * can be overridden from the environment so one bridge build can explore a
- * parameter sweep without recompiling seekdb. Unset env == baseline behavior. */
+/* Build/quality knobs. Defaults select the custom IVF + GPU RNG-prune path
+ * and its current proxy-tuned parameters. Set SEEKDB_CUVS_BUILD_MODE=0 and the
+ * graph parameters to the frozen values to compare the official builder; env
+ * overrides allow parameter sweeps without recompiling seekdb. */
 typedef struct {
   int      graph_degree;
   int      intermediate_degree;
@@ -37,7 +39,7 @@ typedef struct {
   int      search_width;
   size_t   itopk_floor;
   int      build_algo;   /* cuvsCagraGraphBuildAlgo: 0=AUTO, 1=IVF_PQ, 2=NN_DESCENT, 3=ITERATIVE_CAGRA_SEARCH */
-  /* custom GPU graph path (build_algo 4): IVF candidate generation + RNG prune */
+  /* Custom graph path (build_mode 1): IVF candidates + GPU RNG prune. */
   int      build_mode;   /* 0 = official cuvsCagraBuild, 1 = IVF + GPU RNG prune */
   int      cand;         /* candidates per point before pruning */
   int      occl;         /* occlusion-set size for RNG pruning */
@@ -57,20 +59,17 @@ static sk_cuvs_cfg sk_cuvs_config(void)
 {
   sk_cuvs_cfg c;
   c.graph_degree        = sk_env_int("SEEKDB_CUVS_GRAPH_DEGREE", 160);
-  /* igd=160 builds faster AND improves recall vs igd=256 on Hidden-like data;
-   * see sweep: 256-dim recall@100 0.9031 (igd=160) vs 0.9010 (igd=256). */
+  /* igd=160 is the current proxy-tuned default; official recall still needs
+   * the fixed SIFT250K/Hidden250K evaluator. */
   c.intermediate_degree = sk_env_int("SEEKDB_CUVS_INTERMEDIATE_DEGREE", 160);
   c.niter               = sk_env_int("SEEKDB_CUVS_NITER", 100);
   c.search_width        = sk_env_int("SEEKDB_CUVS_SEARCH_WIDTH", 4);
   c.itopk_floor         = (size_t)sk_env_int("SEEKDB_CUVS_ITOPK_FLOOR", 512);
   /* cuvsCagraGraphBuildAlgo: 0=AUTO_SELECT,1=IVF_PQ,2=NN_DESCENT(default),3=ITERATIVE_CAGRA_SEARCH */
   c.build_algo          = sk_env_int("SEEKDB_CUVS_BUILD_ALGO", 2);
-  /* The custom path is the default: IVF candidate generation + GPU RNG prune
-   * feeds the official cuvsCagraIndexFromArgs, leaving CAGRA search untouched.
-   * Measured on two independent 256-dim sets (n=250k, exact GT):
-   *   official NN-Descent gd=128   12.87 s, recall@10 0.9345, recall@100 0.8986
-   *   custom  gd=160 cand=320 p=48  5.22 s, recall@10 0.9525, recall@100 0.9151
-   * SEEKDB_CUVS_BUILD_MODE=0 restores the official builder. */
+  /* The custom IVF + GPU RNG-prune path is the default; it supplies a graph
+   * through cuvsCagraIndexFromArgs while leaving official CAGRA search intact.
+   * SEEKDB_CUVS_BUILD_MODE=0 uses cuvsCagraBuild instead. */
   c.build_mode          = sk_env_int("SEEKDB_CUVS_BUILD_MODE", 1);
   c.cand                = sk_env_int("SEEKDB_CUVS_CAND", 0);       /* 0 -> gd*2, min gd+32 */
   c.occl                = sk_env_int("SEEKDB_CUVS_OCCL", 16);
@@ -151,7 +150,7 @@ static void sk_mk_tensor(DLManagedTensor* t, void* data, long rows, long cols,
  * Shared layout: pv[occl*dim] floats, pids[occl], blk[bfk] bytes, acc[bfk].
  */
 __global__ void sk_rng_prune_kernel(const float* __restrict__ base,
-                                    const unsigned* __restrict__ cand_ids,
+                                    const long long* __restrict__ cand_ids,
                                     const float* __restrict__ cand_dst,
                                     unsigned* __restrict__ graph,
                                     int dim, int bfk, int gd, int occl,
@@ -167,18 +166,20 @@ __global__ void sk_rng_prune_kernel(const float* __restrict__ base,
   const long gi = block_off + r;
   if (gi >= n) return;
 
-  const unsigned* ci = cand_ids + r * bfk;
-  const float*    cd = cand_dst + r * bfk;
+  const long long* ci = cand_ids + r * bfk;
+  const float*     cd = cand_dst + r * bfk;
 
   /* Prefix: the occl closest non-self candidates of the distance-sorted row. */
   if (threadIdx.x == 0) {
     int np = 0;
     for (int j = 0; j < bfk && np < occl; ++j) {
-      if ((long)ci[j] == gi) continue;
+      if (ci[j] < 0 || ci[j] >= n || ci[j] == gi) continue;
       pids[np++] = (unsigned)ci[j];
     }
     for (int k = np; k < occl; ++k) pids[k] = (unsigned)gi;
-    for (int j = 0; j < bfk; ++j) blk[j] = (unsigned char)((long)ci[j] == gi);
+    for (int j = 0; j < bfk; ++j) {
+      blk[j] = (unsigned char)(ci[j] < 0 || ci[j] >= n || ci[j] == gi);
+    }
   }
   __syncthreads();
 
@@ -196,7 +197,7 @@ __global__ void sk_rng_prune_kernel(const float* __restrict__ base,
     const float* pj = base + (size_t)cid * dim;
     int occluded = 0;
     for (int k = 0; k < occl; ++k) {
-      if (pids[k] == cid) { occluded = 1; break; }
+      if (pids[k] == cid) continue;
       const float* pk = pv + (size_t)k * dim;
       float s = 0.f;
       for (int d = 0; d < dim; ++d) {
@@ -219,9 +220,8 @@ __global__ void sk_rng_prune_kernel(const float* __restrict__ base,
     /* Backfill from the occluded tail; RNG can leave a row short. */
     for (int j = 0; j < bfk && out < gd; ++j) {
       if (!blk[j]) continue;
-      const unsigned cid = (unsigned)ci[j];
-      if ((long)cid == gi) continue;
-      grow[out++] = cid;
+      if (ci[j] < 0 || ci[j] >= n || ci[j] == gi) continue;
+      grow[out++] = (unsigned)ci[j];
     }
     while (out < gd) grow[out++] = (unsigned)gi;
   }
@@ -263,8 +263,12 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
   cuvsIvfFlatSearchParams_t sp = NULL;
   void* ids_d = NULL;
   void* dst_d = NULL;
-  const size_t ids_bytes = sizeof(unsigned) * (size_t)cfg->chunk * (size_t)bfk;
+  const size_t ids_bytes = sizeof(int64_t) * (size_t)cfg->chunk * (size_t)bfk;
   const size_t dst_bytes = sizeof(float)   * (size_t)cfg->chunk * (size_t)bfk;
+  /* ~32 points per list is the sweet spot at n=250k; keep that ratio for
+   * smaller datasets instead of asking IVF for more lists than it can fill. */
+  const uint32_t n_lists = (uint32_t)(((long)cfg->n_lists > n / 32 ? (n / 32 > 0 ? n / 32 : 1)
+                                                               : (long)cfg->n_lists));
 
   double t_ivf = sk_now();
   long ds_sh[2];
@@ -273,10 +277,6 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
   if (cuvsIvfFlatIndexParamsCreate(&ip) != CUVS_SUCCESS) goto fail;
   ip->metric = L2Expanded;
   ip->metric_arg = 0.f;
-  /* ~32 points per list is the sweet spot at n=250k; keep that ratio for
-   * smaller datasets instead of asking IVF for more lists than it can fill. */
-  const uint32_t n_lists = (uint32_t)(((long)cfg->n_lists > n / 32 ? (n / 32 > 0 ? n / 32 : 1)
-                                                               : (long)cfg->n_lists));
   ip->n_lists = n_lists;
   ip->kmeans_n_iters = 25;
   ip->kmeans_trainset_fraction = 1.0;
@@ -299,7 +299,7 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
       DLManagedTensor q_t, n_t, d_t;
       sk_mk_tensor(&q_t, (char*)base_d + (size_t)off * dim * sizeof(float),
                    rows, dim, kDLCUDA, kDLFloat, 32, qs_sh);
-      sk_mk_tensor(&n_t, ids_d, rows, bfk, kDLCUDA, kDLUInt, 32, n_sh);
+      sk_mk_tensor(&n_t, ids_d, rows, bfk, kDLCUDA, kDLInt, 64, n_sh);
       sk_mk_tensor(&d_t, dst_d, rows, bfk, kDLCUDA, kDLFloat, 32, d_sh);
       cuvsFilter f; f.type = NO_FILTER; f.addr = (uintptr_t)0;
       if (cuvsIvfFlatSearch(res, sp, ivf, &q_t, &n_t, &d_t, f) != CUVS_SUCCESS) goto fail;
@@ -308,7 +308,7 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
                          + (size_t)((bfk + 3) & ~3)
                          + (size_t)bfk * sizeof(unsigned);
       sk_rng_prune_kernel<<<(unsigned)rows, 128, shmem>>>(
-          (const float*)base_d, (const unsigned*)ids_d, (const float*)dst_d,
+          (const float*)base_d, (const long long*)ids_d, (const float*)dst_d,
           (unsigned*)graph_d, (int)dim, (int)bfk, (int)gd, (int)occl, off, n);
       if (cudaGetLastError() != cudaSuccess || cudaDeviceSynchronize() != cudaSuccess) goto fail;
     }
@@ -351,26 +351,31 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   if (!h) return NULL;
   if (cuvsResourcesCreate(&h->res) != CUVS_SUCCESS) { free(h); return NULL; }
 
-  /* Upload base vectors to the device so NN-Descent distance kernels run
-   * on the GPU rather than on the host.  The CPU path (%CPU 1331 observed)
-   * appears when cuVS receives kDLCPU and copies internally per-kernel;
-   * passing kDLCUDA lets it use the already-resident buffer directly. */
-  const size_t base_bytes = (size_t)n * (size_t)dim * sizeof(float);
+  size_t base_bytes = 0;
   void* base_d = NULL;
-  int use_gpu_base = 0;
-  if (cuvsRMMAlloc(h->res, &base_d, base_bytes) == CUVS_SUCCESS &&
-      cudaMemcpy(base_d, base, base_bytes, cudaMemcpyHostToDevice) == cudaSuccess) {
-    use_gpu_base = 1;
-    if (log_on) fprintf(stderr, "[seekdb_cuvs] build#%llu GPU base upload %.1f MB\n",
-                        call_no, (double)base_bytes / 1048576.0);
-  } else {
-    /* Fall back to host tensor on alloc/copy failure. */
-    if (base_d) { cuvsRMMFree(h->res, base_d, base_bytes); base_d = NULL; }
+  /* Upload base vectors to the device so every build path remains GPU-only.
+   * Passing a host tensor lets cuVS silently run a CPU fallback, which violates
+   * the evaluation contract; allocation or upload failure must fail the build. */
+  if (!base || n <= 1 || dim <= 0) {
+    cuvsResourcesDestroy(h->res);
+    free(h);
+    return NULL;
   }
+  base_bytes = (size_t)n * (size_t)dim * sizeof(float);
+  if (cuvsRMMAlloc(h->res, &base_d, base_bytes) != CUVS_SUCCESS ||
+      cudaMemcpy(base_d, base, base_bytes, cudaMemcpyHostToDevice) != cudaSuccess) {
+    if (base_d) cuvsRMMFree(h->res, base_d, base_bytes);
+    if (log_on) fprintf(stderr, "[seekdb_cuvs] build#%llu GPU base upload failed\n", call_no);
+    cuvsResourcesDestroy(h->res);
+    free(h);
+    return NULL;
+  }
+  if (log_on) fprintf(stderr, "[seekdb_cuvs] build#%llu GPU base upload %.1f MB\n",
+                      call_no, (double)base_bytes / 1048576.0);
 
   DLManagedTensor dset; long ds[2] = {n, dim};
-  dset.dl_tensor.data = use_gpu_base ? base_d : (void*)base;
-  dset.dl_tensor.device.device_type = use_gpu_base ? kDLCUDA : kDLCPU;
+  dset.dl_tensor.data = base_d;
+  dset.dl_tensor.device.device_type = kDLCUDA;
   dset.dl_tensor.device.device_id = 0;
   dset.dl_tensor.ndim = 2;
   dset.dl_tensor.dtype.code = kDLFloat; dset.dl_tensor.dtype.bits = 32; dset.dl_tensor.dtype.lanes = 1;
@@ -385,11 +390,11 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
     if (log_on) {
       fprintf(stderr, "[seekdb_cuvs] build#%llu START n=%ld dim=%ld gd=%d igd=%d niter=%d algo=%d mode=%d base=%s\n",
               call_no, n, dim, cfg.graph_degree, cfg.intermediate_degree, cfg.niter, cfg.build_algo,
-              cfg.build_mode, use_gpu_base ? "GPU" : "CPU");
+              cfg.build_mode, "GPU");
     }
   }
   if (cuvsCagraIndexCreate(&h->idx)      != CUVS_SUCCESS) goto fail_ip;
-  if (cfg.build_mode == 1 && use_gpu_base) {
+  if (cfg.build_mode == 1) {
     /* Custom GPU graph, official search: IVF candidate generation + GPU RNG
      * prune builds the kNN graph; cuvsCagraIndexFromArgs wires it into the
      * official CAGRA index, leaving search untouched.
@@ -427,7 +432,7 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
     goto fail_idx;
   }
   h->n = n; h->dim = dim;
-  h->base_d = base_d; h->base_d_bytes = use_gpu_base ? base_bytes : 0;
+  h->base_d = base_d; h->base_d_bytes = base_bytes;
   if (log_on) {
     fprintf(stderr, "[seekdb_cuvs] build#%llu DONE  n=%ld dim=%ld in %.3f s\n",
             call_no, n, dim, sk_now() - t0);
@@ -446,7 +451,8 @@ int seekdb_cuvs_search(void* handle, const float* query, long nq, long topk,
                        unsigned int* out_ids, float* out_dist)
 {
   sk_cuvs_index* h = (sk_cuvs_index*)handle;
-  if (!h) return 1;
+  if (!h || !query || !out_ids || nq <= 0 || topk <= 0 || topk > h->n || nq > LONG_MAX / h->dim ||
+      topk > LONG_MAX / nq) return 1;
   int rc = 0;
   float* qd = 0; unsigned* nd = 0; float* dd = 0; cuvsCagraSearchParams_t sp = 0;
   if (cuvsRMMAlloc(h->res, (void**)&qd, sizeof(float)*nq*h->dim)  != CUVS_SUCCESS) { rc=10; goto done; }
@@ -471,7 +477,7 @@ int seekdb_cuvs_search(void* handle, const float* query, long nq, long topk,
     cuvsFilter f; f.type=NO_FILTER; f.addr=(uintptr_t)0;
     if (cuvsCagraSearch(h->res, sp, h->idx, &qt, &nt, &dt, f) != CUVS_SUCCESS) { rc=15; goto done; }
     if (cudaMemcpy(out_ids, nd, sizeof(unsigned)*nq*topk, cudaMemcpyDefault) != cudaSuccess) { rc=16; goto done; }
-    if (out_dist) cudaMemcpy(out_dist, dd, sizeof(float)*nq*topk, cudaMemcpyDefault);
+    if (out_dist && cudaMemcpy(out_dist, dd, sizeof(float)*nq*topk, cudaMemcpyDefault) != cudaSuccess) { rc=17; goto done; }
   }
 done:
   if (sp) cuvsCagraSearchParamsDestroy(sp);

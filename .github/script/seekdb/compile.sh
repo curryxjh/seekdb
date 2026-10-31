@@ -20,11 +20,13 @@ echo "[compile.sh] build.sh: -f=$([[ -f "$WORKSPACE/build.sh" ]] && echo 1 || ec
 
 export GITHUB_WORKSPACE="$WORKSPACE"
 export SEEKDB_TASK_DIR="$TASK_DIR"
+# build.sh supports the release profile (and packaging profiles), not debug.
 export PACKAGE_TYPE="${RELEASE_MODE:+release}"
-export PACKAGE_TYPE="${PACKAGE_TYPE:-debug}"
+export PACKAGE_TYPE="${PACKAGE_TYPE:-release}"
 export MAKE="${MAKE:-make}"
 export MAKE_ARGS="${MAKE_ARGS:--j32}"
 export PATH="$WORKSPACE/deps/3rd/usr/local/oceanbase/devtools/bin:$PATH"
+FORWARDING_HOST="${FORWARDING_HOST:-}"
 [[ -n "$FORWARDING_HOST" ]] && echo "$FORWARDING_HOST mirrors.oceanbase.com" >> /etc/hosts 2>/dev/null || true
 
 cd "$WORKSPACE"
