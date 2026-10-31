@@ -270,7 +270,10 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
   if (cuvsIvfFlatIndexParamsCreate(&ip) != CUVS_SUCCESS) goto fail;
   ip->metric = L2Expanded;
   ip->metric_arg = 0.f;
-  ip->n_lists = (uint32_t)cfg->n_lists;
+  /* ~32 points per list is the sweet spot at n=250k; keep that ratio for
+   * smaller datasets instead of asking IVF for more lists than it can fill. */
+  ip->n_lists = (uint32_t)(((long)cfg->n_lists > n / 32 ? (n / 32 > 0 ? n / 32 : 1)
+                                                        : (long)cfg->n_lists));
   ip->kmeans_n_iters = 25;
   ip->kmeans_trainset_fraction = 1.0;
   ip->add_data_on_build = true;
