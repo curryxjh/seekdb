@@ -20,17 +20,16 @@ OUTPUT=${1:-$SCRIPT_DIR/libseekdb_cuvs_bridge.so}
 
 mkdir -p "$(dirname "$OUTPUT")"
 
-# -x hip: the bridge carries its own device kernel for the custom graph path,
-# and hipcc otherwise compiles a .c file as ISO C (no blockIdx / __syncthreads).
+# The bridge carries its own device kernel for the custom graph path; the .hip
+# extension makes hipcc treat it as HIP source regardless of build flags.
 "$HIPCC" \
-  -x hip \
   -shared \
   -fPIC \
   -O2 \
   -D__HIP_PLATFORM_AMD__ \
   -I"$HIPVS_ROOT/include" \
   -I"$ROCM_ROOT/include" \
-  "$SCRIPT_DIR/seekdb_cuvs_bridge.c" \
+  "$SCRIPT_DIR/seekdb_cuvs_bridge.hip" \
   -L"$HIPVS_ROOT/lib" \
   -Wl,-soname,libseekdb_cuvs_bridge.so \
   -Wl,-rpath,"$HIPVS_ROOT/lib:$ROCM_ROOT/lib" \
