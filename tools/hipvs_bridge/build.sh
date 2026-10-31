@@ -21,10 +21,16 @@ OUTPUT=${1:-$SCRIPT_DIR/libseekdb_cuvs_bridge.so}
 mkdir -p "$(dirname "$OUTPUT")"
 
 # The bridge carries its own device kernel for the custom graph path.
+# -O3 + -funroll-loops lets the per-candidate L2 distance loop unroll the
+#   dim=128/256 inner stride, which is the single hottest FP line in the
+#   RNG prune kernel. -ffast-math is deliberately NOT set: the kernel's
+#   `s < dij` comparison must stay bit-stable to keep Hidden recall@100
+#   inside the baseline-delta <=0.005 gate.
 "$HIPCC" \
   -shared \
   -fPIC \
-  -O2 \
+  -O3 \
+  -funroll-loops \
   -D__HIP_PLATFORM_AMD__ \
   -I"$HIPVS_ROOT/include" \
   -I"$ROCM_ROOT/include" \
