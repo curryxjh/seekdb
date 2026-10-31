@@ -151,7 +151,7 @@ static void sk_mk_tensor(DLManagedTensor* t, void* data, long rows, long cols,
  * Shared layout: pv[occl*dim] floats, pids[occl], blk[bfk] bytes, acc[bfk].
  */
 __global__ void sk_rng_prune_kernel(const float* __restrict__ base,
-                                    const long long* __restrict__ cand_ids,
+                                    const unsigned* __restrict__ cand_ids,
                                     const float* __restrict__ cand_dst,
                                     unsigned* __restrict__ graph,
                                     int dim, int bfk, int gd, int occl,
@@ -167,8 +167,8 @@ __global__ void sk_rng_prune_kernel(const float* __restrict__ base,
   const long gi = block_off + r;
   if (gi >= n) return;
 
-  const long long* ci = cand_ids + r * bfk;
-  const float*     cd = cand_dst + r * bfk;
+  const unsigned* ci = cand_ids + r * bfk;
+  const float*    cd = cand_dst + r * bfk;
 
   /* Prefix: the occl closest non-self candidates of the distance-sorted row. */
   if (threadIdx.x == 0) {
@@ -236,6 +236,9 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
 {
   const long gd   = cfg->graph_degree;
   const long cand = cfg->cand;
+  /* The custom graph has a fixed gd-column output. Let the official builder
+   * handle tiny datasets where there are not enough distinct neighbours. */
+  if (n <= 1 || gd <= 0 || cand <= 0 || n <= gd || n <= cand) return NULL;
   long occl = (cfg->occl > 0) ? cfg->occl : 1;
   /* The kernel stages the occl closest base vectors in shared memory, and a
    * block gets 64 KB on gfx1100. Shrink the prefix for high-dim data rather
@@ -250,7 +253,7 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
     if (fits < (size_t)occl) occl = fits ? (long)fits : 1;
   }
   /* IVF returns cand+1 so that dropping self still leaves a full row. */
-  const long bfk  = cand + 1;
+  const long bfk  = (cand + 1 < n) ? cand + 1 : n;
   const size_t graph_bytes = sizeof(unsigned) * (size_t)n * (size_t)gd;
   void* graph_d = NULL;
   if (cuvsRMMAlloc(res, &graph_d, graph_bytes) != CUVS_SUCCESS) return NULL;
@@ -260,7 +263,7 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
   cuvsIvfFlatSearchParams_t sp = NULL;
   void* ids_d = NULL;
   void* dst_d = NULL;
-  const size_t ids_bytes = sizeof(int64_t) * (size_t)cfg->chunk * (size_t)bfk;
+  const size_t ids_bytes = sizeof(unsigned) * (size_t)cfg->chunk * (size_t)bfk;
   const size_t dst_bytes = sizeof(float)   * (size_t)cfg->chunk * (size_t)bfk;
 
   double t_ivf = sk_now();
@@ -272,15 +275,17 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
   ip->metric_arg = 0.f;
   /* ~32 points per list is the sweet spot at n=250k; keep that ratio for
    * smaller datasets instead of asking IVF for more lists than it can fill. */
-  ip->n_lists = (uint32_t)(((long)cfg->n_lists > n / 32 ? (n / 32 > 0 ? n / 32 : 1)
-                                                        : (long)cfg->n_lists));
+  const uint32_t n_lists = (uint32_t)(((long)cfg->n_lists > n / 32 ? (n / 32 > 0 ? n / 32 : 1)
+                                                               : (long)cfg->n_lists));
+  ip->n_lists = n_lists;
   ip->kmeans_n_iters = 25;
   ip->kmeans_trainset_fraction = 1.0;
   ip->add_data_on_build = true;
   if (cuvsIvfFlatIndexCreate(&ivf) != CUVS_SUCCESS) goto fail;
   if (cuvsIvfFlatBuild(res, ip, &ds_t, ivf) != CUVS_SUCCESS) goto fail;
   if (cuvsIvfFlatSearchParamsCreate(&sp) != CUVS_SUCCESS) goto fail;
-  sp->n_probes = (uint32_t)cfg->n_probes;
+  sp->n_probes = (uint32_t)(cfg->n_probes < (int)n_lists ? cfg->n_probes : (int)n_lists);
+  if (sp->n_probes == 0) sp->n_probes = 1;
   if (cudaDeviceSynchronize() != cudaSuccess) goto fail;
   if (cuvsRMMAlloc(res, &ids_d, ids_bytes) != CUVS_SUCCESS) goto fail;
   if (cuvsRMMAlloc(res, &dst_d, dst_bytes) != CUVS_SUCCESS) goto fail;
@@ -294,7 +299,7 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
       DLManagedTensor q_t, n_t, d_t;
       sk_mk_tensor(&q_t, (char*)base_d + (size_t)off * dim * sizeof(float),
                    rows, dim, kDLCUDA, kDLFloat, 32, qs_sh);
-      sk_mk_tensor(&n_t, ids_d, rows, bfk, kDLCUDA, kDLInt, 64, n_sh);
+      sk_mk_tensor(&n_t, ids_d, rows, bfk, kDLCUDA, kDLUInt, 32, n_sh);
       sk_mk_tensor(&d_t, dst_d, rows, bfk, kDLCUDA, kDLFloat, 32, d_sh);
       cuvsFilter f; f.type = NO_FILTER; f.addr = (uintptr_t)0;
       if (cuvsIvfFlatSearch(res, sp, ivf, &q_t, &n_t, &d_t, f) != CUVS_SUCCESS) goto fail;
@@ -303,7 +308,7 @@ static void* sk_build_graph_gpu(cuvsResources_t res, void* base_d,
                          + (size_t)((bfk + 3) & ~3)
                          + (size_t)bfk * sizeof(unsigned);
       sk_rng_prune_kernel<<<(unsigned)rows, 128, shmem>>>(
-          (const float*)base_d, (const long long*)ids_d, (const float*)dst_d,
+          (const float*)base_d, (const unsigned*)ids_d, (const float*)dst_d,
           (unsigned*)graph_d, (int)dim, (int)bfk, (int)gd, (int)occl, off, n);
       if (cudaGetLastError() != cudaSuccess || cudaDeviceSynchronize() != cudaSuccess) goto fail;
     }
