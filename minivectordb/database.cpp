@@ -214,33 +214,55 @@ class Sorter {
 };
 }  // namespace
 
-Spool::Spool(const std::string &directory) {
-  std::string pattern = directory + "/spool-XXXXXX";
+Spool::Spool(const std::string &directory) : directory_(directory) {}
+void Spool::spill() {
+  std::string pattern = directory_ + "/spool-XXXXXX";
   const int fd = ::mkstemp(pattern.data());
   require(fd >= 0, "io_error", "cannot create temporary result");
   if (::unlink(pattern.c_str()) != 0) { ::close(fd); throw Error("io_error", "cannot unlink temporary result"); }
   file_ = ::fdopen(fd, "w+b");
   if (file_ == nullptr) { ::close(fd); throw Error("io_error", "cannot open temporary result"); }
+  checked(std::fwrite(buffer_.data(), 1, buffer_.size(), file_) == buffer_.size());
+  std::string{}.swap(buffer_);
 }
 Spool::~Spool() { if (file_ != nullptr) std::fclose(file_); }
-Spool::Spool(Spool &&other) noexcept : file_(other.file_) { other.file_ = nullptr; }
+Spool::Spool(Spool &&other) noexcept
+    : directory_(std::move(other.directory_)), buffer_(std::move(other.buffer_)),
+      position_(other.position_), file_(other.file_) { other.file_ = nullptr; }
 Spool &Spool::operator=(Spool &&other) noexcept {
   if (this != &other) {
     if (file_ != nullptr) std::fclose(file_);
+    directory_ = std::move(other.directory_); buffer_ = std::move(other.buffer_);
+    position_ = other.position_;
     file_ = other.file_; other.file_ = nullptr;
   }
   return *this;
 }
 void Spool::write(std::string_view value) {
+  if (file_ == nullptr) {
+    if (value.size() <= memory_limit - buffer_.size()) { buffer_ += value; return; }
+    spill();
+  }
   checked(std::fwrite(value.data(), 1, value.size(), file_) == value.size());
 }
-void Spool::start_read() { checked(std::fseek(file_, 0, SEEK_SET) == 0); }
+void Spool::start_read() {
+  if (file_ == nullptr) position_ = 0;
+  else checked(std::fseek(file_, 0, SEEK_SET) == 0);
+}
 bool Spool::read(void *destination, size_t size) {
+  if (file_ == nullptr) {
+    if (size != 0 && position_ == buffer_.size()) return false;
+    checked(size <= buffer_.size() - position_);
+    std::memcpy(destination, buffer_.data() + position_, size); position_ += size; return true;
+  }
   const auto n = std::fread(destination, 1, size, file_);
   if (n == 0 && std::feof(file_)) return false;
   checked(n == size); return true;
 }
 void Spool::output(FILE *stream) {
+  if (file_ == nullptr) {
+    checked(std::fwrite(buffer_.data(), 1, buffer_.size(), stream) == buffer_.size()); return;
+  }
   start_read(); std::array<char, 16384> buffer{};
   while (true) {
     const auto n = std::fread(buffer.data(), 1, buffer.size(), file_);
