@@ -66,7 +66,11 @@ std::string json_string(std::string_view text) {
 }
 
 int64_t bigint(std::string_view text) {
-  if (!text.empty() && text.front() == '+') text.remove_prefix(1);
+  if (!text.empty() && text.front() == '+') {
+    text.remove_prefix(1);
+    require(!text.empty() && text.front() >= '0' && text.front() <= '9',
+            "invalid_bigint", "expected signed 64-bit integer");
+  }
   int64_t value = 0;
   const auto result = std::from_chars(text.data(), text.data() + text.size(), value);
   require(!text.empty() && result.ec == std::errc{} &&
@@ -125,6 +129,7 @@ class Parser {
         std::string table_pk;
         do {
           if (take("primary")) {
+            require(table_pk.empty(), "invalid_schema", "duplicate PRIMARY KEY declaration");
             expect("key"); expect("("); table_pk = identifier(); expect(")");
           } else {
             Column c; c.name = identifier();
@@ -145,6 +150,7 @@ class Parser {
         if (!table_pk.empty()) {
           bool found = false;
           for (auto &c : s.columns) {
+            require(!c.primary, "invalid_schema", "duplicate PRIMARY KEY declaration");
             if (c.name == table_pk) { c.primary = true; found = true; }
           }
           require(found, "unknown_column", "primary key column does not exist");
@@ -279,6 +285,7 @@ class Parser {
   std::string identifier() {
     require(current_.tag == Token::Word || current_.tag == Token::Identifier,
             "syntax", "expected identifier");
+    require(!current_.text.empty(), "syntax", "empty identifier");
     std::string result = lower(current_.text); next(); return result;
   }
   uint32_t size_parameter() {

@@ -3,6 +3,7 @@
 #include "sql.h"
 
 #include <array>
+#include <bit>
 #include <functional>
 #include <list>
 #include <map>
@@ -21,6 +22,16 @@ uint64_t read_u64(std::string_view &bytes);
 std::string_view read_bytes(std::string_view &bytes, size_t size);
 void append_string(std::string &out, std::string_view value);
 std::string read_string(std::string_view &bytes);
+
+// Caller validates the complete vector span once with read_bytes.
+inline float load_float(const char *data) {
+  const auto *p = reinterpret_cast<const unsigned char *>(data);
+  const uint32_t bits = static_cast<uint32_t>(p[0]) |
+                        (static_cast<uint32_t>(p[1]) << 8U) |
+                        (static_cast<uint32_t>(p[2]) << 16U) |
+                        (static_cast<uint32_t>(p[3]) << 24U);
+  return std::bit_cast<float>(bits);
+}
 
 struct Table {
   std::vector<Column> columns;

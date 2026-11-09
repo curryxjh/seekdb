@@ -33,10 +33,13 @@ def boundaries(client):
     bad(client, "CREATE TABLE x (id VARCHAR(4) PRIMARY KEY);")
     bad(client, "CREATE TABLE x (id BIGINT PRIMARY KEY, id BIGINT);")
     bad(client, "CREATE TABLE x (id BIGINT PRIMARY KEY, a VECTOR(1), b VECTOR(1));")
+    bad(client, "CREATE TABLE x (id BIGINT PRIMARY KEY, PRIMARY KEY(id));")
+    bad(client, "CREATE TABLE x (id BIGINT, PRIMARY KEY(id), PRIMARY KEY(id));")
+    bad(client, "CREATE TABLE `` (id BIGINT PRIMARY KEY);")
     client.ok("CREATE TABLE t (id BIGINT PRIMARY KEY, n BIGINT, s VARCHAR(4), v VECTOR(2));")
     client.ok("INSERT INTO t VALUES (-9223372036854775808,9223372036854775807,'中文😀a','[16777217,0]');")
     check_rows(client, "SELECT id,n,s FROM t;", [[-(2**63), 2**63-1, "中文😀a"]])
-    for integer in ["9223372036854775808", "-9223372036854775809", "1.0", "1e0"]:
+    for integer in ["9223372036854775808", "-9223372036854775809", "1.0", "1e0", "+-1", "-+1"]:
         bad(client, f"INSERT INTO t VALUES ({integer},0,'x','[0,0]');")
     for vector in ["[0]", "[0,0,0]", "[NaN,0]", "[Infinity,0]", "[1e39,0]",
                    "[1e999,0]", '[\"x\",0]', "[0,]", "[0 0]", "[0x1,0]"]:

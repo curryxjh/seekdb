@@ -237,8 +237,9 @@ Row Database::decode(const Table &t, uint64_t offset) {
     if (c.type == Type::Bigint) row.emplace_back(std::bit_cast<int64_t>(read_u64(bytes)));
     else if (c.type == Type::Varchar) row.emplace_back(read_string(bytes));
     else {
-      std::vector<float> vector; vector.reserve(c.size);
-      for (uint32_t i = 0; i < c.size; ++i) vector.push_back(std::bit_cast<float>(read_u32(bytes)));
+      const auto input = read_bytes(bytes, static_cast<size_t>(c.size) * 4);
+      std::vector<float> vector(c.size);
+      for (size_t i = 0; i < vector.size(); ++i) vector[i] = load_float(input.data() + i * 4);
       row.emplace_back(std::move(vector));
     }
   }
@@ -477,9 +478,11 @@ Spool Database::select(const Statement &s, const Table &t) {
     storage_.scan(t.vector_root, [&](int64_t id, uint64_t offset) {
       auto bytes = storage_.blob(offset);
       Candidate value; value.id = id; value.offset = read_u64(bytes);
+      const auto input = read_bytes(bytes, order.query.size() * 4);
+      require(bytes.empty(), "corrupt_data", "trailing vector posting data");
       double sum = 0;
-      for (float q : order.query) {
-        const double delta = static_cast<double>(std::bit_cast<float>(read_u32(bytes))) - q;
+      for (size_t i = 0; i < order.query.size(); ++i) {
+        const double delta = static_cast<double>(load_float(input.data() + i * 4)) - order.query[i];
         sum += delta * delta;
       }
       value.key = std::sqrt(sum); return accept(std::move(value));
