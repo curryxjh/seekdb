@@ -14,7 +14,7 @@ def run(image, output):
     if output:
         Path(output).mkdir(parents=True, exist_ok=True)
     try:
-        for suite in ["public", "regression"]:
+        for suite in ["public", "regression", "storage_splits"]:
             command = [sys.executable, str(Path(__file__).with_name(suite + ".py")),
                        "--binary", wrapper]
             result = subprocess.run(command, env=env, capture_output=True, text=True)

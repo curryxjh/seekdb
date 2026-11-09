@@ -16,6 +16,7 @@ g++ -std=c++20 -O3 -Wall -Wextra -Wpedantic -Wconversion -Wshadow \
     -DMINIVECTORDB_FAULTS minivectordb/*.cpp -o /data/minivectordb-fault
 python3 tests/public.py --binary /data/minivectordb-fault --temp-root /data
 python3 tests/regression.py --binary /data/minivectordb-fault --temp-root /data
+python3 tests/storage_splits.py --binary /data/minivectordb-fault --temp-root /data
 python3 tests/crash.py --binary /data/minivectordb-fault --temp-root /data
 """
     try:

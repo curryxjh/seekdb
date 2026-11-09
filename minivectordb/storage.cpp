@@ -314,18 +314,25 @@ uint64_t Storage::find(uint64_t root, int64_t key) {
 }
 Storage::Split Storage::insert(uint64_t root, int64_t key, uint64_t value, uint64_t boundary) {
   Node n = node(root);
+  bool appended = false;
   if (n.leaf) {
     auto it = std::lower_bound(n.entries.begin(), n.entries.end(), key,
                                [](const Entry &e, int64_t k) { return e.key < k; });
     if (it != n.entries.end() && it->key == key) it->ref = value;
-    else n.entries.insert(it, {key, value});
+    else {
+      appended = it == n.entries.end();
+      n.entries.insert(it, {key, value});
+    }
   } else {
     auto it = std::upper_bound(n.entries.begin(), n.entries.end(), key,
                                [](int64_t k, const Entry &e) { return k < e.key; });
     size_t index = it == n.entries.begin() ? 0 : static_cast<size_t>(std::prev(it) - n.entries.begin());
     Split child = insert(n.entries[index].ref, key, value, boundary);
     n.entries[index] = child.left;
-    if (child.has_right) n.entries.insert(n.entries.begin() + static_cast<ptrdiff_t>(index + 1), child.right);
+    if (child.has_right) {
+      appended = index + 1 == n.entries.size();
+      n.entries.insert(n.entries.begin() + static_cast<ptrdiff_t>(index + 1), child.right);
+    }
   }
   Split result{};
   if (n.entries.size() <= capacity) {
@@ -333,7 +340,9 @@ Storage::Split Storage::insert(uint64_t root, int64_t key, uint64_t value, uint6
     result.left = {first, save_node(root, std::move(n), boundary)};
   } else {
     Node right; right.leaf = n.leaf;
-    const size_t mid = n.entries.size() / 2;
+    // A new rightmost entry can start a right sibling without leaving a
+    // half-empty historical page on every ascending split.
+    const size_t mid = appended ? capacity : n.entries.size() / 2;
     right.entries.assign(n.entries.begin() + static_cast<ptrdiff_t>(mid), n.entries.end());
     n.entries.resize(mid);
     const auto first = n.entries.front().key;
