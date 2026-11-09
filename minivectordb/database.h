@@ -11,7 +11,7 @@ namespace mvdb {
 using Value = std::variant<int64_t, std::string, std::vector<float>, double>;
 using Row = std::vector<Value>;
 
-// Results complete before success is emitted; large results spill under /data.
+// Results are completed on disk before any successful response is emitted.
 class Spool {
  public:
   explicit Spool(const std::string &directory);
@@ -24,12 +24,7 @@ class Spool {
   bool read(void *destination, size_t size);
   void output(FILE *stream);
  private:
-  static constexpr size_t memory_limit = 8192;
-  std::string directory_;
-  std::string buffer_;
-  size_t position_ = 0;
   FILE *file_ = nullptr;
-  void spill();
 };
 
 class Database {
