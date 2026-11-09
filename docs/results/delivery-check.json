@@ -1,16 +1,10 @@
 {
   "status": "PASS",
-  "validated_commit": "b4d6befa0a25bd19a86682b87ad512eadea159e2",
-  "tested_core_commit": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
+  "validated_commit": "d40301fd27be41996d9ed043a7ea874a24ba8edc",
+  "tested_core_commit": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
   "date": "2026-11-09",
-  "scope": "Full Git commit exported into an empty temporary directory; authentic artifact validation, clean native rebuild and unchanged public assertions executed there. No formal platform submission.",
-  "core_and_build_diff_from_tested_core": "",
-  "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-  "file_sha256": {
-    "Dockerfile": "4caf1d9b74ea08d5ab8318f7175206c52b6be8ed7bc2b617e6741a79bb7edc92",
-    "agent/conversation.json": "77fd95a5502ca07fbea02e887f72569f770acfb7a3b0eef20b3743c6ca3a2903"
-  },
-  "unique_learning_artifact": "agent/conversation.json",
+  "scope": "Full committed tree exported into an empty directory; evidence validation, clean native build, unchanged public assertions and regression. Source-built no-cache Linux amd64 image executable compared with the fully tested candidate. No formal submission.",
+  "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
   "commands": [
     {
       "argv": [
@@ -18,7 +12,8 @@
         "tests/evidence.py"
       ],
       "exit": 0,
-      "stdout": "PASS strict UTF-8 JSON, 61600 bytes, 13 pointers, excerpts, 36 artifact hashes and final source digest\n",
+      "seconds": 0.05966504199022893,
+      "stdout": "PASS strict UTF-8 JSON, 127708 bytes, 25 pointers, excerpts, 64 artifact hashes and final source digest\n",
       "stderr": ""
     },
     {
@@ -26,6 +21,7 @@
         "./build.sh"
       ],
       "exit": 0,
+      "seconds": 2.784040416998323,
       "stdout": "",
       "stderr": ""
     },
@@ -37,12 +33,48 @@
         "build/minivectordb"
       ],
       "exit": 0,
+      "seconds": 0.4356199169997126,
       "stdout": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\n",
       "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/regression.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "exit": 0,
+      "seconds": 0.696636207998381,
+      "stdout": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "build",
+        "--no-cache",
+        "--platform",
+        "linux/amd64",
+        "-t",
+        "minivectordb:optimized-clean",
+        "."
+      ],
+      "exit": 0,
+      "seconds": 9.249218541997834,
+      "stdout": "",
+      "stderr": "#0 building with \"desktop-linux\" instance using docker driver\n\n#1 [internal] load build definition from Dockerfile\n#1 transferring dockerfile: 552B done\n#1 DONE 0.0s\n\n#2 [internal] load metadata for docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\n#2 DONE 0.0s\n\n#3 [internal] load metadata for docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c\n#3 DONE 0.0s\n\n#4 [internal] load .dockerignore\n#4 transferring context: 77B done\n#4 DONE 0.0s\n\n#5 [stage-1 1/3] FROM docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\n#5 resolve docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc done\n#5 CACHED\n\n#6 [build 1/4] FROM docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c\n#6 resolve docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c done\n#6 DONE 0.0s\n\n#7 [build 2/4] WORKDIR /src\n#7 CACHED\n\n#8 [internal] load build context\n#8 transferring context: 65.50kB done\n#8 DONE 0.0s\n\n#9 [build 3/4] COPY minivectordb/ minivectordb/\n#9 DONE 0.0s\n\n#10 [build 4/4] RUN g++ -std=c++20 -O3 -Wall -Wextra -Wpedantic -Wconversion -Wshadow     -static-libstdc++ -static-libgcc minivectordb/*.cpp -o /minivectordb\n#10 DONE 8.6s\n\n#11 [stage-1 2/3] COPY --from=build /minivectordb /usr/local/bin/minivectordb\n#11 DONE 0.0s\n\n#12 [stage-1 3/3] WORKDIR /data\n#12 DONE 0.0s\n\n#13 exporting to image\n#13 exporting layers 0.1s done\n#13 exporting manifest sha256:dac91021a030bfb257aedf128d1d1804afa4dd5d497a0962115ff593a610b17f done\n#13 exporting config sha256:f09a5aeabc92faa568d07929a355c8a3a581ac7b25b4f77210b190277cf64549 done\n#13 exporting attestation manifest sha256:6b29785b3f4685d53dec7e234e2cb28a5a899359c4a6f9edb609474322602f8f done\n#13 exporting manifest list sha256:6eb4e22a0f886f4d4b6b696fc332d6ecf3dbebafe039fecf494f12977443a905 done\n#13 naming to docker.io/library/minivectordb:optimized-clean done\n#13 DONE 0.1s\n\nView build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/vor694mg2cf75ldsk7kfbckht\n"
     }
   ],
-  "linux_clean_build_evidence": "docs/results/core-clean.json",
-  "linux_binary_sha256": "41a953dac674b5c85b3401a21fec8a66166d588ca4d68f824a4269f234c89be3",
-  "linux_binary_note": "The prior no-cache Linux amd64 clean build used the identical core sources and Dockerfile; its binary matched the fully tested local image.",
-  "record_commit_note": "The following commit adds only this verification record. Source, Dockerfile and learning JSON remain byte-identical to validated_commit."
+  "linux_binary_sha256": "8ca58ec9522a17079e4c470925c2d048638fd748cc58152f0fa7750c75aa4255",
+  "image_id": "sha256:6eb4e22a0f886f4d4b6b696fc332d6ecf3dbebafe039fecf494f12977443a905",
+  "measured_image_id": "sha256:629bebe92d69ed8ceeeb865cd2a2d4a688eb820ae9e5ad4b298c41526b7901e0",
+  "core_and_build_diff_from_tested_core": "",
+  "file_sha256": {
+    "Dockerfile": "4caf1d9b74ea08d5ab8318f7175206c52b6be8ed7bc2b617e6741a79bb7edc92",
+    "agent/conversation.json": "441b07f75f45498678ec5ccf810deab0faa9a3d5487290bbd3cebdbe5263ef30"
+  },
+  "unique_learning_artifact": "agent/conversation.json",
+  "linux_binary_note": "No-cache exported-commit build executable is byte-identical to the image used by the full final-source suite, resource tests and both final benchmark modes.",
+  "record_commit_note": "The following verification commit changes only docs/results/delivery-check.json. Source, Dockerfile and evidence remain byte-identical to validated_commit."
 }
