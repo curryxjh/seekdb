@@ -13,7 +13,7 @@ struct Error : std::runtime_error {
   Error(std::string code_, const std::string &message)
       : std::runtime_error(message), code(std::move(code_)) {}
 };
-void require(bool condition, const std::string &code, const std::string &message);
+void require(bool condition, std::string_view code, std::string_view message);
 std::string lower(std::string text);
 size_t unicode_length(std::string_view text);
 std::string json_string(std::string_view text);

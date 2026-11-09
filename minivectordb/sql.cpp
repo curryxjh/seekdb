@@ -7,8 +7,8 @@
 
 namespace mvdb {
 
-void require(bool condition, const std::string &code, const std::string &message) {
-  if (!condition) throw Error(code, message);
+void require(bool condition, std::string_view code, std::string_view message) {
+  if (!condition) throw Error(std::string(code), std::string(message));
 }
 
 std::string lower(std::string text) {
