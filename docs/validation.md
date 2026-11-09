@@ -1,8 +1,11 @@
 # Validation and performance record
 
-Date: 2026-11-09, Asia/Shanghai. All results below are LOCAL; no formal platform
-submission was attempted, and no official admission, E, rank or 80-point score is
-claimed.
+Date: 2026-11-09, Asia/Shanghai. The engineering results below are LOCAL.
+The user subsequently reported a formal platform failure at 21:54 for delivered
+commit `3ccc14effd6501ffb10d5e6aaa0ba2853032cb86`. Authenticated inspection
+confirmed failed admission; performance and prompt evaluation were skipped.
+No detailed failure log was returned. See [platform investigation](platform-failure.md).
+No official admission, E, rank or 80-point score is claimed.
 
 ## Revision and environment
 
@@ -234,7 +237,9 @@ need checking against frozen limits. Cross-container macOS bind-mount flock is
 not supported in the observed environment; Linux volumes were verified.
 
 The learning artifact includes actual user authorization and engineering/test
-results. There is no user technical prediction, explanation, correction or
-transfer feedback in this session. `learning_units` is empty rather than forged;
-the Agent's work is not assigned to a student. Neither dual first places nor
-80 points has been established, and formal submission remains unattempted.
+results. The user's later platform-failure report is retained as an actual
+independent challenge to the delivery evidence. It has no assigned score or
+invented technical explanation, prediction, transfer response or completed
+repair. The Agent's work is not assigned to a student. Neither dual first
+places nor 80 points has been established. The latest observed formal admission
+failed; the agent did not submit or retry it.

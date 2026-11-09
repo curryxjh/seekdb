@@ -1,0 +1,30 @@
+{
+  "scope": "Sanitized selected fields from the authenticated platform record and result dialog; not a complete response",
+  "observed_date": "2026-11-09",
+  "timezone": "Asia/Shanghai",
+  "record_url": "https://open.oceanbase.com/train/TestRecord?questionId=600081",
+  "record_id": 47247992,
+  "submitted_at": "2026-11-09T21:54:37+08:00",
+  "repository": "curryxjh/seekdb",
+  "branch": "minivectordb-round2",
+  "commit": "3ccc14effd6501ffb10d5e6aaa0ba2853032cb86",
+  "task_status_label": "执行成功",
+  "success_count": 0,
+  "fail_count": 1,
+  "admission": "未通过；此项为准入条件，不计排名分",
+  "performance": "MySQL 正式用例未通过，不计本项",
+  "agent_prompt": "MySQL 正式用例未通过，不计本项",
+  "errorMessage": null,
+  "case_results": [
+    {
+      "testCase": "MySQL 正式用例",
+      "resultStatus": 2,
+      "score": "0",
+      "questionScore": "0",
+      "message": "此项为准入条件，不计排名分"
+    }
+  ],
+  "diagnosis": "Root cause unresolved: no per-case errors, build/runtime logs or official process driver returned",
+  "agent_submitted_retry": false,
+  "redaction": "Omitted authenticated repository URL and unrelated account/session fields; no raw response saved"
+}

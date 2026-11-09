@@ -23,12 +23,12 @@
       }
     ],
     "ai_assistance": "The initial prompt explicitly says AI assisted its drafting. Attached-document plans, the prior model handoff, agent-authored work, and tool logs are not student learning experiences. Only actual user utterances are labeled student.",
-    "selection_and_redaction": "Kept task authorization, technical decisions, actual failures/corrections, raw outputs and all measured rounds. Omitted repetitive progress chatter, browser chrome, unrelated original workspace files, account-local paths and account/session data. No invented technical student replies.",
+    "selection_and_redaction": "Kept task authorization, technical decisions, actual failures/corrections, raw outputs and all measured rounds. Omitted repetitive progress chatter, browser chrome, unrelated original workspace files, account-local paths and account/session data. No invented technical student replies. Later platform evidence keeps only diagnostic fields; authenticated repository URL and account/session data omitted.",
     "asan_build_command": "SANITIZE=1 FAULTS=1 OUTPUT=build/minivectordb-sanitize ./build.sh",
-    "formal_submission": "not authorized and not attempted",
-    "formal_admission": "29-case organizer driver/configuration absent; unverified",
+    "formal_submission": "User supplied platform record 47247992 for 3ccc14e; inspected, no agent submission or retry.",
+    "formal_admission": "FAIL at 3ccc14effd6501ffb10d5e6aaa0ba2853032cb86; detailed error and formal driver unavailable.",
     "score_or_rank": null,
-    "student_technical_evidence": "not supplied; no learning instance or score inferred from authorization",
+    "student_technical_evidence": "Actual user platform-failure feedback retained; no technical explanation or completed repair inferred.",
     "byte_limit": 131072,
     "prior_delivery_commit": "c8423c1c5c3fa15d8b5dc0d131aec81d35d425d9",
     "iteration_scope": "Further optimization requested by the user; retain measured improvements, preserve and withdraw unfavorable experiments; LOCAL three-metric proxy only."
@@ -98,6 +98,18 @@
       "role": "agent",
       "origin": "agent_authored_session_summary_not_verbatim_transcript",
       "content": "比较器必须逐轮配对同种子后计算三指标，再取中位数，不拼接各轮最佳值。将原始cgroup I/O标为未认证，代理值不称官方E或排名。查询内存仅-0.35%，不足以证明稳定改善；显式postings查询只比新扫描快3.44%，但I/O和内存增加，继续不自动建索引。用户曾请求代写反思，该AI草稿不计学生证据；没有独立技术回复，learning_units继续为空。"
+    },
+    {
+      "id": "u6",
+      "role": "student",
+      "origin": "actual_user_message",
+      "content": "https://open.oceanbase.com/train/TestRecord?questionId=600081 全都未通过啊"
+    },
+    {
+      "id": "a5",
+      "role": "agent",
+      "origin": "agent_authored_session_summary_not_verbatim_transcript",
+      "content": "平台确认评测了交付提交，功能准入失败导致两项排名评测跳过。没有首条错误日志，官方公开题包仍缺进程驱动；本地协议兼容性未证实，无法确认根因或复现同一失败。此前将本地通过作为交付依据不充分；记录失败，未盲改协议或重新提测。"
     }
   ],
   "experiments": [
@@ -730,6 +742,14 @@
       "exit_status": 0,
       "student_refs": [],
       "scope": "Paired local proxy only; baseline and candidate source hashes retained in raw inputs; not official E or rankings"
+    },
+    {
+      "id": "platform-admission-failure",
+      "origin": "authenticated_browser_selected_response_and_dialog_fields",
+      "status": "admission failed; diagnosis blocked by missing first error and official driver",
+      "code_revision": "3ccc14effd6501ffb10d5e6aaa0ba2853032cb86",
+      "final_source": false,
+      "output": "recordId=47247992; submitted=2026-11-09T21:54:37+08:00; branch=minivectordb-round2; commit=3ccc14effd6501ffb10d5e6aaa0ba2853032cb86; task=执行成功; successCount=0; failCount=1; MySQL 正式用例=未通过; performance/agent_prompt=MySQL 正式用例未通过，不计本项; errorMessage=null; no per-case log returned. Upstream refetch=9f6df2ba5acf871376e22b64a3d0724e4b575044; public README still delegates wire protocol to absent organizer driver. No retry submitted."
     }
   ],
   "engineering_decisions": [
@@ -806,7 +826,19 @@
       "limitations": "Agent transfer validation only; tree seed30274159 and vector seed14223819 held out; no student transfer score claimed."
     }
   ],
-  "learning_units": [],
+  "learning_units": [
+    {
+      "id": "platform-counterexample",
+      "dimension": "独立验证与质疑",
+      "student_refs": [
+        "/messages/10/content"
+      ],
+      "result_refs": [
+        "/experiments/41/output"
+      ],
+      "status": "User supplied actual contrary platform feedback; cause and repair unresolved. No score claimed; no technical explanation or completed loop invented."
+    }
+  ],
   "learning_opportunities": [
     {
       "topic": "Commit rename completed but success response absent: which complete states may recovery expose?",
@@ -857,7 +889,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "314c3818a5d56680172c5bb5641575652f3ae6576d224ca66e59828eae4c56cc"
+      "sha256": "c5d0205d3f375a9fccb819e1dcd72c7c1431a399284720403cc2254e2c79f31c"
     },
     {
       "path": "build.sh",
@@ -869,7 +901,7 @@
     },
     {
       "path": "docs/requirements.md",
-      "sha256": "a4f57614a16a5beb446475d5089d36cb537b78d1eb44ebf8d285e332f89acbb3"
+      "sha256": "94a48123b506cd8d1f9f155db69de8c01cc978faa3b8b25307d96b4d408cc021"
     },
     {
       "path": "docs/results/benchmark-checks-postings.json",
@@ -1049,7 +1081,7 @@
     },
     {
       "path": "docs/validation.md",
-      "sha256": "57780e2f1a76e731eab174b29e6e5cd07361d165ff74075dd56ea606d856bf40"
+      "sha256": "b6bdd8298438d07cc0a89741fe0ca6d5a6832457068c509ce1b3597065787dea"
     },
     {
       "path": "tests/benchmark.py",
@@ -1102,15 +1134,23 @@
     {
       "path": "tests/vector_sweep.py",
       "sha256": "596bce12f00af323a4373373e1bfc8f759e13daf98d9521509985038ca1cb5c8"
+    },
+    {
+      "path": "docs/platform-failure.md",
+      "sha256": "23c3fcfc6f20c830f3f0f5fc36ba04346520e3cfff02fe7563b4b7dbec72524e"
+    },
+    {
+      "path": "docs/results/platform-admission-failure.json",
+      "sha256": "dc5c1e38695d7d8109a6f316a16f4046dbd2bce1b19e5f040f4ae70acdd3b730"
     }
   ],
   "remaining_limits": [
     "LOCAL adapter; organizer framing, ready/error/mode mapping and frozen budgets unavailable",
-    "No formal 29/29 result, official E, rank or 80-point evidence",
+    "Formal admission FAILED at delivered 3ccc14e; root cause unresolved; no official E, rank or 80-point evidence",
     "ann is exact fallback, not sublinear approximate search",
     "Append/COW has no compaction; old pages, rows and tombstones consume space",
     "Maximum request/AST memory still needs formal-budget calibration",
     "Observed cross-container macOS bind-mount flock unreliable; Linux named volumes verified",
-    "No genuine student technical prediction, explanation or transfer feedback in this session"
+    "Actual user platform-failure feedback retained; no student technical prediction, explanation or transfer reply"
   ]
 }
