@@ -1,0 +1,48 @@
+{
+  "status": "PASS",
+  "validated_commit": "b4d6befa0a25bd19a86682b87ad512eadea159e2",
+  "tested_core_commit": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
+  "date": "2026-11-09",
+  "scope": "Full Git commit exported into an empty temporary directory; authentic artifact validation, clean native rebuild and unchanged public assertions executed there. No formal platform submission.",
+  "core_and_build_diff_from_tested_core": "",
+  "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
+  "file_sha256": {
+    "Dockerfile": "4caf1d9b74ea08d5ab8318f7175206c52b6be8ed7bc2b617e6741a79bb7edc92",
+    "agent/conversation.json": "77fd95a5502ca07fbea02e887f72569f770acfb7a3b0eef20b3743c6ca3a2903"
+  },
+  "unique_learning_artifact": "agent/conversation.json",
+  "commands": [
+    {
+      "argv": [
+        "python3",
+        "tests/evidence.py"
+      ],
+      "exit": 0,
+      "stdout": "PASS strict UTF-8 JSON, 61600 bytes, 13 pointers, excerpts, 36 artifact hashes and final source digest\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "./build.sh"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/public.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "exit": 0,
+      "stdout": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\n",
+      "stderr": ""
+    }
+  ],
+  "linux_clean_build_evidence": "docs/results/core-clean.json",
+  "linux_binary_sha256": "41a953dac674b5c85b3401a21fec8a66166d588ca4d68f824a4269f234c89be3",
+  "linux_binary_note": "The prior no-cache Linux amd64 clean build used the identical core sources and Dockerfile; its binary matched the fully tested local image.",
+  "record_commit_note": "The following commit adds only this verification record. Source, Dockerfile and learning JSON remain byte-identical to validated_commit."
+}
