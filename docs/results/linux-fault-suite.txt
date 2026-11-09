@@ -1,0 +1,51 @@
+PASS sql_crud (7 SQL)
+PASS sql_comparisons (4 SQL)
+PASS sql_ordering (4 SQL)
+PASS sql_empty (3 SQL)
+PASS sql_primary_key (4 SQL)
+PASS sql_unicode (3 SQL)
+PASS sql_bigint (3 SQL)
+PASS sql_unsupported (3 SQL)
+PASS storage_restart (3 SQL)
+PASS vector_euclidean (3 SQL)
+PASS transaction_commit (6 SQL)
+PASS transaction_rollback (6 SQL)
+PASS storage_mutations (6 SQL)
+PASS storage_multiple_tables (6 SQL)
+PASS vector_ties_and_filter (5 SQL)
+PASS vector_float32 (3 SQL)
+PASS vector_index_maintenance (9 SQL)
+PASS transaction_failed_insert (8 SQL)
+PASS transaction_autocommit_atomic (4 SQL)
+PASS transaction_shutdown_rollback (5 SQL)
+PASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter
+PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity
+PASS differential seed=7, steps=150, index_attempted=True
+PASS differential seed=42, steps=150, index_attempted=True
+PASS differential seed=20261109, steps=150, index_attempted=True
+PASS differential seed=8675309, steps=150, index_attempted=True
+PASS differential seed=39034843, steps=150, index_attempted=True
+PASS crash=before_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_data_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_catalog_write, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_catalog_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_catalog_rename, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS crash=after_directory_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS crash=before_success_response, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS SIGKILL without COMMIT: entire multi-table transaction absent
+PASS autocommit crash=before_data_flush: atomic batch
+PASS autocommit crash=after_data_flush: atomic batch
+PASS autocommit crash=after_data_sync: atomic batch
+PASS autocommit crash=after_catalog_write: atomic batch
+PASS autocommit crash=after_catalog_sync: atomic batch
+PASS autocommit crash=after_catalog_rename: atomic batch
+PASS autocommit crash=after_directory_sync: atomic batch
+PASS crash suite: 17 kill scenarios, 36 repeated recovery kills, 18 idempotent restarts
+PASS indexed crash=index-append: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=index-publish: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=row-before-write: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=row-append: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=posting-append: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=indexed-publish: rows, postings, filtered and unfiltered TopK consistent

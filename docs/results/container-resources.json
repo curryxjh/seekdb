@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "platform": "linux/amd64",
+  "network": "none",
+  "local_memory_limit": 100663296,
+  "swap": 0,
+  "rows": 40000,
+  "data_bytes_before_index": 143434768,
+  "phases": [
+    "large_transaction_commit",
+    "index_build",
+    "filtered_topk",
+    "external_sort",
+    "large_update_delete_rollback",
+    "delete_commit",
+    "uncommitted_delete_sigkill",
+    "restart"
+  ],
+  "before_kill": {
+    "memory_peak": 100663296,
+    "memory_max": "100663296",
+    "swap_max": "0",
+    "io_stat": "254:0 rbytes=1751056384 wbytes=801828864 rios=3037 wios=1993 dbytes=0 dios=0"
+  },
+  "after_restart": {
+    "memory_peak": 100130816,
+    "memory_max": "100663296",
+    "swap_max": "0",
+    "io_stat": "254:0 rbytes=83730432 wbytes=0 rios=99 wios=0 dbytes=0 dios=0"
+  },
+  "seconds": 4.528305040992564,
+  "io_caveat": "Raw cgroup io.stat; dedicated device/writeback attribution not certified."
+}

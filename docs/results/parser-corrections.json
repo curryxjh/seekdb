@@ -1,0 +1,55 @@
+{
+  "minivectordb:baseline": {
+    "image_id": "sha256:5acc990fcff735b8d7154fb577d1bc5fdef047ae13f15741dacaec38de4e9365",
+    "results": [
+      {
+        "sql": "INSERT INTO signed_test VALUES(+-1);",
+        "response": {
+          "ok": true,
+          "affected_rows": 1
+        }
+      },
+      {
+        "sql": "CREATE TABLE duplicate_test(id BIGINT PRIMARY KEY,PRIMARY KEY(id));",
+        "response": {
+          "ok": true
+        }
+      },
+      {
+        "sql": "CREATE TABLE ``(id BIGINT PRIMARY KEY);",
+        "response": {
+          "ok": true
+        }
+      }
+    ]
+  },
+  "minivectordb:local": {
+    "image_id": "sha256:c7abcf2c5a38547a3b6bc2db6acafd22caae8dc090dbda1ad538d178fa4a0285",
+    "results": [
+      {
+        "sql": "INSERT INTO signed_test VALUES(+-1);",
+        "response": {
+          "ok": false,
+          "error": "invalid_bigint",
+          "message": "expected signed 64-bit integer"
+        }
+      },
+      {
+        "sql": "CREATE TABLE duplicate_test(id BIGINT PRIMARY KEY,PRIMARY KEY(id));",
+        "response": {
+          "ok": false,
+          "error": "invalid_schema",
+          "message": "duplicate PRIMARY KEY declaration"
+        }
+      },
+      {
+        "sql": "CREATE TABLE ``(id BIGINT PRIMARY KEY);",
+        "response": {
+          "ok": false,
+          "error": "syntax",
+          "message": "empty identifier"
+        }
+      }
+    ]
+  }
+}

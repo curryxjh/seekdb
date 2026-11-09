@@ -1,0 +1,24 @@
+PASS crash=before_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_data_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_catalog_write, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_catalog_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_catalog_rename, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS crash=after_directory_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS crash=before_success_response, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS SIGKILL without COMMIT: entire multi-table transaction absent
+PASS autocommit crash=before_data_flush: atomic batch
+PASS autocommit crash=after_data_flush: atomic batch
+PASS autocommit crash=after_data_sync: atomic batch
+PASS autocommit crash=after_catalog_write: atomic batch
+PASS autocommit crash=after_catalog_sync: atomic batch
+PASS autocommit crash=after_catalog_rename: atomic batch
+PASS autocommit crash=after_directory_sync: atomic batch
+PASS crash suite: 17 kill scenarios, 36 repeated recovery kills, 18 idempotent restarts
+PASS indexed crash=index-append: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=index-publish: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=row-before-write: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=row-append: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=posting-append: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=indexed-publish: rows, postings, filtered and unfiltered TopK consistent

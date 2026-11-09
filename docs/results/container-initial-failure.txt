@@ -1,0 +1,17 @@
+2026-11-09, production Linux amd64 image on Docker Desktop/macOS arm64.
+Command: python3 tests/regression.py --binary tests/docker_db.py
+Initial harness used two separate bind mounts of one macOS temporary directory.
+Failure: regression.py directory-lock assertion failed.
+Focused reproduction:
+  second container returncode 0
+  stdout b'{"ready":true,"protocol":"minivectordb-local-v1"}\n'
+  stderr b''
+Control using one Linux named volume:
+  second process in same container: returncode 74, empty stdout,
+    stderr b'minivectordb: data directory is in use\n'
+  second container on same volume: returncode 74, empty stdout,
+    stderr b'minivectordb: data directory is in use\n'
+Resolution: container_suite.py gives each test a Linux named volume, shared on
+restart and competing opens. No assertion or production lock was removed.
+Limitation: cross-container locking of macOS bind mounts is not supported by
+this observed Docker Desktop filesystem configuration; use Linux volumes.

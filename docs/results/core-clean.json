@@ -1,0 +1,74 @@
+{
+  "commit": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
+  "scope": "clean exported core commit; source/Dockerfile unchanged in final docs delivery",
+  "commands": [
+    {
+      "argv": [
+        "./build.sh"
+      ],
+      "exit": 0,
+      "output": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/public.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "exit": 0,
+      "output": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/regression.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "exit": 0,
+      "output": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/vector_sweep.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "exit": 0,
+      "output": "PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\n"
+    },
+    {
+      "argv": [
+        "docker",
+        "build",
+        "--no-cache",
+        "--platform",
+        "linux/amd64",
+        "-t",
+        "minivectordb:clean",
+        "."
+      ],
+      "exit": 0,
+      "output": "#0 building with \"desktop-linux\" instance using docker driver\n\n#1 [internal] load build definition from Dockerfile\n#1 transferring dockerfile: 552B done\n#1 DONE 0.0s\n\n#2 [internal] load metadata for docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c\n#2 DONE 0.0s\n\n#3 [internal] load metadata for docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\n#3 DONE 0.0s\n\n#4 [internal] load .dockerignore\n#4 transferring context: 77B done\n#4 DONE 0.0s\n\n#5 [stage-1 1/3] FROM docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\n#5 resolve docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc done\n#5 CACHED\n\n#6 [build 1/4] FROM docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c\n#6 resolve docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c done\n#6 DONE 0.0s\n\n#7 [build 2/4] WORKDIR /src\n#7 CACHED\n\n#8 [internal] load build context\n#8 transferring context: 63.38kB done\n#8 DONE 0.0s\n\n#9 [build 3/4] COPY minivectordb/ minivectordb/\n#9 DONE 0.0s\n\n#10 [build 4/4] RUN g++ -std=c++20 -O3 -Wall -Wextra -Wpedantic -Wconversion -Wshadow     -static-libstdc++ -static-libgcc minivectordb/*.cpp -o /minivectordb\n#10 DONE 9.1s\n\n#11 [stage-1 2/3] COPY --from=build /minivectordb /usr/local/bin/minivectordb\n#11 DONE 0.0s\n\n#12 [stage-1 3/3] WORKDIR /data\n#12 DONE 0.0s\n\n#13 exporting to image\n#13 exporting layers 0.1s done\n#13 exporting manifest sha256:e49bf021879b4a0d15482515135107a61cd8230f1481f34afe30e70f5428c1b9 done\n#13 exporting config sha256:110d02664d941c9d041c45a5591429a1e854dac6b72c2f907bb7718bd2efe69c done\n#13 exporting attestation manifest sha256:bc38577684d59faab4b8d865565aedc2f815d16a5a581664fe89fad4ede940ed done\n#13 exporting manifest list sha256:a9255d48ef7d70b03d9526c970b99be2b879e5661be72da2195760237840c57b done\n#13 naming to docker.io/library/minivectordb:clean done\n#13 DONE 0.1s\n\nView build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/9uptzuk897yzd6ft1frvwiot9\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/container_suite.py",
+        "--image",
+        "minivectordb:clean"
+      ],
+      "exit": 0,
+      "output": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\nPASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n"
+    }
+  ],
+  "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
+  "linux_binary_sha256": {
+    "minivectordb:local": "41a953dac674b5c85b3401a21fec8a66166d588ca4d68f824a4269f234c89be3",
+    "minivectordb:clean": "41a953dac674b5c85b3401a21fec8a66166d588ca4d68f824a4269f234c89be3"
+  },
+  "binary_identical": true,
+  "status": "PASS"
+}
