@@ -1,0 +1,205 @@
+{
+  "date": "2026-11-09",
+  "scope": "LOCAL final-source tests, no organizer result",
+  "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+  "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+  "commands": [
+    {
+      "label": "native-public",
+      "argv": [
+        "python3",
+        "tests/public.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 0.5109329580009216,
+      "output": "docs/results/opt-final-native-public.txt",
+      "output_sha256": "498d843396623651a6bbd82b80296d40390cbd68b6d0c3ea1e62d6fb9ec8d5cc"
+    },
+    {
+      "label": "native-regression",
+      "argv": [
+        "python3",
+        "tests/regression.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 0.7074874170066323,
+      "output": "docs/results/opt-final-native-regression.txt",
+      "output_sha256": "1c3c65c657d40765f96a0e5f0d7cf65138e4a58f9278ab9a0db1ac957f8cc811"
+    },
+    {
+      "label": "native-storage_splits",
+      "argv": [
+        "python3",
+        "tests/storage_splits.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 1.1924998750037048,
+      "output": "docs/results/opt-final-native-storage_splits.txt",
+      "output_sha256": "3778f5ee13bba627972451962e3c9a0d6b32bf7bc8d8b891d6d0b5b77412fb4f"
+    },
+    {
+      "label": "native-vector_sweep",
+      "argv": [
+        "python3",
+        "tests/vector_sweep.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 0.9288690000103088,
+      "output": "docs/results/opt-final-native-vector_sweep.txt",
+      "output_sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25"
+    },
+    {
+      "label": "sanitize-build",
+      "argv": [
+        "./build.sh"
+      ],
+      "environment_overrides": {
+        "SANITIZE": "1",
+        "FAULTS": "1",
+        "OUTPUT": "build/minivectordb-sanitize"
+      },
+      "exit": 0,
+      "seconds": 5.440698167003575,
+      "output": "docs/results/opt-final-sanitize-build.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "sanitize-public",
+      "argv": [
+        "python3",
+        "tests/public.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 1.1048927499941783,
+      "output": "docs/results/opt-final-sanitize-public.txt",
+      "output_sha256": "498d843396623651a6bbd82b80296d40390cbd68b6d0c3ea1e62d6fb9ec8d5cc"
+    },
+    {
+      "label": "sanitize-regression",
+      "argv": [
+        "python3",
+        "tests/regression.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 2.751302125005168,
+      "output": "docs/results/opt-final-sanitize-regression.txt",
+      "output_sha256": "1c3c65c657d40765f96a0e5f0d7cf65138e4a58f9278ab9a0db1ac957f8cc811"
+    },
+    {
+      "label": "sanitize-storage_splits",
+      "argv": [
+        "python3",
+        "tests/storage_splits.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 3.002957417003927,
+      "output": "docs/results/opt-final-sanitize-storage_splits.txt",
+      "output_sha256": "3778f5ee13bba627972451962e3c9a0d6b32bf7bc8d8b891d6d0b5b77412fb4f"
+    },
+    {
+      "label": "sanitize-crash",
+      "argv": [
+        "python3",
+        "tests/crash.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 2.605558250012109,
+      "output": "docs/results/opt-final-sanitize-crash.txt",
+      "output_sha256": "3b2e248674e7b91c28a6cf945af915f301ff5e01c31a4b36e46679097b0ab0b9"
+    },
+    {
+      "label": "sanitize-vector_sweep",
+      "argv": [
+        "python3",
+        "tests/vector_sweep.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 1.5042462080018595,
+      "output": "docs/results/opt-final-sanitize-vector_sweep.txt",
+      "output_sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25"
+    },
+    {
+      "label": "linux-fault",
+      "argv": [
+        "python3",
+        "tests/linux_suite.py"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 14.503309957988677,
+      "output": "docs/results/opt-final-linux-fault.txt",
+      "output_sha256": "ee29f1a1c985db5440fcb7abb094f82e1bc4fe8540dd275effdeb48f1bf43d64"
+    },
+    {
+      "label": "production-suite",
+      "argv": [
+        "python3",
+        "tests/container_suite.py",
+        "--image",
+        "minivectordb:packed"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 21.924052417001803,
+      "output": "docs/results/opt-final-production-suite.txt",
+      "output_sha256": "506f304ba75356f733fb2d1d9384bd55da1237741d00971628d0a286af851995"
+    },
+    {
+      "label": "production-sweep",
+      "argv": [
+        "python3",
+        "tests/vector_sweep.py",
+        "--image",
+        "minivectordb:packed"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 2.866717917000642,
+      "output": "docs/results/opt-final-production-sweep.txt",
+      "output_sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25"
+    },
+    {
+      "label": "resources",
+      "argv": [
+        "python3",
+        "tests/container_checks.py",
+        "--image",
+        "minivectordb:packed",
+        "--output",
+        "/Users/oxidaner/develop/coding/open-source/seekdb-minivectordb/docs/results/opt-final-resources.json"
+      ],
+      "environment_overrides": {},
+      "exit": 0,
+      "seconds": 6.380057916001533,
+      "output": "docs/results/opt-final-resources.txt",
+      "output_sha256": "63cc942d40bca1933fa077017774c118929c686f8158e6a92dd33ec87e39cff2"
+    }
+  ]
+}

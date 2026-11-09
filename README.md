@@ -108,21 +108,33 @@ CLI 也接受 `--mode exact|ann`。目前两者都进行精确检索；`ann` 是
 ```sh
 python3 tests/public.py --binary build/minivectordb
 python3 tests/regression.py --binary build/minivectordb
+python3 tests/storage_splits.py --binary build/minivectordb
 python3 tests/public.py --binary build/minivectordb-sanitize
 python3 tests/regression.py --binary build/minivectordb-sanitize
+python3 tests/storage_splits.py --binary build/minivectordb-sanitize
 python3 tests/crash.py --binary build/minivectordb-sanitize
 python3 tests/linux_suite.py --output docs/results/linux-fault-suite.txt
 python3 tests/container_suite.py --output docs/results
 python3 tests/vector_sweep.py
 python3 tests/container_checks.py --output docs/results/container-resources.json
-python3 tests/benchmark.py --output docs/results/benchmark-final-scan.json
-python3 tests/benchmark.py --indexed --output docs/results/benchmark-final-postings.json
+python3 tests/benchmark.py --output docs/results/opt-packed-scan.json
+python3 tests/benchmark.py --indexed --output docs/results/opt-packed-postings.json
+python3 tests/compare.py --baseline docs/results/opt-previous-scan.json \
+  --candidate docs/results/opt-packed-scan.json --output docs/results/opt-final-comparison.json
 python3 tests/evidence.py
 ```
 
 故障测试必须使用 `FAULTS=1` 构建；生产 Docker 镜像没有环境变量控制的故障注入。
 容器测试使用 Linux 数据卷、断网和禁用 swap，结束后自动移除本轮数据卷。
 独立 Python 模型用于事务随机差分和 float32 检索真值，不调用 C++ 关键逻辑。
+三指标比较器按同种子逐轮计算后取中位数；它只比较本地版本，原始 I/O
+尚未认证设备与写回归属，输出不是官方 E 或排名。历史实验文件保留原版本
+记录，最终版本与结果的对应关系见验证记录。
+
+本轮默认扫描在三轮同负载对照中，1000 次查询耗时中位数从 1803.68 ms
+降至 1412.45 ms，减少约 21.7%；原始 I/O 减少约 2.1%，写入阶段峰值内存
+中位数减少约 12.9%。查询内存变化很小，不据此宣称稳定改善。环境为
+Apple Silicon 上模拟的 Linux x86_64；这些是本地结果。
 
 实际结果与性能取舍见 [验证记录](docs/validation.md)，存储不变量、失败边界和
 资源设计见 [设计说明](docs/design.md)，完整状态见

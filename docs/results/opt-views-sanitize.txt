@@ -1,0 +1,7 @@
+PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity
+PASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance
+PASS differential seed=7, steps=150, index_attempted=True
+PASS differential seed=42, steps=150, index_attempted=True
+PASS differential seed=20261109, steps=150, index_attempted=True
+PASS differential seed=8675309, steps=150, index_attempted=True
+PASS differential seed=39034843, steps=150, index_attempted=True

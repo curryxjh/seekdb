@@ -7,11 +7,11 @@ Public manifest: `minivectordb-public-v4`, 20 cases, 95 SQL statements.
 
 | Requirement | Source | Implementation | Verification | Status |
 | --- | --- | --- | --- | --- |
-| Own storage, SQL, transaction and vector execution | supplied requirements; competition description | `minivectordb/` | source audit | implemented, no external engine |
+| Own storage, SQL, transaction and vector execution | supplied requirements; competition description | `minivectordb/` | source audit | implemented, no external engine; borrowed scan fields and packed append splits reverified |
 | SQL CRUD, signed BIGINT, Unicode VARCHAR, float32 VECTOR | public cases + supplied requirements | parser, executor, types | public runner + independent Python oracle | LOCAL PASS: 20 cases / 95 SQL, boundaries and 5 seeds |
 | Atomic statements, read own writes, multi-table commit | public transaction cases + supplied requirements | COW page roots and atomic catalog | regression, differential and fault tests | LOCAL PASS, including failed late INSERT and index mutations |
 | Acknowledged commits survive SIGKILL; repeatable recovery | public README + supplied requirements | data fsync → catalog fsync → rename → directory fsync | deterministic process kill at publication boundaries | LOCAL PASS: 23 kill scenarios, 36 recovery kills, 18 repeated starts |
-| Data exceeds memory, including transactions and sorting | public README + supplied requirements | disk pages, bounded cache and external runs | Linux cgroup test, swap disabled | PASS: 143434768-byte committed file in 96 MiB, 40000 rows |
+| Data exceeds memory, including transactions and sorting | public README + supplied requirements | disk pages, bounded cache and external runs | Linux cgroup test, swap disabled | PASS: 142734352-byte committed file in 96 MiB, 40000 rows |
 | Exact filtered TopK; deterministic ties; live index maintenance | public vector cases + supplied requirements | scan, bounded selection, disk index | independent float32 truth, mutation tests | LOCAL PASS: 375 sweep checks; three seeds per benchmark, both recall groups 1.0 |
 | Approximate acceleration | supplied requirements; frozen requirements unavailable | ann uses exact fallback, physical postings on explicit CREATE INDEX | measured exact comparison | no sublinear ANN claim; index resource tradeoff documented |
 | Container foreground, stdin/stdout, no runtime network, `/data` | supplied requirements; competition description | `Dockerfile`, local adapter | Linux amd64 container end to end | PASS on Docker Desktop emulation; formal adapter pending |
@@ -46,6 +46,16 @@ commit, restart, and verify only the earlier update survived. Also repeat with
 ROLLBACK. These checks passed in the public transaction cases and the independent
 regression suite; the successful statements remain, the failed statement's rows
 are absent, and ROLLBACK restores the prior snapshot.
+
+## Latest performance iteration
+
+Final core cf294bbc8a664988ef11b5884d35ae57c1dd12cb passed native, ASan/UBSan,
+Linux fault-build and production-container checks. Each of three 66002-row key
+orders covers multi-level splits, eviction, rollback, failed statements and
+SIGKILL/restart. All commands and hashes are in `docs/results/opt-final-tests.json`.
+The three-metric LOCAL comparison pairs entire rounds before taking the median;
+it retains an unfavorable spool experiment and its withdrawal. Official E,
+rankings and student learning scores remain unverified.
 
 ## Remaining admission and scoring gaps
 

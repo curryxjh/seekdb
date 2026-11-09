@@ -6,8 +6,8 @@
     "reference_rule": "agent-learning-evidence-v3-unbounded",
     "schema_note": "Our organization format, not an asserted official schema",
     "official_baseline": "9f6df2ba5acf871376e22b64a3d0724e4b575044",
-    "core_commit": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
-    "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
+    "core_commit": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+    "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
     "delivery_repository": "https://github.com/curryxjh/seekdb",
     "delivery_branch": "minivectordb-round2",
     "context_documents": [
@@ -29,7 +29,9 @@
     "formal_admission": "29-case organizer driver/configuration absent; unverified",
     "score_or_rank": null,
     "student_technical_evidence": "not supplied; no learning instance or score inferred from authorization",
-    "byte_limit": 131072
+    "byte_limit": 131072,
+    "prior_delivery_commit": "c8423c1c5c3fa15d8b5dc0d131aec81d35d425d9",
+    "iteration_scope": "Further optimization requested by the user; retain measured improvements, preserve and withdraw unfavorable experiments; LOCAL three-metric proxy only."
   },
   "messages": [
     {
@@ -63,6 +65,39 @@
       "role": "tool",
       "origin": "actual_container_public_stdout",
       "content": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\n"
+    },
+    {
+      "id": "u3",
+      "role": "student",
+      "origin": "actual_user_message",
+      "content": "还需要我写什么吗",
+      "scope": "question about further input, not technical learning evidence"
+    },
+    {
+      "id": "u4",
+      "role": "student",
+      "origin": "actual_user_message",
+      "content": "你帮我写吧",
+      "scope": "asks the Agent to draft; any draft remains AI-authored, not student explanation"
+    },
+    {
+      "id": "u5",
+      "role": "student",
+      "origin": "actual_user_message",
+      "content": "你要再优化\n\n3.1 性能排名分\n\n根据加赛文档规定的耗时、磁盘 I/O、峰值内存及权重计算综合性能指标，由高到低排序。设性能排名为 r_perf，从 1 开始：\n\n**性能排名分 = max(40 − 0.5 × (r_perf − 1), 0)**\n\n### 3.2 Agent prompt 排名分\n\nAgent 按问题理解与学习规划、Prompt 设计与迭代、验证纠错与独立判断、总结复盘与知识迁移等多个维度评审材料，形成原始评价分，并据此独立排序。原始评价分只用于排名，不直接计入比赛总分。\n\n设 Agent prompt 排名为 r_prompt，从 1 开始：\n\n**Agent prompt 排名分 = max(40 − 0.5 × (r_prompt − 1), 0)**\n\n### 把每一个都拉到最满",
+      "scope": "actual multi-metric goal and prompt iteration request, not a prediction, experimental result or independent technical explanation"
+    },
+    {
+      "id": "a3",
+      "role": "agent",
+      "origin": "agent_authored_session_summary_not_verbatim_transcript",
+      "content": "先重测上一版，再独立测借用行字段、小结果缓冲和右端追加页分裂。借用字段减少候选扫描的字符串/向量分配，并保留完整行边界校验与双精度累加顺序。小结果缓冲未降低原始 I/O，查询耗时与本地三指标代理值变差，撤回该实现而保留提交和原始数据。右端追加分裂保留255条左页；中间插入仍平衡分裂。以66002行、三种键顺序和保留种子验证多层树、回滚、失败语句及SIGKILL恢复。所有新最终源码重新进行公开、随机差分、sanitizer、故障和超内存检查。"
+    },
+    {
+      "id": "a4",
+      "role": "agent",
+      "origin": "agent_authored_session_summary_not_verbatim_transcript",
+      "content": "比较器必须逐轮配对同种子后计算三指标，再取中位数，不拼接各轮最佳值。将原始cgroup I/O标为未认证，代理值不称官方E或排名。查询内存仅-0.35%，不足以证明稳定改善；显式postings查询只比新扫描快3.44%，但I/O和内存增加，继续不自动建索引。用户曾请求代写反思，该AI草稿不计学生证据；没有独立技术回复，learning_units继续为空。"
     }
   ],
   "experiments": [
@@ -74,7 +109,7 @@
       "environment": "Apple Clang 17 / macOS arm64; LOCAL adapter",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\n",
       "exit_status": 0,
       "student_refs": []
@@ -87,7 +122,7 @@
       "environment": "Apple Clang 17 / macOS arm64; LOCAL adapter",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n",
       "exit_status": 0,
       "student_refs": [],
@@ -107,7 +142,7 @@
       "environment": "Apple Clang 17 / macOS arm64; LOCAL adapter",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "PASS crash=before_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_write, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_rename, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_directory_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=before_success_response, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS SIGKILL without COMMIT: entire multi-table transaction absent\nPASS autocommit crash=before_data_flush: atomic batch\nPASS autocommit crash=after_data_flush: atomic batch\nPASS autocommit crash=after_data_sync: atomic batch\nPASS autocommit crash=after_catalog_write: atomic batch\nPASS autocommit crash=after_catalog_sync: atomic batch\nPASS autocommit crash=after_catalog_rename: atomic batch\nPASS autocommit crash=after_directory_sync: atomic batch\nPASS crash suite: 17 kill scenarios, 36 repeated recovery kills, 18 idempotent restarts\nPASS indexed crash=index-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=index-publish: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-before-write: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=posting-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=indexed-publish: rows, postings, filtered and unfiltered TopK consistent\n",
       "exit_status": 0,
       "student_refs": []
@@ -120,7 +155,7 @@
       "environment": "Apple Clang 17 / macOS arm64; LOCAL adapter",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\n",
       "exit_status": 0,
       "student_refs": [],
@@ -136,7 +171,7 @@
       "environment": "Linux x86_64, GCC 14.2.0 pinned compiler image, 2 CPUs, 512 MiB, no swap, network none",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\nPASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\nPASS crash=before_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_write, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_rename, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_directory_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=before_success_response, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS SIGKILL without COMMIT: entire multi-table transaction absent\nPASS autocommit crash=before_data_flush: atomic batch\nPASS autocommit crash=after_data_flush: atomic batch\nPASS autocommit crash=after_data_sync: atomic batch\nPASS autocommit crash=after_catalog_write: atomic batch\nPASS autocommit crash=after_catalog_sync: atomic batch\nPASS autocommit crash=after_catalog_rename: atomic batch\nPASS autocommit crash=after_directory_sync: atomic batch\nPASS crash suite: 17 kill scenarios, 36 repeated recovery kills, 18 idempotent restarts\nPASS indexed crash=index-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=index-publish: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-before-write: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=posting-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=indexed-publish: rows, postings, filtered and unfiltered TopK consistent\n",
       "exit_status": 0,
       "student_refs": []
@@ -149,7 +184,7 @@
       "environment": "production Linux x86_64 image, Docker Desktop emulation, 2 CPUs, 128 MiB, no swap, network none",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\n",
       "exit_status": 0,
       "student_refs": []
@@ -162,7 +197,7 @@
       "environment": "production Linux x86_64 image, Linux named volumes, 2 CPUs, 128 MiB, no swap, network none",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n",
       "exit_status": 0,
       "student_refs": []
@@ -175,7 +210,7 @@
       "environment": "production Linux x86_64 image, Linux volumes, 2 CPUs, 128 MiB, no swap, network none",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\n",
       "exit_status": 0,
       "student_refs": []
@@ -188,7 +223,7 @@
       "environment": "production Linux x86_64, 2 CPUs, 96 MiB, swap 0, network none",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "{\n  \"status\": \"PASS\",\n  \"platform\": \"linux/amd64\",\n  \"network\": \"none\",\n  \"local_memory_limit\": 100663296,\n  \"swap\": 0,\n  \"rows\": 40000,\n  \"data_bytes_before_index\": 143434768,\n  \"phases\": [\n    \"large_transaction_commit\",\n    \"index_build\",\n    \"filtered_topk\",\n    \"external_sort\",\n    \"large_update_delete_rollback\",\n    \"delete_commit\",\n    \"uncommitted_delete_sigkill\",\n    \"restart\"\n  ],\n  \"before_kill\": {\n    \"memory_peak\": 100663296,\n    \"memory_max\": \"100663296\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"254:0 rbytes=1751056384 wbytes=801828864 rios=3037 wios=1993 dbytes=0 dios=0\"\n  },\n  \"after_restart\": {\n    \"memory_peak\": 100130816,\n    \"memory_max\": \"100663296\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"254:0 rbytes=83730432 wbytes=0 rios=99 wios=0 dbytes=0 dios=0\"\n  },\n  \"seconds\": 4.528305040992564,\n  \"io_caveat\": \"Raw cgroup io.stat; dedicated device/writeback attribution not certified.\"\n}",
       "exit_status": 0,
       "student_refs": []
@@ -303,7 +338,7 @@
       "environment": "Linux x86_64 emulated on Apple M4 Pro; fresh cgroups/volumes, 2 CPUs, 128 MiB, swap 0, no networking",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "{\n  \"scope\": \"LOCAL comparison; no organizer baseline or official E\",\n  \"source_sha256\": \"998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75\",\n  \"image_id\": \"sha256:c7abcf2c5a38547a3b6bc2db6acafd22caae8dc090dbda1ad538d178fa4a0285\",\n  \"platform\": \"Linux x86_64 emulated on Apple arm64 Docker Desktop\",\n  \"cpus\": 2,\n  \"memory_limit\": 134217728,\n  \"swap\": 0,\n  \"rows\": 10000,\n  \"dimension\": 128,\n  \"queries\": 1000,\n  \"K\": 10,\n  \"write_batch\": 100,\n  \"indexed\": false,\n  \"cache_policy\": \"fresh cgroups/volumes, no host cache eviction; 10 warmup queries\",\n  \"B_caveat\": \"Raw io.stat retained; dedicated data-device/writeback attribution unverified\",\n  \"rounds\": [\n    {\n      \"seed\": 20261109,\n      \"write\": {\n        \"T_ms\": 1584.5872079953551,\n        \"memory_peak\": 24113152,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\n        \"restart_content_check\": true\n      },\n      \"query\": {\n        \"T_ms\": 1915.0574579980457,\n        \"memory_peak\": 22376448,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\n        \"preparation_ms\": 0.0012499949662014842,\n        \"recall_unfiltered\": 1.0,\n        \"recall_filtered\": 1.0,\n        \"all_query_assertions\": true\n      }\n    },\n    {\n      \"seed\": 7,\n      \"write\": {\n        \"T_ms\": 1573.269791988423,\n        \"memory_peak\": 22626304,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\n        \"restart_content_check\": true\n      },\n      \"query\": {\n        \"T_ms\": 1925.63075000362,\n        \"memory_peak\": 24784896,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\n        \"preparation_ms\": 0.0007500057108700275,\n        \"recall_unfiltered\": 1.0,\n        \"recall_filtered\": 1.0,\n        \"all_query_assertions\": true\n      }\n    },\n    {\n      \"seed\": 39034843,\n      \"write\": {\n        \"T_ms\": 1588.479209007346,\n        \"memory_peak\": 24592384,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\n        \"restart_content_check\": true\n      },\n      \"query\": {\n        \"T_ms\": 1922.14129200147,\n        \"memory_peak\": 22142976,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\n        \"preparation_ms\": 0.0002079905243590474,\n        \"recall_unfiltered\": 1.0,\n        \"recall_filtered\": 1.0,\n        \"all_query_assertions\": true\n      }\n    }\n  ]\n}",
       "exit_status": 0,
       "student_refs": [],
@@ -322,7 +357,7 @@
       "environment": "Linux x86_64 emulated on Apple M4 Pro; fresh cgroups/volumes, 2 CPUs, 128 MiB, swap 0, no networking",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "{\n  \"scope\": \"LOCAL comparison; no organizer baseline or official E\",\n  \"source_sha256\": \"998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75\",\n  \"image_id\": \"sha256:c7abcf2c5a38547a3b6bc2db6acafd22caae8dc090dbda1ad538d178fa4a0285\",\n  \"platform\": \"Linux x86_64 emulated on Apple arm64 Docker Desktop\",\n  \"cpus\": 2,\n  \"memory_limit\": 134217728,\n  \"swap\": 0,\n  \"rows\": 10000,\n  \"dimension\": 128,\n  \"queries\": 1000,\n  \"K\": 10,\n  \"write_batch\": 100,\n  \"indexed\": true,\n  \"cache_policy\": \"fresh cgroups/volumes, no host cache eviction; 10 warmup queries\",\n  \"B_caveat\": \"Raw io.stat retained; dedicated data-device/writeback attribution unverified\",\n  \"rounds\": [\n    {\n      \"seed\": 20261109,\n      \"write\": {\n        \"T_ms\": 1584.1453339962754,\n        \"memory_peak\": 24236032,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\n        \"restart_content_check\": true\n      },\n      \"query\": {\n        \"T_ms\": 1631.272041995544,\n        \"memory_peak\": 27648000,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=12972032 rios=0 wios=314 dbytes=0 dios=0\",\n        \"preparation_ms\": 21.25937500386499,\n        \"recall_unfiltered\": 1.0,\n        \"recall_filtered\": 1.0,\n        \"all_query_assertions\": true\n      }\n    },\n    {\n      \"seed\": 7,\n      \"write\": {\n        \"T_ms\": 1584.1510000027483,\n        \"memory_peak\": 22384640,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\n        \"restart_content_check\": true\n      },\n      \"query\": {\n        \"T_ms\": 1718.6564589937916,\n        \"memory_peak\": 27594752,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=12972032 rios=0 wios=318 dbytes=0 dios=0\",\n        \"preparation_ms\": 20.646083998144604,\n        \"recall_unfiltered\": 1.0,\n        \"recall_filtered\": 1.0,\n        \"all_query_assertions\": true\n      }\n    },\n    {\n      \"seed\": 39034843,\n      \"write\": {\n        \"T_ms\": 1600.0592080090428,\n        \"memory_peak\": 24227840,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\n        \"restart_content_check\": true\n      },\n      \"query\": {\n        \"T_ms\": 1677.2205000015674,\n        \"memory_peak\": 30175232,\n        \"memory_max\": \"134217728\",\n        \"swap_max\": \"0\",\n        \"io_stat\": \"254:0 rbytes=0 wbytes=12972032 rios=0 wios=318 dbytes=0 dios=0\",\n        \"preparation_ms\": 21.07733399316203,\n        \"recall_unfiltered\": 1.0,\n        \"recall_filtered\": 1.0,\n        \"all_query_assertions\": true\n      }\n    }\n  ]\n}",
       "exit_status": 0,
       "student_refs": [],
@@ -341,10 +376,360 @@
       "environment": "clean temporary export, native Clang and pinned GCC 14.2.0 Linux build",
       "code_revision": "4f4e0474e6eff1715625f6c9ec4a261c95623386",
       "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
-      "final_source": true,
+      "final_source": false,
       "output": "{\n  \"commit\": \"4f4e0474e6eff1715625f6c9ec4a261c95623386\",\n  \"scope\": \"clean exported core commit; source/Dockerfile unchanged in final docs delivery\",\n  \"commands\": [\n    {\n      \"argv\": [\n        \"./build.sh\"\n      ],\n      \"exit\": 0,\n      \"output\": \"\"\n    },\n    {\n      \"argv\": [\n        \"python3\",\n        \"tests/public.py\",\n        \"--binary\",\n        \"build/minivectordb\"\n      ],\n      \"exit\": 0,\n      \"output\": \"PASS sql_crud (7 SQL)\\nPASS sql_comparisons (4 SQL)\\nPASS sql_ordering (4 SQL)\\nPASS sql_empty (3 SQL)\\nPASS sql_primary_key (4 SQL)\\nPASS sql_unicode (3 SQL)\\nPASS sql_bigint (3 SQL)\\nPASS sql_unsupported (3 SQL)\\nPASS storage_restart (3 SQL)\\nPASS vector_euclidean (3 SQL)\\nPASS transaction_commit (6 SQL)\\nPASS transaction_rollback (6 SQL)\\nPASS storage_mutations (6 SQL)\\nPASS storage_multiple_tables (6 SQL)\\nPASS vector_ties_and_filter (5 SQL)\\nPASS vector_float32 (3 SQL)\\nPASS vector_index_maintenance (9 SQL)\\nPASS transaction_failed_insert (8 SQL)\\nPASS transaction_autocommit_atomic (4 SQL)\\nPASS transaction_shutdown_rollback (5 SQL)\\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\\n\"\n    },\n    {\n      \"argv\": [\n        \"python3\",\n        \"tests/regression.py\",\n        \"--binary\",\n        \"build/minivectordb\"\n      ],\n      \"exit\": 0,\n      \"output\": \"PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\\nPASS differential seed=7, steps=150, index_attempted=True\\nPASS differential seed=42, steps=150, index_attempted=True\\nPASS differential seed=20261109, steps=150, index_attempted=True\\nPASS differential seed=8675309, steps=150, index_attempted=True\\nPASS differential seed=39034843, steps=150, index_attempted=True\\n\"\n    },\n    {\n      \"argv\": [\n        \"python3\",\n        \"tests/vector_sweep.py\",\n        \"--binary\",\n        \"build/minivectordb\"\n      ],\n      \"exit\": 0,\n      \"output\": \"PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\\n\"\n    },\n    {\n      \"argv\": [\n        \"docker\",\n        \"build\",\n        \"--no-cache\",\n        \"--platform\",\n        \"linux/amd64\",\n        \"-t\",\n        \"minivectordb:clean\",\n        \".\"\n      ],\n      \"exit\": 0,\n      \"output\": \"#0 building with \\\"desktop-linux\\\" instance using docker driver\\n\\n#1 [internal] load build definition from Dockerfile\\n#1 transferring dockerfile: 552B done\\n#1 DONE 0.0s\\n\\n#2 [internal] load metadata for docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c\\n#2 DONE 0.0s\\n\\n#3 [internal] load metadata for docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\\n#3 DONE 0.0s\\n\\n#4 [internal] load .dockerignore\\n#4 transferring context: 77B done\\n#4 DONE 0.0s\\n\\n#5 [stage-1 1/3] FROM docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\\n#5 resolve docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc done\\n#5 CACHED\\n\\n#6 [build 1/4] FROM docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c\\n#6 resolve docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c done\\n#6 DONE 0.0s\\n\\n#7 [build 2/4] WORKDIR /src\\n#7 CACHED\\n\\n#8 [internal] load build context\\n#8 transferring context: 63.38kB done\\n#8 DONE 0.0s\\n\\n#9 [build 3/4] COPY minivectordb/ minivectordb/\\n#9 DONE 0.0s\\n\\n#10 [build 4/4] RUN g++ -std=c++20 -O3 -Wall -Wextra -Wpedantic -Wconversion -Wshadow     -static-libstdc++ -static-libgcc minivectordb/*.cpp -o /minivectordb\\n#10 DONE 9.1s\\n\\n#11 [stage-1 2/3] COPY --from=build /minivectordb /usr/local/bin/minivectordb\\n#11 DONE 0.0s\\n\\n#12 [stage-1 3/3] WORKDIR /data\\n#12 DONE 0.0s\\n\\n#13 exporting to image\\n#13 exporting layers 0.1s done\\n#13 exporting manifest sha256:e49bf021879b4a0d15482515135107a61cd8230f1481f34afe30e70f5428c1b9 done\\n#13 exporting config sha256:110d02664d941c9d041c45a5591429a1e854dac6b72c2f907bb7718bd2efe69c done\\n#13 exporting attestation manifest sha256:bc38577684d59faab4b8d865565aedc2f815d16a5a581664fe89fad4ede940ed done\\n#13 exporting manifest list sha256:a9255d48ef7d70b03d9526c970b99be2b879e5661be72da2195760237840c57b done\\n#13 naming to docker.io/library/minivectordb:clean done\\n#13 DONE 0.1s\\n\\nView build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/9uptzuk897yzd6ft1frvwiot9\\n\"\n    },\n    {\n      \"argv\": [\n        \"python3\",\n        \"tests/container_suite.py\",\n        \"--image\",\n        \"minivectordb:clean\"\n      ],\n      \"exit\": 0,\n      \"output\": \"PASS sql_crud (7 SQL)\\nPASS sql_comparisons (4 SQL)\\nPASS sql_ordering (4 SQL)\\nPASS sql_empty (3 SQL)\\nPASS sql_primary_key (4 SQL)\\nPASS sql_unicode (3 SQL)\\nPASS sql_bigint (3 SQL)\\nPASS sql_unsupported (3 SQL)\\nPASS storage_restart (3 SQL)\\nPASS vector_euclidean (3 SQL)\\nPASS transaction_commit (6 SQL)\\nPASS transaction_rollback (6 SQL)\\nPASS storage_mutations (6 SQL)\\nPASS storage_multiple_tables (6 SQL)\\nPASS vector_ties_and_filter (5 SQL)\\nPASS vector_float32 (3 SQL)\\nPASS vector_index_maintenance (9 SQL)\\nPASS transaction_failed_insert (8 SQL)\\nPASS transaction_autocommit_atomic (4 SQL)\\nPASS transaction_shutdown_rollback (5 SQL)\\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\\nPASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\\nPASS differential seed=7, steps=150, index_attempted=True\\nPASS differential seed=42, steps=150, index_attempted=True\\nPASS differential seed=20261109, steps=150, index_attempted=True\\nPASS differential seed=8675309, steps=150, index_attempted=True\\nPASS differential seed=39034843, steps=150, index_attempted=True\\n\"\n    }\n  ],\n  \"source_sha256\": \"998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75\",\n  \"linux_binary_sha256\": {\n    \"minivectordb:local\": \"41a953dac674b5c85b3401a21fec8a66166d588ca4d68f824a4269f234c89be3\",\n    \"minivectordb:clean\": \"41a953dac674b5c85b3401a21fec8a66166d588ca4d68f824a4269f234c89be3\"\n  },\n  \"binary_identical\": true,\n  \"status\": \"PASS\"\n}",
       "exit_status": 0,
       "student_refs": []
+    },
+    {
+      "id": "opt-previous-scan",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/benchmark.py --image minivectordb:previous --output docs/results/opt-previous-scan.json",
+      "working_directory_note": "Full Git archive export of code_revision; image built from identical source; CPU-heavy builds/tests did not overlap timed benchmark",
+      "environment": "Linux x86_64 emulated on Apple arm64 Docker Desktop; 2 CPUs,128 MiB,swap0,networknone; LOCAL adapter",
+      "code_revision": "c8423c1c5c3fa15d8b5dc0d131aec81d35d425d9",
+      "source_sha256": "998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75",
+      "final_source": false,
+      "seeds": [
+        20261109,
+        7,
+        39034843
+      ],
+      "output": "{\"scope\":\"LOCAL comparison; no organizer baseline or official E\",\"source_sha256\":\"998365883cb8276eafb1baf82ff1e862a5664d5c17c6cff29988f8d7b617ed75\",\"image_id\":\"sha256:c7abcf2c5a38547a3b6bc2db6acafd22caae8dc090dbda1ad538d178fa4a0285\",\"platform\":\"Linux x86_64 emulated on Apple arm64 Docker Desktop\",\"cpus\":2,\"memory_limit\":134217728,\"swap\":0,\"rows\":10000,\"dimension\":128,\"queries\":1000,\"K\":10,\"write_batch\":100,\"indexed\":false,\"cache_policy\":\"fresh cgroups/volumes, no host cache eviction; 10 warmup queries\",\"B_caveat\":\"Raw io.stat retained; dedicated data-device/writeback attribution unverified\",\"rounds\":[{\"seed\":20261109,\"write\":{\"T_ms\":1558.1018749944633,\"memory_peak\":27623424,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=5726208 wbytes=7397376 rios=126 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1801.5184590040008,\"memory_peak\":24809472,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.000333995558321476,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}},{\"seed\":7,\"write\":{\"T_ms\":1556.5233749948675,\"memory_peak\":24178688,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1803.9212089934153,\"memory_peak\":22155264,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.00037500285543501377,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}},{\"seed\":39034843,\"write\":{\"T_ms\":1561.6894169943407,\"memory_peak\":25079808,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1803.6820410052314,\"memory_peak\":24399872,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.0002090091584250331,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}}]}",
+      "exit_status": 0,
+      "student_refs": []
+    },
+    {
+      "id": "opt-views-scan",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/benchmark.py --image minivectordb:views --output docs/results/opt-views-scan.json",
+      "working_directory_note": "Full Git archive export of code_revision; image built from identical source; CPU-heavy builds/tests did not overlap timed benchmark",
+      "environment": "Linux x86_64 emulated on Apple arm64 Docker Desktop; 2 CPUs,128 MiB,swap0,networknone; LOCAL adapter",
+      "code_revision": "ea95beea84fbfd8c48ae6de81b356855adf6736d",
+      "source_sha256": "f81f9a80acf022fb60074f0ced5a1a4c432854b18a14d8374d72ce8d4c4a62f3",
+      "final_source": false,
+      "seeds": [
+        20261109,
+        7,
+        39034843
+      ],
+      "output": "{\"scope\":\"LOCAL comparison; no organizer baseline or official E\",\"source_sha256\":\"f81f9a80acf022fb60074f0ced5a1a4c432854b18a14d8374d72ce8d4c4a62f3\",\"image_id\":\"sha256:7176acabc40271882d3381ec45f1a673fb28c628a6430d31e1e565e98d104928\",\"platform\":\"Linux x86_64 emulated on Apple arm64 Docker Desktop\",\"cpus\":2,\"memory_limit\":134217728,\"swap\":0,\"rows\":10000,\"dimension\":128,\"queries\":1000,\"K\":10,\"write_batch\":100,\"indexed\":false,\"cache_policy\":\"fresh cgroups/volumes, no host cache eviction; 10 warmup queries\",\"B_caveat\":\"Raw io.stat retained; dedicated data-device/writeback attribution unverified\",\"rounds\":[{\"seed\":20261109,\"write\":{\"T_ms\":1559.605874994304,\"memory_peak\":23904256,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1423.513332993025,\"memory_peak\":24494080,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.0002500019036233425,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}},{\"seed\":7,\"write\":{\"T_ms\":1566.244874993572,\"memory_peak\":23928832,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1450.2957910008263,\"memory_peak\":24514560,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.0005829933797940612,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}},{\"seed\":39034843,\"write\":{\"T_ms\":1550.9951660060324,\"memory_peak\":26558464,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1430.2872080006637,\"memory_peak\":24551424,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.000166997779160738,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}}]}",
+      "exit_status": 0,
+      "student_refs": []
+    },
+    {
+      "id": "opt-spool-scan",
+      "status": "passed correctness; withdrawn performance",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/benchmark.py --image minivectordb:spool --output docs/results/opt-spool-scan.json",
+      "working_directory_note": "Full Git archive export of code_revision; image built from identical source; CPU-heavy builds/tests did not overlap timed benchmark",
+      "environment": "Linux x86_64 emulated on Apple arm64 Docker Desktop; 2 CPUs,128 MiB,swap0,networknone; LOCAL adapter",
+      "code_revision": "3a39bbf80d5ec85fb7b93a9937491162bb575cc6",
+      "source_sha256": "dec781bba315275afa3cad7c16928986a2ee2c60d1bf3246d95eefa9b8097dae",
+      "final_source": false,
+      "seeds": [
+        20261109,
+        7,
+        39034843
+      ],
+      "output": "{\"scope\":\"LOCAL comparison; no organizer baseline or official E\",\"source_sha256\":\"dec781bba315275afa3cad7c16928986a2ee2c60d1bf3246d95eefa9b8097dae\",\"image_id\":\"sha256:300345e31d59337d5b1d32308a2e74f48cfdfdbb8a639420aa42daa0c5b53bbc\",\"platform\":\"Linux x86_64 emulated on Apple arm64 Docker Desktop\",\"cpus\":2,\"memory_limit\":134217728,\"swap\":0,\"rows\":10000,\"dimension\":128,\"queries\":1000,\"K\":10,\"write_batch\":100,\"indexed\":false,\"cache_policy\":\"fresh cgroups/volumes, no host cache eviction; 10 warmup queries\",\"B_caveat\":\"Raw io.stat retained; dedicated data-device/writeback attribution unverified\",\"rounds\":[{\"seed\":20261109,\"write\":{\"T_ms\":1561.7147500015562,\"memory_peak\":24883200,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1658.2311669917544,\"memory_peak\":24379392,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.00033299147617071867,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}},{\"seed\":7,\"write\":{\"T_ms\":1571.8571670004167,\"memory_peak\":24117248,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1593.8315420062281,\"memory_peak\":21532672,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.0005419860826805234,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}},{\"seed\":39034843,\"write\":{\"T_ms\":1585.8828330092365,\"memory_peak\":22519808,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1499.330667007598,\"memory_peak\":24576000,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7397376 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":8.400820661336184e-05,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}}]}",
+      "exit_status": 0,
+      "student_refs": []
+    },
+    {
+      "id": "opt-packed-scan",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/benchmark.py --image minivectordb:packed --output docs/results/opt-packed-scan.json",
+      "working_directory_note": "Full Git archive export of code_revision; image built from identical source; CPU-heavy builds/tests did not overlap timed benchmark",
+      "environment": "Linux x86_64 emulated on Apple arm64 Docker Desktop; 2 CPUs,128 MiB,swap0,networknone; LOCAL adapter",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "seeds": [
+        20261109,
+        7,
+        39034843
+      ],
+      "output": "{\"scope\":\"LOCAL comparison; no organizer baseline or official E\",\"source_sha256\":\"ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248\",\"image_id\":\"sha256:629bebe92d69ed8ceeeb865cd2a2d4a688eb820ae9e5ad4b298c41526b7901e0\",\"platform\":\"Linux x86_64 emulated on Apple arm64 Docker Desktop\",\"cpus\":2,\"memory_limit\":134217728,\"swap\":0,\"rows\":10000,\"dimension\":128,\"queries\":1000,\"K\":10,\"write_batch\":100,\"indexed\":false,\"cache_policy\":\"fresh cgroups/volumes, no host cache eviction; 10 warmup queries\",\"B_caveat\":\"Raw io.stat retained; dedicated data-device/writeback attribution unverified\",\"rounds\":[{\"seed\":20261109,\"write\":{\"T_ms\":1555.7025000016438,\"memory_peak\":21405696,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1404.9977920076344,\"memory_peak\":24313856,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.00037500285543501377,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}},{\"seed\":7,\"write\":{\"T_ms\":1562.285874999361,\"memory_peak\":23404544,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1412.4522500060266,\"memory_peak\":25276416,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.00045899651013314724,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}},{\"seed\":39034843,\"write\":{\"T_ms\":1560.2205409959424,\"memory_peak\":21856256,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1423.1505420029862,\"memory_peak\":21143552,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0\",\"preparation_ms\":0.0029999937396496534,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}}]}",
+      "exit_status": 0,
+      "student_refs": []
+    },
+    {
+      "id": "opt-packed-postings",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/benchmark.py --image minivectordb:packed --indexed --output docs/results/opt-packed-postings.json",
+      "working_directory_note": "Full Git archive export of code_revision; image built from identical source; CPU-heavy builds/tests did not overlap timed benchmark",
+      "environment": "Linux x86_64 emulated on Apple arm64 Docker Desktop; 2 CPUs,128 MiB,swap0,networknone; LOCAL adapter",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "seeds": [
+        20261109,
+        7,
+        39034843
+      ],
+      "output": "{\"scope\":\"LOCAL comparison; no organizer baseline or official E\",\"source_sha256\":\"ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248\",\"image_id\":\"sha256:629bebe92d69ed8ceeeb865cd2a2d4a688eb820ae9e5ad4b298c41526b7901e0\",\"platform\":\"Linux x86_64 emulated on Apple arm64 Docker Desktop\",\"cpus\":2,\"memory_limit\":134217728,\"swap\":0,\"rows\":10000,\"dimension\":128,\"queries\":1000,\"K\":10,\"write_batch\":100,\"indexed\":true,\"cache_policy\":\"fresh cgroups/volumes, no host cache eviction; 10 warmup queries\",\"B_caveat\":\"Raw io.stat retained; dedicated data-device/writeback attribution unverified\",\"rounds\":[{\"seed\":20261109,\"write\":{\"T_ms\":1564.0870829956839,\"memory_peak\":21344256,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1352.0807499880902,\"memory_peak\":29478912,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=12660736 rios=0 wios=318 dbytes=0 dios=0\",\"preparation_ms\":19.64991699787788,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}},{\"seed\":7,\"write\":{\"T_ms\":1549.5980420091655,\"memory_peak\":21917696,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1363.8670419895789,\"memory_peak\":27090944,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=12660736 rios=0 wios=318 dbytes=0 dios=0\",\"preparation_ms\":20.748208000441082,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}},{\"seed\":39034843,\"write\":{\"T_ms\":1559.543457988184,\"memory_peak\":23179264,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0\",\"restart_content_check\":true},\"query\":{\"T_ms\":1375.5556670075748,\"memory_peak\":29364224,\"memory_max\":\"134217728\",\"swap_max\":\"0\",\"io_stat\":\"254:0 rbytes=0 wbytes=12660736 rios=0 wios=318 dbytes=0 dios=0\",\"preparation_ms\":20.19924999331124,\"recall_unfiltered\":1.0,\"recall_filtered\":1.0,\"all_query_assertions\":true}}]}",
+      "exit_status": 0,
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-native-public",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/public.py --binary build/minivectordb",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-native-public.txt",
+      "artifact_sha256": "498d843396623651a6bbd82b80296d40390cbd68b6d0c3ea1e62d6fb9ec8d5cc",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-native-regression",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/regression.py --binary build/minivectordb",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-native-regression.txt",
+      "artifact_sha256": "1c3c65c657d40765f96a0e5f0d7cf65138e4a58f9278ab9a0db1ac957f8cc811",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-native-storage_splits",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/storage_splits.py --binary build/minivectordb",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS tree splits order=ascending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=descending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=shuffled, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS all split trees after a second restart\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-native-storage_splits.txt",
+      "artifact_sha256": "3778f5ee13bba627972451962e3c9a0d6b32bf7bc8d8b891d6d0b5b77412fb4f",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-native-vector_sweep",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/vector_sweep.py --binary build/minivectordb",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-native-vector_sweep.txt",
+      "artifact_sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-sanitize-public",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/public.py --binary build/minivectordb-sanitize",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-sanitize-public.txt",
+      "artifact_sha256": "498d843396623651a6bbd82b80296d40390cbd68b6d0c3ea1e62d6fb9ec8d5cc",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-sanitize-regression",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/regression.py --binary build/minivectordb-sanitize",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-sanitize-regression.txt",
+      "artifact_sha256": "1c3c65c657d40765f96a0e5f0d7cf65138e4a58f9278ab9a0db1ac957f8cc811",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-sanitize-storage_splits",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/storage_splits.py --binary build/minivectordb-sanitize",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS tree splits order=ascending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=descending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=shuffled, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS all split trees after a second restart\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-sanitize-storage_splits.txt",
+      "artifact_sha256": "3778f5ee13bba627972451962e3c9a0d6b32bf7bc8d8b891d6d0b5b77412fb4f",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-sanitize-crash",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/crash.py --binary build/minivectordb-sanitize",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS crash=before_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_write, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_rename, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_directory_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=before_success_response, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS SIGKILL without COMMIT: entire multi-table transaction absent\nPASS autocommit crash=before_data_flush: atomic batch\nPASS autocommit crash=after_data_flush: atomic batch\nPASS autocommit crash=after_data_sync: atomic batch\nPASS autocommit crash=after_catalog_write: atomic batch\nPASS autocommit crash=after_catalog_sync: atomic batch\nPASS autocommit crash=after_catalog_rename: atomic batch\nPASS autocommit crash=after_directory_sync: atomic batch\nPASS crash suite: 17 kill scenarios, 36 repeated recovery kills, 18 idempotent restarts\nPASS indexed crash=index-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=index-publish: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-before-write: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=posting-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=indexed-publish: rows, postings, filtered and unfiltered TopK consistent\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-sanitize-crash.txt",
+      "artifact_sha256": "3b2e248674e7b91c28a6cf945af915f301ff5e01c31a4b36e46679097b0ab0b9",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-sanitize-vector_sweep",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/vector_sweep.py --binary build/minivectordb-sanitize",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-sanitize-vector_sweep.txt",
+      "artifact_sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-linux-fault",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/linux_suite.py",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\nPASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\nPASS tree splits order=ascending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=descending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=shuffled, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS all split trees after a second restart\nPASS crash=before_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_write, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_rename, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_directory_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=before_success_response, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS SIGKILL without COMMIT: entire multi-table transaction absent\nPASS autocommit crash=before_data_flush: atomic batch\nPASS autocommit crash=after_data_flush: atomic batch\nPASS autocommit crash=after_data_sync: atomic batch\nPASS autocommit crash=after_catalog_write: atomic batch\nPASS autocommit crash=after_catalog_sync: atomic batch\nPASS autocommit crash=after_catalog_rename: atomic batch\nPASS autocommit crash=after_directory_sync: atomic batch\nPASS crash suite: 17 kill scenarios, 36 repeated recovery kills, 18 idempotent restarts\nPASS indexed crash=index-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=index-publish: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-before-write: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=posting-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=indexed-publish: rows, postings, filtered and unfiltered TopK consistent\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-linux-fault.txt",
+      "artifact_sha256": "ee29f1a1c985db5440fcb7abb094f82e1bc4fe8540dd275effdeb48f1bf43d64",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-production-suite",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/container_suite.py --image minivectordb:packed",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; LOCAL adapter\nPASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\nPASS tree splits order=ascending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=descending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=shuffled, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS all split trees after a second restart\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-production-suite.txt",
+      "artifact_sha256": "506f304ba75356f733fb2d1d9384bd55da1237741d00971628d0a286af851995",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-production-sweep",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/vector_sweep.py --image minivectordb:packed",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-production-sweep.txt",
+      "artifact_sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25",
+      "student_refs": []
+    },
+    {
+      "id": "opt-final-resources",
+      "status": "passed",
+      "origin": "actual_tool_output",
+      "command": "python3 tests/container_checks.py --image minivectordb:packed --output /Users/oxidaner/develop/coding/open-source/seekdb-minivectordb/docs/results/opt-final-resources.json",
+      "environment": "macOS arm64 / Clang17 for native and sanitizer; emulated Linux amd64 Docker for Linux/production/resource",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "source_sha256": "ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248",
+      "final_source": true,
+      "output": "{\n  \"status\": \"PASS\",\n  \"platform\": \"linux/amd64\",\n  \"network\": \"none\",\n  \"local_memory_limit\": 100663296,\n  \"swap\": 0,\n  \"rows\": 40000,\n  \"data_bytes_before_index\": 142734352,\n  \"phases\": [\n    \"large_transaction_commit\",\n    \"index_build\",\n    \"filtered_topk\",\n    \"external_sort\",\n    \"large_update_delete_rollback\",\n    \"delete_commit\",\n    \"uncommitted_delete_sigkill\",\n    \"restart\"\n  ],\n  \"before_kill\": {\n    \"memory_peak\": 100663296,\n    \"memory_max\": \"100663296\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"254:0 rbytes=1608208384 wbytes=803639296 rios=1778 wios=2563 dbytes=0 dios=0\"\n  },\n  \"after_restart\": {\n    \"memory_peak\": 100663296,\n    \"memory_max\": \"100663296\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"254:0 rbytes=86151168 wbytes=0 rios=115 wios=0 dbytes=0 dios=0\"\n  },\n  \"seconds\": 6.306571082997834,\n  \"io_caveat\": \"Raw cgroup io.stat; dedicated device/writeback attribution not certified.\"\n}\n",
+      "exit_status": 0,
+      "artifact": "docs/results/opt-final-resources.txt",
+      "artifact_sha256": "63cc942d40bca1933fa077017774c118929c686f8158e6a92dd33ec87e39cff2",
+      "student_refs": []
+    },
+    {
+      "id": "local-comparison-views",
+      "status": "local comparison completed",
+      "origin": "actual_comparison_script_output",
+      "command": "python3 tests/compare.py --baseline docs/results/opt-previous-scan.json --candidate docs/results/opt-views-scan.json --output docs/results/opt-views-comparison.json",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "final_source": false,
+      "output": "{\"scope\":\"LOCAL proxy only; no official baseline, E, score or ranking\",\"B_caveat\":\"Raw cgroup io.stat across reported devices; dedicated device and writeback attribution are not certified\",\"formula\":\"0.6*time + 0.2*IO + 0.2*memory; query weight 2; f(R)=R/(1+R); epsilon=1ms,1MiB,1MiB; per-round then median\",\"median_local_proxy\":\"0.522306\",\"no_change_reference\":0.5,\"rounds\":[{\"seed\":20261109,\"write\":{\"baseline\":{\"T_ms\":1558.1018749944633,\"B_bytes\":13123584,\"M_bytes\":27623424},\"candidate\":{\"T_ms\":1559.605874994304,\"B_bytes\":7397376,\"M_bytes\":23904256},\"ratios\":{\"T_ms\":0.9990362717301405,\"B_bytes\":1.6779825412221145,\"M_bytes\":1.149047931713723},\"local_proxy\":0.5321078183795768},\"query\":{\"baseline\":{\"T_ms\":1801.5184590040008,\"B_bytes\":7397376,\"M_bytes\":24809472},\"candidate\":{\"T_ms\":1423.513332993025,\"B_bytes\":7397376,\"M_bytes\":24494080},\"ratios\":{\"T_ms\":1.2653573801354001,\"B_bytes\":1.0,\"M_bytes\":1.0123476587556126},\"local_proxy\":0.5357547228762815},\"local_proxy\":0.5345390880440465},{\"seed\":7,\"write\":{\"baseline\":{\"T_ms\":1556.5233749948675,\"B_bytes\":7397376,\"M_bytes\":24178688},\"candidate\":{\"T_ms\":1566.244874993572,\"B_bytes\":7397376,\"M_bytes\":23928832},\"ratios\":{\"T_ms\":0.9937970765425254,\"B_bytes\":1.0,\"M_bytes\":1.010003279763857},\"local_proxy\":0.4995643415822042},\"query\":{\"baseline\":{\"T_ms\":1803.9212089934153,\"B_bytes\":7397376,\"M_bytes\":22155264},\"candidate\":{\"T_ms\":1450.2957910008263,\"B_bytes\":7397376,\"M_bytes\":24514560},\"ratios\":{\"T_ms\":1.243661850454845,\"B_bytes\":1.0,\"M_bytes\":0.9077070982214389},\"local_proxy\":0.5277421263393478},\"local_proxy\":0.5183495314202999},{\"seed\":39034843,\"write\":{\"baseline\":{\"T_ms\":1561.6894169943407,\"B_bytes\":7397376,\"M_bytes\":25079808},\"candidate\":{\"T_ms\":1550.9951660060324,\"B_bytes\":7397376,\"M_bytes\":26558464},\"ratios\":{\"T_ms\":1.0068906470990044,\"B_bytes\":1.0,\"M_bytes\":0.9464391691394659},\"local_proxy\":0.49827831408940015},\"query\":{\"baseline\":{\"T_ms\":1803.6820410052314,\"B_bytes\":7397376,\"M_bytes\":24399872},\"candidate\":{\"T_ms\":1430.2872080006637,\"B_bytes\":7397376,\"M_bytes\":24551424},\"ratios\":{\"T_ms\":1.2608804374952498,\"B_bytes\":1.0,\"M_bytes\":0.99408},\"local_proxy\":0.5343197820541028},\"local_proxy\":0.522305959399202}],\"metric_medians_for_description_only\":{\"write\":{\"baseline\":{\"T_ms\":1558.1018749944633,\"B_bytes\":7397376,\"M_bytes\":25079808},\"candidate\":{\"T_ms\":1559.605874994304,\"B_bytes\":7397376,\"M_bytes\":23928832}},\"query\":{\"baseline\":{\"T_ms\":1803.6820410052314,\"B_bytes\":7397376,\"M_bytes\":24399872},\"candidate\":{\"T_ms\":1430.2872080006637,\"B_bytes\":7397376,\"M_bytes\":24514560}}},\"inputs\":[{\"path\":\"docs/results/opt-previous-scan.json\",\"sha256\":\"9e0a9452d4c4de476722d847ea8eadc41361074d5cf031dbf5668c6234caac6d\"},{\"path\":\"docs/results/opt-views-scan.json\",\"sha256\":\"397841554903123f1e48ff75538bd5cc2b20c48a3adeccec51370bfecdc039cd\"}]}",
+      "exit_status": 0,
+      "student_refs": [],
+      "scope": "Paired local proxy only; baseline and candidate source hashes retained in raw inputs; not official E or rankings"
+    },
+    {
+      "id": "local-comparison-spool",
+      "status": "unfavorable; implementation withdrawn",
+      "origin": "actual_comparison_script_output",
+      "command": "python3 tests/compare.py --baseline docs/results/opt-views-scan.json --candidate docs/results/opt-spool-scan.json --output docs/results/opt-spool-comparison.json",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "final_source": false,
+      "output": "{\"scope\":\"LOCAL proxy only; no official baseline, E, score or ranking\",\"B_caveat\":\"Raw cgroup io.stat across reported devices; dedicated device and writeback attribution are not certified\",\"formula\":\"0.6*time + 0.2*IO + 0.2*memory; query weight 2; f(R)=R/(1+R); epsilon=1ms,1MiB,1MiB; per-round then median\",\"median_local_proxy\":\"0.494401\",\"no_change_reference\":0.5,\"rounds\":[{\"seed\":20261109,\"write\":{\"baseline\":{\"T_ms\":1559.605874994304,\"B_bytes\":7397376,\"M_bytes\":23904256},\"candidate\":{\"T_ms\":1561.7147500015562,\"B_bytes\":7397376,\"M_bytes\":24883200},\"ratios\":{\"T_ms\":0.9986505054698881,\"B_bytes\":1.0,\"M_bytes\":0.9622492497235824},\"local_proxy\":0.4978735882214214},\"query\":{\"baseline\":{\"T_ms\":1423.513332993025,\"B_bytes\":7397376,\"M_bytes\":24494080},\"candidate\":{\"T_ms\":1658.2311669917544,\"B_bytes\":7397376,\"M_bytes\":24379392},\"ratios\":{\"T_ms\":0.8585381960825379,\"B_bytes\":1.0,\"M_bytes\":1.0045103092783505},\"local_proxy\":0.47739064215388416},\"local_proxy\":0.4842182908430632},{\"seed\":7,\"write\":{\"baseline\":{\"T_ms\":1566.244874993572,\"B_bytes\":7397376,\"M_bytes\":23928832},\"candidate\":{\"T_ms\":1571.8571670004167,\"B_bytes\":7397376,\"M_bytes\":24117248},\"ratios\":{\"T_ms\":0.9964317853365238,\"B_bytes\":1.0,\"M_bytes\":0.9925130208333334},\"local_proxy\":0.49908805558658637},\"query\":{\"baseline\":{\"T_ms\":1450.2957910008263,\"B_bytes\":7397376,\"M_bytes\":24514560},\"candidate\":{\"T_ms\":1593.8315420062281,\"B_bytes\":7397376,\"M_bytes\":21532672},\"ratios\":{\"T_ms\":0.9099994280117886,\"B_bytes\":1.0,\"M_bytes\":1.1320515146018502},\"local_proxy\":0.492057416480042},\"local_proxy\":0.4944009628488901},{\"seed\":39034843,\"write\":{\"baseline\":{\"T_ms\":1550.9951660060324,\"B_bytes\":7397376,\"M_bytes\":26558464},\"candidate\":{\"T_ms\":1585.8828330092365,\"B_bytes\":7397376,\"M_bytes\":22519808},\"ratios\":{\"T_ms\":0.978014969802751,\"B_bytes\":1.0,\"M_bytes\":1.1713590545707333},\"local_proxy\":0.5045573799977302},\"query\":{\"baseline\":{\"T_ms\":1430.2872080006637,\"B_bytes\":7397376,\"M_bytes\":24551424},\"candidate\":{\"T_ms\":1499.330667007598,\"B_bytes\":7397376,\"M_bytes\":24576000},\"ratios\":{\"T_ms\":0.9539811719341569,\"B_bytes\":1.0,\"M_bytes\":0.9990409207161125},\"local_proxy\":0.49288662822471296},\"local_proxy\":0.4967768788157187}],\"metric_medians_for_description_only\":{\"write\":{\"baseline\":{\"T_ms\":1559.605874994304,\"B_bytes\":7397376,\"M_bytes\":23928832},\"candidate\":{\"T_ms\":1571.8571670004167,\"B_bytes\":7397376,\"M_bytes\":24117248}},\"query\":{\"baseline\":{\"T_ms\":1430.2872080006637,\"B_bytes\":7397376,\"M_bytes\":24514560},\"candidate\":{\"T_ms\":1593.8315420062281,\"B_bytes\":7397376,\"M_bytes\":24379392}}},\"inputs\":[{\"path\":\"docs/results/opt-views-scan.json\",\"sha256\":\"397841554903123f1e48ff75538bd5cc2b20c48a3adeccec51370bfecdc039cd\"},{\"path\":\"docs/results/opt-spool-scan.json\",\"sha256\":\"87a5d00a3e762f288de2f04e7afeffa09ff22c94029b5f866d20a4310ef5b44b\"}]}",
+      "exit_status": 0,
+      "student_refs": [],
+      "scope": "Paired local proxy only; baseline and candidate source hashes retained in raw inputs; not official E or rankings"
+    },
+    {
+      "id": "local-comparison-packed",
+      "status": "local comparison completed",
+      "origin": "actual_comparison_script_output",
+      "command": "python3 tests/compare.py --baseline docs/results/opt-views-scan.json --candidate docs/results/opt-packed-scan.json --output docs/results/opt-packed-comparison.json",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "final_source": false,
+      "output": "{\"scope\":\"LOCAL proxy only; no official baseline, E, score or ranking\",\"B_caveat\":\"Raw cgroup io.stat across reported devices; dedicated device and writeback attribution are not certified\",\"formula\":\"0.6*time + 0.2*IO + 0.2*memory; query weight 2; f(R)=R/(1+R); epsilon=1ms,1MiB,1MiB; per-round then median\",\"median_local_proxy\":\"0.504356\",\"no_change_reference\":0.5,\"rounds\":[{\"seed\":20261109,\"write\":{\"baseline\":{\"T_ms\":1559.605874994304,\"B_bytes\":7397376,\"M_bytes\":23904256},\"candidate\":{\"T_ms\":1555.7025000016438,\"B_bytes\":7241728,\"M_bytes\":21405696},\"ratios\":{\"T_ms\":1.00250746368857,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.1112732579350602},\"local_proxy\":0.5065760872162236},\"query\":{\"baseline\":{\"T_ms\":1423.513332993025,\"B_bytes\":7397376,\"M_bytes\":24494080},\"candidate\":{\"T_ms\":1404.9977920076344,\"B_bytes\":7241728,\"M_bytes\":24313856},\"ratios\":{\"T_ms\":1.0131689687499097,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.0071059431524547},\"local_proxy\":0.5032464679248119},\"local_proxy\":0.504356341021949},{\"seed\":7,\"write\":{\"baseline\":{\"T_ms\":1566.244874993572,\"B_bytes\":7397376,\"M_bytes\":23928832},\"candidate\":{\"T_ms\":1562.285874999361,\"B_bytes\":7241728,\"M_bytes\":23404544},\"ratios\":{\"T_ms\":1.0025324862570082,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.0214405360134002},\"local_proxy\":0.5023700537111968},\"query\":{\"baseline\":{\"T_ms\":1450.2957910008263,\"B_bytes\":7397376,\"M_bytes\":24514560},\"candidate\":{\"T_ms\":1412.4522500060266,\"B_bytes\":7241728,\"M_bytes\":25276416},\"ratios\":{\"T_ms\":1.026773837598432,\"B_bytes\":1.0187747035573123,\"M_bytes\":0.9710595923447954},\"local_proxy\":0.5034247613695249},\"local_proxy\":0.5030731921500822},{\"seed\":39034843,\"write\":{\"baseline\":{\"T_ms\":1550.9951660060324,\"B_bytes\":7397376,\"M_bytes\":26558464},\"candidate\":{\"T_ms\":1560.2205409959424,\"B_bytes\":7241728,\"M_bytes\":21856256},\"ratios\":{\"T_ms\":0.9940909213351594,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.2052932761087267},\"local_proxy\":0.5093501310428529},\"query\":{\"baseline\":{\"T_ms\":1430.2872080006637,\"B_bytes\":7397376,\"M_bytes\":24551424},\"candidate\":{\"T_ms\":1423.1505420029862,\"B_bytes\":7241728,\"M_bytes\":21143552},\"ratios\":{\"T_ms\":1.0050111738802838,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.153562200073828},\"local_proxy\":0.5088104159383883},\"local_proxy\":0.5089903209732097}],\"metric_medians_for_description_only\":{\"write\":{\"baseline\":{\"T_ms\":1559.605874994304,\"B_bytes\":7397376,\"M_bytes\":23928832},\"candidate\":{\"T_ms\":1560.2205409959424,\"B_bytes\":7241728,\"M_bytes\":21856256}},\"query\":{\"baseline\":{\"T_ms\":1430.2872080006637,\"B_bytes\":7397376,\"M_bytes\":24514560},\"candidate\":{\"T_ms\":1412.4522500060266,\"B_bytes\":7241728,\"M_bytes\":24313856}}},\"inputs\":[{\"path\":\"docs/results/opt-views-scan.json\",\"sha256\":\"397841554903123f1e48ff75538bd5cc2b20c48a3adeccec51370bfecdc039cd\"},{\"path\":\"docs/results/opt-packed-scan.json\",\"sha256\":\"c61b68f157ba3a50a1ab983446e50b9ae74f7ece81e2b89e8ee1acfbd8f90cbd\"}]}",
+      "exit_status": 0,
+      "student_refs": [],
+      "scope": "Paired local proxy only; baseline and candidate source hashes retained in raw inputs; not official E or rankings"
+    },
+    {
+      "id": "local-comparison-final",
+      "status": "local comparison completed",
+      "origin": "actual_comparison_script_output",
+      "command": "python3 tests/compare.py --baseline docs/results/opt-previous-scan.json --candidate docs/results/opt-packed-scan.json --output docs/results/opt-final-comparison.json",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "final_source": false,
+      "output": "{\"scope\":\"LOCAL proxy only; no official baseline, E, score or ranking\",\"B_caveat\":\"Raw cgroup io.stat across reported devices; dedicated device and writeback attribution are not certified\",\"formula\":\"0.6*time + 0.2*IO + 0.2*memory; query weight 2; f(R)=R/(1+R); epsilon=1ms,1MiB,1MiB; per-round then median\",\"median_local_proxy\":\"0.531296\",\"no_change_reference\":0.5,\"rounds\":[{\"seed\":20261109,\"write\":{\"baseline\":{\"T_ms\":1558.1018749944633,\"B_bytes\":13123584,\"M_bytes\":27623424},\"candidate\":{\"T_ms\":1555.7025000016438,\"B_bytes\":7241728,\"M_bytes\":21405696},\"ratios\":{\"T_ms\":1.0015413189050681,\"B_bytes\":1.709486166007905,\"M_bytes\":1.2769062385990515},\"local_proxy\":0.5385777986053114},\"query\":{\"baseline\":{\"T_ms\":1801.5184590040008,\"B_bytes\":7397376,\"M_bytes\":24809472},\"candidate\":{\"T_ms\":1404.9977920076344,\"B_bytes\":7241728,\"M_bytes\":24313856},\"ratios\":{\"T_ms\":1.2820208319318707,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.0195413436692506},\"local_proxy\":0.5389727612469075},\"local_proxy\":0.5388411070330421},{\"seed\":7,\"write\":{\"baseline\":{\"T_ms\":1556.5233749948675,\"B_bytes\":7397376,\"M_bytes\":24178688},\"candidate\":{\"T_ms\":1562.285874999361,\"B_bytes\":7241728,\"M_bytes\":23404544},\"ratios\":{\"T_ms\":0.9963138539811243,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.0316582914572865},\"local_proxy\":0.5019343108599271},\"query\":{\"baseline\":{\"T_ms\":1803.9212089934153,\"B_bytes\":7397376,\"M_bytes\":22155264},\"candidate\":{\"T_ms\":1412.4522500060266,\"B_bytes\":7241728,\"M_bytes\":25276416},\"ratios\":{\"T_ms\":1.2769594508662883,\"B_bytes\":1.0187747035573123,\"M_bytes\":0.8814376847673876},\"local_proxy\":0.5311190138877835},\"local_proxy\":0.5213907795451647},{\"seed\":39034843,\"write\":{\"baseline\":{\"T_ms\":1561.6894169943407,\"B_bytes\":7397376,\"M_bytes\":25079808},\"candidate\":{\"T_ms\":1560.2205409959424,\"B_bytes\":7241728,\"M_bytes\":21856256},\"ratios\":{\"T_ms\":1.0009408510584041,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.1407367668097281},\"local_proxy\":0.5076452872288525},\"query\":{\"baseline\":{\"T_ms\":1803.6820410052314,\"B_bytes\":7397376,\"M_bytes\":24399872},\"candidate\":{\"T_ms\":1423.1505420029862,\"B_bytes\":7241728,\"M_bytes\":21143552},\"ratios\":{\"T_ms\":1.267198928609787,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.1467331118493909},\"local_proxy\":0.5431214484086266},\"local_proxy\":0.5312960613487019}],\"metric_medians_for_description_only\":{\"write\":{\"baseline\":{\"T_ms\":1558.1018749944633,\"B_bytes\":7397376,\"M_bytes\":25079808},\"candidate\":{\"T_ms\":1560.2205409959424,\"B_bytes\":7241728,\"M_bytes\":21856256}},\"query\":{\"baseline\":{\"T_ms\":1803.6820410052314,\"B_bytes\":7397376,\"M_bytes\":24399872},\"candidate\":{\"T_ms\":1412.4522500060266,\"B_bytes\":7241728,\"M_bytes\":24313856}}},\"inputs\":[{\"path\":\"docs/results/opt-previous-scan.json\",\"sha256\":\"9e0a9452d4c4de476722d847ea8eadc41361074d5cf031dbf5668c6234caac6d\"},{\"path\":\"docs/results/opt-packed-scan.json\",\"sha256\":\"c61b68f157ba3a50a1ab983446e50b9ae74f7ece81e2b89e8ee1acfbd8f90cbd\"}]}",
+      "exit_status": 0,
+      "student_refs": [],
+      "scope": "Paired local proxy only; baseline and candidate source hashes retained in raw inputs; not official E or rankings"
+    },
+    {
+      "id": "local-comparison-postings",
+      "status": "local comparison completed",
+      "origin": "actual_comparison_script_output",
+      "command": "python3 tests/compare.py --baseline docs/results/benchmark-final-postings.json --candidate docs/results/opt-packed-postings.json --output docs/results/opt-postings-comparison.json",
+      "code_revision": "cf294bbc8a664988ef11b5884d35ae57c1dd12cb",
+      "final_source": false,
+      "output": "{\"scope\":\"LOCAL proxy only; no official baseline, E, score or ranking\",\"B_caveat\":\"Raw cgroup io.stat across reported devices; dedicated device and writeback attribution are not certified\",\"formula\":\"0.6*time + 0.2*IO + 0.2*memory; query weight 2; f(R)=R/(1+R); epsilon=1ms,1MiB,1MiB; per-round then median\",\"median_local_proxy\":\"0.523674\",\"no_change_reference\":0.5,\"rounds\":[{\"seed\":20261109,\"write\":{\"baseline\":{\"T_ms\":1584.1453339962754,\"B_bytes\":7397376,\"M_bytes\":24236032},\"candidate\":{\"T_ms\":1564.0870829956839,\"B_bytes\":7241728,\"M_bytes\":21344256},\"ratios\":{\"T_ms\":1.0128160606643042,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.1291384671666362},\"local_proxy\":0.5089054656717821},\"query\":{\"baseline\":{\"T_ms\":1631.272041995544,\"B_bytes\":12972032,\"M_bytes\":27648000},\"candidate\":{\"T_ms\":1352.0807499880902,\"B_bytes\":12660736,\"M_bytes\":29478912},\"ratios\":{\"T_ms\":1.2063374946468726,\"B_bytes\":1.0227069017030177,\"M_bytes\":0.9400241513484503},\"local_proxy\":0.526087210030112},\"local_proxy\":0.5203599619106688},{\"seed\":7,\"write\":{\"baseline\":{\"T_ms\":1584.1510000027483,\"B_bytes\":7397376,\"M_bytes\":22384640},\"candidate\":{\"T_ms\":1549.5980420091655,\"B_bytes\":7241728,\"M_bytes\":21917696},\"ratios\":{\"T_ms\":1.0222836331902052,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.0203317281968967},\"local_proxy\":0.5052420741538922},\"query\":{\"baseline\":{\"T_ms\":1718.6564589937916,\"B_bytes\":12972032,\"M_bytes\":27594752},\"candidate\":{\"T_ms\":1363.8670419895789,\"B_bytes\":12660736,\"M_bytes\":27090944},\"ratios\":{\"T_ms\":1.2599443067267806,\"B_bytes\":1.0227069017030177,\"M_bytes\":1.0179039301310044},\"local_proxy\":0.5365165853204623},\"local_proxy\":0.526091748264939},{\"seed\":39034843,\"write\":{\"baseline\":{\"T_ms\":1600.0592080090428,\"B_bytes\":7397376,\"M_bytes\":24227840},\"candidate\":{\"T_ms\":1559.543457988184,\"B_bytes\":7241728,\"M_bytes\":23179264},\"ratios\":{\"T_ms\":1.0259625900281502,\"B_bytes\":1.0187747035573123,\"M_bytes\":1.0432797971259509},\"local_proxy\":0.5068926402772028},\"query\":{\"baseline\":{\"T_ms\":1677.2205000015674,\"B_bytes\":12972032,\"M_bytes\":30175232},\"candidate\":{\"T_ms\":1375.5556670075748,\"B_bytes\":12660736,\"M_bytes\":29364224},\"ratios\":{\"T_ms\":1.2191446668115984,\"B_bytes\":1.0227069017030177,\"M_bytes\":1.0266666666666666},\"local_proxy\":0.5320639476317992},\"local_proxy\":0.5236735118469338}],\"metric_medians_for_description_only\":{\"write\":{\"baseline\":{\"T_ms\":1584.1510000027483,\"B_bytes\":7397376,\"M_bytes\":24227840},\"candidate\":{\"T_ms\":1559.543457988184,\"B_bytes\":7241728,\"M_bytes\":21917696}},\"query\":{\"baseline\":{\"T_ms\":1677.2205000015674,\"B_bytes\":12972032,\"M_bytes\":27648000},\"candidate\":{\"T_ms\":1363.8670419895789,\"B_bytes\":12660736,\"M_bytes\":29364224}}},\"inputs\":[{\"path\":\"docs/results/benchmark-final-postings.json\",\"sha256\":\"1a65e8bfbf115d8554eab50ad5670f7b2f07e5f3d60760a0057aaa80cf5a3c82\"},{\"path\":\"docs/results/opt-packed-postings.json\",\"sha256\":\"6bb42ce7e838e59f68e9982a0ac9881b4a16f0c4a2ed5640a9fa93296614b0bf\"}]}",
+      "exit_status": 0,
+      "student_refs": [],
+      "scope": "Paired local proxy only; baseline and candidate source hashes retained in raw inputs; not official E or rankings"
     }
   ],
   "engineering_decisions": [
@@ -387,6 +772,38 @@
       ],
       "student_refs": [],
       "limitations": "All diagnosis, correction and retesting performed by Agent; no student contribution claimed."
+    },
+    {
+      "topic": "Further multi-metric optimization and independent withdrawal",
+      "agent_refs": [
+        "/messages/8/content",
+        "/messages/9/content"
+      ],
+      "result_refs": [
+        "/experiments/36/output",
+        "/experiments/37/output",
+        "/experiments/38/output",
+        "/experiments/39/output"
+      ],
+      "student_refs": [],
+      "prompt_refs": [
+        "/messages/7/content"
+      ],
+      "limitations": "Real user task steering; all hypotheses, implementation, measurements and conclusions below are Agent work, not student learning contributions."
+    },
+    {
+      "topic": "New-version regression and transfer beyond tuned seeds",
+      "agent_refs": [
+        "/messages/8/content"
+      ],
+      "result_refs": [
+        "/experiments/29/output",
+        "/experiments/32/output",
+        "/experiments/34/output",
+        "/experiments/35/output"
+      ],
+      "student_refs": [],
+      "limitations": "Agent transfer validation only; tree seed30274159 and vector seed14223819 held out; no student transfer score claimed."
     }
   ],
   "learning_units": [],
@@ -403,7 +820,7 @@
     },
     {
       "topic": "Given T improves but B/M rise for physical postings, what additional certified evidence determines the tradeoff?",
-      "status": "proposed follow-up; no student judgment supplied",
+      "status": "A tradeoff question was asked after the prior delivery. User requested Agent drafting instead. The neutral draft was AI-authored; no student technical explanation or experiment was supplied.",
       "student_answer": null
     }
   ],
@@ -415,80 +832,44 @@
     {
       "pointer": "/experiments/2/output",
       "text": "PASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2"
+    },
+    {
+      "pointer": "/messages/6/content",
+      "text": "你帮我写吧"
+    },
+    {
+      "pointer": "/messages/7/content",
+      "text": "你要再优化"
+    },
+    {
+      "pointer": "/experiments/37/output",
+      "text": "\"median_local_proxy\":\"0.494401\""
     }
   ],
   "artifacts": [
+    {
+      "path": "CMakeLists.txt",
+      "sha256": "8d984f3fff8bd81d5d98d43736606a1339b6351b1b71bbb3c475f9176cb6001d"
+    },
     {
       "path": "Dockerfile",
       "sha256": "4caf1d9b74ea08d5ab8318f7175206c52b6be8ed7bc2b617e6741a79bb7edc92"
     },
     {
-      "path": "CMakeLists.txt",
-      "sha256": "8d984f3fff8bd81d5d98d43736606a1339b6351b1b71bbb3c475f9176cb6001d"
+      "path": "README.md",
+      "sha256": "314c3818a5d56680172c5bb5641575652f3ae6576d224ca66e59828eae4c56cc"
     },
     {
       "path": "build.sh",
       "sha256": "7df68fdea37568304871ec2078fc5189b7c61c74dfea2c87559f75407adf48a3"
     },
     {
-      "path": "README.md",
-      "sha256": "75fe577215b014ae45172c895eefe16adefd25c1ce31aa79f34490548c9f975e"
-    },
-    {
       "path": "docs/design.md",
-      "sha256": "356d3cb0212ae109ccaeff9664a355db727b7d8ac6c2d382a322a85154edd7fc"
+      "sha256": "5b707cc9ae39c0e481f56244b2c28d388b8c50dfc0b5c348c80eaf2438ea6b2b"
     },
     {
       "path": "docs/requirements.md",
-      "sha256": "dba0e378a1898e2f1ff1a00b5c05db29409566273772ea86a6b3375d2381a080"
-    },
-    {
-      "path": "docs/validation.md",
-      "sha256": "e6d63e0f171ffa6bc713a750df83f966b44d078bfbec67160d1aa89327af66ee"
-    },
-    {
-      "path": "tests/benchmark.py",
-      "sha256": "8bb01d3b0742d00476e96d4d61a0fd7252e85a9b3c84292a29f244951bb1e227"
-    },
-    {
-      "path": "tests/client.py",
-      "sha256": "f01cbf72fd7053f782e3410dfafa9cce50e1633e31336ad62b1f18db108d7e50"
-    },
-    {
-      "path": "tests/container_checks.py",
-      "sha256": "38bbab34e461dfa1ee42f1fb0b06c320719a4631b5291df2b4292c0535b671e2"
-    },
-    {
-      "path": "tests/container_suite.py",
-      "sha256": "bcce4b35d93bb707b8792c43d03132347317e2906b5cf9e56ef6b3214f4266c4"
-    },
-    {
-      "path": "tests/crash.py",
-      "sha256": "36c955367cc8b7637108a668ae696a6d6cd5a84ce2d12c66948b079859f8b36c"
-    },
-    {
-      "path": "tests/docker_db.py",
-      "sha256": "2a38028edf42f3009e13f6a07ec604d91ffe23e4fba3d52f05016b05a20be6b3"
-    },
-    {
-      "path": "tests/evidence.py",
-      "sha256": "a8270c1c3a3b50cf77fcbb0786651cb8c238c195664111e1cae23c6cfa000c62"
-    },
-    {
-      "path": "tests/linux_suite.py",
-      "sha256": "9888cd680c38679088ce9487e7970bee19114175ab64fedfb8d4e4e706baaf14"
-    },
-    {
-      "path": "tests/public.py",
-      "sha256": "be34af0f0793c6fa86984e81f72e322d3b0564f43fd0c57d1dd4d020bf76fd59"
-    },
-    {
-      "path": "tests/regression.py",
-      "sha256": "969f9487f26cf026c35b2193070e4bd76fce73009b2dba83f07ffb42119149f5"
-    },
-    {
-      "path": "tests/vector_sweep.py",
-      "sha256": "596bce12f00af323a4373373e1bfc8f759e13daf98d9521509985038ca1cb5c8"
+      "sha256": "a4f57614a16a5beb446475d5089d36cb537b78d1eb44ebf8d285e332f89acbb3"
     },
     {
       "path": "docs/results/benchmark-checks-postings.json",
@@ -543,6 +924,110 @@
       "sha256": "7c43790d5cc8c3bbf82439ac0c84d83318ef1a303e65f21e4111c8e538e84703"
     },
     {
+      "path": "docs/results/opt-final-comparison.json",
+      "sha256": "50a822a616b0e1cf3b6065560afbf9e64b8d2f15c531a8bce642a968ca2ab639"
+    },
+    {
+      "path": "docs/results/opt-final-linux-fault.txt",
+      "sha256": "ee29f1a1c985db5440fcb7abb094f82e1bc4fe8540dd275effdeb48f1bf43d64"
+    },
+    {
+      "path": "docs/results/opt-final-native-public.txt",
+      "sha256": "498d843396623651a6bbd82b80296d40390cbd68b6d0c3ea1e62d6fb9ec8d5cc"
+    },
+    {
+      "path": "docs/results/opt-final-native-regression.txt",
+      "sha256": "1c3c65c657d40765f96a0e5f0d7cf65138e4a58f9278ab9a0db1ac957f8cc811"
+    },
+    {
+      "path": "docs/results/opt-final-native-storage_splits.txt",
+      "sha256": "3778f5ee13bba627972451962e3c9a0d6b32bf7bc8d8b891d6d0b5b77412fb4f"
+    },
+    {
+      "path": "docs/results/opt-final-native-vector_sweep.txt",
+      "sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25"
+    },
+    {
+      "path": "docs/results/opt-final-production-suite.txt",
+      "sha256": "506f304ba75356f733fb2d1d9384bd55da1237741d00971628d0a286af851995"
+    },
+    {
+      "path": "docs/results/opt-final-production-sweep.txt",
+      "sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25"
+    },
+    {
+      "path": "docs/results/opt-final-resources.json",
+      "sha256": "67fa102346545405b69aa8806b620d5f2be4ed5ce3800ccd6e862f4aabccd452"
+    },
+    {
+      "path": "docs/results/opt-final-resources.txt",
+      "sha256": "63cc942d40bca1933fa077017774c118929c686f8158e6a92dd33ec87e39cff2"
+    },
+    {
+      "path": "docs/results/opt-final-sanitize-crash.txt",
+      "sha256": "3b2e248674e7b91c28a6cf945af915f301ff5e01c31a4b36e46679097b0ab0b9"
+    },
+    {
+      "path": "docs/results/opt-final-sanitize-public.txt",
+      "sha256": "498d843396623651a6bbd82b80296d40390cbd68b6d0c3ea1e62d6fb9ec8d5cc"
+    },
+    {
+      "path": "docs/results/opt-final-sanitize-regression.txt",
+      "sha256": "1c3c65c657d40765f96a0e5f0d7cf65138e4a58f9278ab9a0db1ac957f8cc811"
+    },
+    {
+      "path": "docs/results/opt-final-sanitize-storage_splits.txt",
+      "sha256": "3778f5ee13bba627972451962e3c9a0d6b32bf7bc8d8b891d6d0b5b77412fb4f"
+    },
+    {
+      "path": "docs/results/opt-final-sanitize-vector_sweep.txt",
+      "sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25"
+    },
+    {
+      "path": "docs/results/opt-final-tests.json",
+      "sha256": "055bbe99359948cd64ffd0858e8d1ee7e4f758d2e45f6631495769fcd6f46f45"
+    },
+    {
+      "path": "docs/results/opt-packed-comparison.json",
+      "sha256": "c04a3cb2644df389f64ef5f364eb4ce617b732a0dbe85e9fa17f7e4a7c496bb2"
+    },
+    {
+      "path": "docs/results/opt-packed-postings.json",
+      "sha256": "6bb42ce7e838e59f68e9982a0ac9881b4a16f0c4a2ed5640a9fa93296614b0bf"
+    },
+    {
+      "path": "docs/results/opt-packed-scan.json",
+      "sha256": "c61b68f157ba3a50a1ab983446e50b9ae74f7ece81e2b89e8ee1acfbd8f90cbd"
+    },
+    {
+      "path": "docs/results/opt-postings-comparison.json",
+      "sha256": "1649d938663d10e616a4a7fcc4cb48a05a68ded735ad51a583f9b263c97645e7"
+    },
+    {
+      "path": "docs/results/opt-previous-scan.json",
+      "sha256": "9e0a9452d4c4de476722d847ea8eadc41361074d5cf031dbf5668c6234caac6d"
+    },
+    {
+      "path": "docs/results/opt-spool-comparison.json",
+      "sha256": "e8403e162c7cfb24007fe62460ab4fd83afe40034317a790ed78432fbb4706f7"
+    },
+    {
+      "path": "docs/results/opt-spool-scan.json",
+      "sha256": "87a5d00a3e762f288de2f04e7afeffa09ff22c94029b5f866d20a4310ef5b44b"
+    },
+    {
+      "path": "docs/results/opt-views-comparison.json",
+      "sha256": "9942c094b2e83d9252a21c6c817e064f152243fd912ce719a7d86036999f553a"
+    },
+    {
+      "path": "docs/results/opt-views-sanitize.txt",
+      "sha256": "1c3c65c657d40765f96a0e5f0d7cf65138e4a58f9278ab9a0db1ac957f8cc811"
+    },
+    {
+      "path": "docs/results/opt-views-scan.json",
+      "sha256": "397841554903123f1e48ff75538bd5cc2b20c48a3adeccec51370bfecdc039cd"
+    },
+    {
       "path": "docs/results/parser-corrections.json",
       "sha256": "ac8d6e966311c73c788ef94c4327e804e42f5df58393ed13a0c4a89fd8aa5a83"
     },
@@ -561,6 +1046,62 @@
     {
       "path": "docs/results/sanitize-vector-sweep.txt",
       "sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25"
+    },
+    {
+      "path": "docs/validation.md",
+      "sha256": "57780e2f1a76e731eab174b29e6e5cd07361d165ff74075dd56ea606d856bf40"
+    },
+    {
+      "path": "tests/benchmark.py",
+      "sha256": "8bb01d3b0742d00476e96d4d61a0fd7252e85a9b3c84292a29f244951bb1e227"
+    },
+    {
+      "path": "tests/client.py",
+      "sha256": "f01cbf72fd7053f782e3410dfafa9cce50e1633e31336ad62b1f18db108d7e50"
+    },
+    {
+      "path": "tests/compare.py",
+      "sha256": "f1cc5167aec5deed89e00daf1f32eaf7de51022ffa0f782abf89b282a78f55d2"
+    },
+    {
+      "path": "tests/container_checks.py",
+      "sha256": "38bbab34e461dfa1ee42f1fb0b06c320719a4631b5291df2b4292c0535b671e2"
+    },
+    {
+      "path": "tests/container_suite.py",
+      "sha256": "0e415c68f71d3a500cd6dfe7cbfacc28cbbd9aafb4941a8d334609ecdb0a8809"
+    },
+    {
+      "path": "tests/crash.py",
+      "sha256": "36c955367cc8b7637108a668ae696a6d6cd5a84ce2d12c66948b079859f8b36c"
+    },
+    {
+      "path": "tests/docker_db.py",
+      "sha256": "2a38028edf42f3009e13f6a07ec604d91ffe23e4fba3d52f05016b05a20be6b3"
+    },
+    {
+      "path": "tests/evidence.py",
+      "sha256": "a8270c1c3a3b50cf77fcbb0786651cb8c238c195664111e1cae23c6cfa000c62"
+    },
+    {
+      "path": "tests/linux_suite.py",
+      "sha256": "82f89ea02c830c6c260130f02c2ba7174c037a894cba440f0636f367228a6463"
+    },
+    {
+      "path": "tests/public.py",
+      "sha256": "be34af0f0793c6fa86984e81f72e322d3b0564f43fd0c57d1dd4d020bf76fd59"
+    },
+    {
+      "path": "tests/regression.py",
+      "sha256": "4d3493affdae132c5b1cf93a7a69f00df46b5911f69e1d363166363c8b38dc55"
+    },
+    {
+      "path": "tests/storage_splits.py",
+      "sha256": "5b031f61166516f32da31f9db3652a06584eca4bf44139b9b4136abbde533f2b"
+    },
+    {
+      "path": "tests/vector_sweep.py",
+      "sha256": "596bce12f00af323a4373373e1bfc8f759e13daf98d9521509985038ca1cb5c8"
     }
   ],
   "remaining_limits": [

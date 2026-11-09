@@ -21,6 +21,14 @@ primary keys to row offsets; zero references are deletion tombstones. Inner
 entries store each child's minimum key. Splits propagate updated minimum keys.
 No leaf links can point into a different snapshot.
 
+On overflow caused by appending a new rightmost entry, the left page retains
+255 entries and the new right sibling starts with one. This applies to leaves
+and internal child entries; middle insertions retain balanced splits. Appending
+is detected before insertion, and replacement/tombstone updates do not trigger
+this policy. There is no minimum-occupancy assumption in lookup, scan or recovery.
+This reduces historical half-empty pages for ascending keys without changing
+the statement savepoint or publication boundaries.
+
 The page cache holds at most 512 pages with LRU eviction, flushing dirty pages on
 eviction. Disk reads use a read-only mapping; pages remain reclaimable by the OS,
 and Linux cgroup accounting includes that file cache. Tree scans retain one node
@@ -87,6 +95,12 @@ ties by ascending primary key, including descending scalar/distance order.
 
 Primary-key equality uses a tree lookup. Other queries scan current primary
 roots. Numeric/distance ORDER BY with K <= 16384 uses bounded TopK selection.
+The primary-row scan reuses one array of borrowed field spans. It checks complete
+row boundaries, compares scalar predicates without owning string allocations,
+and computes distance directly from serialized float32 fields. Spans are used
+inside the current callback before another storage access could remap the file.
+Sort keys own any strings that outlive a callback; full rows are decoded only
+when projecting selected results. The double accumulation order is unchanged.
 Larger or string orderings use approximately 4 MiB sorted runs and binary
 levelled merges, bounding both active runs/file descriptors by O(log N).
 Results are first materialized to an anonymous `/data` spool, so evaluation
@@ -117,3 +131,8 @@ resource budget; it is not silently run outside the measurement window.
 Memory/IO counters in local reports are container cgroup counters. `io.stat`
 device attribution and complete deferred writeback attribution have not been
 certified against an organizer data device. No official E is computed from them.
+`tests/compare.py` pairs equal seeds and workloads, checks correctness/recall and
+local hard limits, applies all three weights within each round, then takes the
+median. Per-metric medians are shown only for description. An 8 KiB in-memory
+spool experiment was withdrawn after its local weighted proxy regressed; results
+continue to use the existing anonymous disk spool.

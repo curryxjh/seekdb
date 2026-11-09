@@ -1,0 +1,4 @@
+PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart
+PASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart
+PASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart
+PASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback
