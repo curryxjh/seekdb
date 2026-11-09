@@ -172,11 +172,55 @@ def differential(client, seed, steps=150):
     print(f"PASS differential seed={seed}, steps={steps}, index_attempted={indexed}")
 
 
+def scan_views(client):
+    """Exercise borrowed fields with variable offsets and independent ordering."""
+    rng = random.Random(5271941)
+    rows = []
+    client.ok("CREATE TABLE views(s VARCHAR(4096),v VECTOR(3),id BIGINT PRIMARY KEY,"
+              "g BIGINT,tail VARCHAR(16));")
+    client.ok("BEGIN;")
+    for key in range(300):
+        text = rng.choice(["", "中文", "😀", "é"]) * rng.randrange(80)
+        vector = [f32(rng.uniform(-7, 7)) for _ in range(3)]
+        group = key % 7
+        tail = str(key % 11)
+        rows.append([text, vector, key, group, tail])
+        client.ok(f"INSERT INTO views VALUES({sql_string(text)},"
+                  f"{sql_string(json.dumps(vector))},{key},{group},{sql_string(tail)});")
+    client.ok("COMMIT;")
+    selected = [r for r in rows if r[3] >= 2 and r[4] < "8"]
+    for descending in [False, True]:
+        for c, name in [(0, "s"), (3, "g"), (4, "tail")]:
+            # Stable sorting keeps the ascending primary-key tie order.
+            expected = sorted(selected, key=lambda r: r[c], reverse=descending)
+            direction = "DESC" if descending else "ASC"
+            check_rows(client,
+                       f"SELECT id,s,tail FROM views WHERE g>=2 AND tail<'8' "
+                       f"ORDER BY {name} {direction} LIMIT 177;",
+                       [[r[2], r[0], r[4]] for r in expected[:177]])
+        query = [f32(0.2), f32(-0.4), f32(1.7)]
+        expected = sorted(((math.dist(r[1], query), r[2]) for r in selected),
+                          key=lambda pair: (-pair[0] if descending else pair[0], pair[1]))
+        actual = client.ok(
+            "SELECT id,L2_DISTANCE(v,'[1,2,3]') AS projected FROM views "
+            "WHERE g>=2 AND tail<'8' ORDER BY L2_DISTANCE(v,'[0.2,-0.4,1.7]') "
+            f"{'DESC' if descending else 'ASC'} LIMIT 177;")["rows"]
+        assert [r[0] for r in actual] == [key for _, key in expected[:177]]
+        assert all(math.isclose(d, math.dist(rows[key][1], [1, 2, 3]),
+                                rel_tol=1e-5, abs_tol=1e-5) for key, d in actual)
+    check_rows(client, "SELECT id FROM views WHERE id=17 AND s='missing';", [])
+    check_rows(client, "SELECT id,tail FROM views WHERE g>=0 LIMIT 4;",
+               [[r[2], r[4]] for r in rows[:4]])
+    print("PASS borrowed scan fields, variable strings, nonleading primary key, "
+          "scalar/distance ordering and distinct projection distance")
+
+
 def run(binary, temp_root=None, seeds=None):
     with tempfile.TemporaryDirectory(dir=temp_root) as directory:
         client = Client([binary], directory)
         try:
             boundaries(client)
+            scan_views(client)
             # Directory lock must fail before ready and release on process exit.
             locked = subprocess.run([binary, "--data", directory], input=b"", capture_output=True)
             assert locked.returncode != 0 and not locked.stdout and b"in use" in locked.stderr

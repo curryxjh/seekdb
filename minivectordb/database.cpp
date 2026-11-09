@@ -36,21 +36,72 @@ int compare(const Value &a, const Value &b) {
   throw Error("unsupported", "vector comparison requires L2_DISTANCE");
 }
 struct BoundPredicate { uint32_t column; std::string op; Value value; };
+bool satisfies(int result, std::string_view op) {
+  if (op == "=") return result == 0;
+  if (op == "<") return result < 0;
+  if (op == "<=") return result <= 0;
+  if (op == ">") return result > 0;
+  return result >= 0;
+}
 bool matches(const Row &row, const std::vector<BoundPredicate> &where) {
   for (const auto &p : where) {
-    const int result = compare(row[p.column], p.value);
-    if (p.op == "=" && result != 0) return false;
-    if (p.op == "<" && result >= 0) return false;
-    if (p.op == "<=" && result > 0) return false;
-    if (p.op == ">" && result <= 0) return false;
-    if (p.op == ">=" && result < 0) return false;
+    if (!satisfies(compare(row[p.column], p.value), p.op)) return false;
   }
   return true;
 }
+// Views are consumed within one scan callback, before another storage access.
+// Reuse the field array; rejected rows never allocate strings or vectors.
+class RowView {
+ public:
+  explicit RowView(const Table &table) : table_(table), fields_(table.columns.size()) {}
+  void reset(std::string_view bytes) {
+    for (size_t i = 0; i < fields_.size(); ++i) {
+      const auto &c = table_.columns[i];
+      size_t size = 8;
+      if (c.type == Type::Varchar) size = read_u32(bytes);
+      else if (c.type == Type::Vector) size = static_cast<size_t>(c.size) * 4;
+      fields_[i] = read_bytes(bytes, size);
+    }
+    require(bytes.empty(), "corrupt_data", "trailing row data");
+  }
+  bool matches(const std::vector<BoundPredicate> &where) const {
+    for (const auto &p : where) {
+      int result = 0;
+      if (table_.columns[p.column].type == Type::Bigint) {
+        const auto a = integer(p.column), b = std::get<int64_t>(p.value);
+        result = (a > b) - (a < b);
+      } else {
+        result = fields_[p.column].compare(std::get<std::string>(p.value));
+      }
+      if (!satisfies(result, p.op)) return false;
+    }
+    return true;
+  }
+  Value scalar(uint32_t column) const {
+    if (table_.columns[column].type == Type::Bigint) return integer(column);
+    return std::string(fields_[column]);
+  }
+  std::string_view vector(uint32_t column) const { return fields_[column]; }
+ private:
+  const Table &table_;
+  std::vector<std::string_view> fields_;
+  int64_t integer(uint32_t column) const {
+    auto bytes = fields_[column];
+    return std::bit_cast<int64_t>(read_u64(bytes));
+  }
+};
 double distance(const std::vector<float> &a, const std::vector<float> &b) {
   double sum = 0;
   for (size_t i = 0; i < a.size(); ++i) {
     const double delta = static_cast<double>(a[i]) - static_cast<double>(b[i]);
+    sum += delta * delta;
+  }
+  return std::sqrt(sum);
+}
+double distance(std::string_view bytes, const std::vector<float> &query) {
+  double sum = 0;
+  for (size_t i = 0; i < query.size(); ++i) {
+    const double delta = static_cast<double>(load_float(bytes.data() + i * 4)) - query[i];
     sum += delta * delta;
   }
   return std::sqrt(sum);
@@ -63,6 +114,10 @@ struct BoundExpr {
   Value eval(const Row &row) const {
     if (!distance) return row[column];
     return mvdb::distance(std::get<std::vector<float>>(row[column]), query);
+  }
+  Value eval(const RowView &row) const {
+    if (!distance) return row.scalar(column);
+    return mvdb::distance(row.vector(column), query);
   }
 };
 struct Candidate {
@@ -455,9 +510,10 @@ Spool Database::select(const Statement &s, const Table &t) {
     } else sorter.add(std::move(value));
     return true;
   };
+  RowView row(t);
   const auto visit = [&](int64_t id, uint64_t offset) {
-    Row row = decode(t, offset);
-    if (!matches(row, where)) return true;
+    row.reset(storage_.blob(offset));
+    if (!row.matches(where)) return true;
     Candidate value; value.id = id; value.offset = offset;
     value.key = s.ordered ? order.eval(row) : Value(id);
     return accept(std::move(value));
@@ -480,12 +536,7 @@ Spool Database::select(const Statement &s, const Table &t) {
       Candidate value; value.id = id; value.offset = read_u64(bytes);
       const auto input = read_bytes(bytes, order.query.size() * 4);
       require(bytes.empty(), "corrupt_data", "trailing vector posting data");
-      double sum = 0;
-      for (size_t i = 0; i < order.query.size(); ++i) {
-        const double delta = static_cast<double>(load_float(input.data() + i * 4)) - order.query[i];
-        sum += delta * delta;
-      }
-      value.key = std::sqrt(sum); return accept(std::move(value));
+      value.key = distance(input, order.query); return accept(std::move(value));
     });
   } else if (!direct) storage_.scan(t.root, visit);
   if (s.ordered) {
