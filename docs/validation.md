@@ -1,6 +1,6 @@
 # Validation and performance record
 
-Date: 2026-11-09, Asia/Shanghai. The engineering results below are LOCAL.
+Date: 2026-11-11, Asia/Shanghai. Historical performance results below are LOCAL; the protocol checks use the official released driver.
 The user subsequently reported a formal platform failure at 21:54 for delivered
 commit `3ccc14effd6501ffb10d5e6aaa0ba2853032cb86`. Authenticated inspection
 confirmed failed admission; performance and prompt evaluation were skipped.
@@ -9,9 +9,11 @@ No official admission, E, rank or 80-point score is claimed.
 
 ## Revision and environment
 
-* Official baseline: `9f6df2ba5acf871376e22b64a3d0724e4b575044`.
-* Final tested core commit: `cf294bbc8a664988ef11b5884d35ae57c1dd12cb`.
-* Final `minivectordb/` SHA256: `ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248`.
+* Initial official baseline: `9f6df2ba5acf871376e22b64a3d0724e4b575044`.
+* Official protocol/driver update: `f4d4e26653af823a7601668802f80e374ad6643c`.
+* Final tested core before protocol repair: `cf294bbc8a664988ef11b5884d35ae57c1dd12cb`.
+* Pre-repair `minivectordb/` SHA256: `ef7e8244c6e5b2dad5bd66440905fb56db6d452291b7a94114cb975f70128248`.
+* Repaired `minivectordb/` SHA256: `1399594fad6d6684dd91517c3556d11961d7598a1134176a392f335ae8364492`.
 * Previous pushed delivery: `c8423c1c5c3fa15d8b5dc0d131aec81d35d425d9`;
   its core was `4f4e0474e6eff1715625f6c9ec4a261c95623386`.
 * Initial implementation/benchmark: `f0448c9dc3f5fa6919e4fa7b84cdc1764e966c49`,
@@ -25,7 +27,36 @@ No official admission, E, rank or 80-point score is claimed.
 * Source digest algorithm: sorted immediate files under `minivectordb/`, hashing
   each basename followed by its raw bytes. `tests/evidence.py` rechecks it.
 
-## Correctness, crash and resource results
+## Official protocol repair
+
+The unchanged official driver rejected the old delivery at the startup handshake:
+`expected ready, got {'ready': True, 'protocol': 'minivectordb-local-v1'}`.
+The corrected program implements the exact ready object, JSONL execute/shutdown,
+typed request IDs, nested errors and per-response flush. The old SQL stream
+framer and local mode command were removed. SQL execution and storage semantics
+were preserved; official SQL cases, assertions, protocol and driver match upstream.
+
+The native and Linux amd64 production builds pass all 20 public cases / 95 SQL
+under that driver. Additional checks cover ID types and precision, strict JSON,
+Unicode escapes, fragmented input, continued execution after errors, shutdown
+rollback and restart. ASan/UBSan public, protocol, differential, crash and vector
+suites pass. The repaired image also passes the 40000-row test under 96 MiB with
+swap disabled. See [old handshake](results/protocol-before/result.json),
+[official Docker cases](results/protocol-docker-public/result.json),
+[protocol and resource commands](results/protocol-docker-tests.json) and
+[sanitizer commands](results/protocol-sanitize-tests.json).
+
+A clean staged-tree export was rebuilt offline for Linux amd64, then passed the
+unchanged official 20-case driver and protocol boundary suite again. The rebuilt
+database executable has the same SHA256 as the tested production image; image
+config IDs differ and both identities are preserved in
+[the delivery report](results/protocol-delivery.json).
+
+The performance numbers and broad split/fault results below describe the
+pre-repair revisions explicitly named in their reports. They are retained as
+history, not measurements of the new transport. No official retry has been made.
+
+## Pre-repair correctness, crash and resource results
 
 | Check | Actual result | Reproduction / evidence |
 | --- | --- | --- |
@@ -220,21 +251,22 @@ spool branch and its 8 KiB setting were removed. The comparison script options
 only select input/output evidence files; they do not affect database execution. Tests live in `tests/`, not `tools/`.
 
 Source, Dockerfile, tests, documentation and the sole authentic
-`agent/conversation.json` are delivered together. The original empty root JSON
-placeholder is removed. The original master worktree and its untracked files
+`agent/conversation.json` are delivered together. The empty upstream root JSON
+placeholder is retained; the sole learning artifact remains under `agent/`.
+The original master worktree and its untracked files
 were preserved. Git delivery uses `minivectordb-round2` as explicitly authorized,
-without force push. Exported-commit rebuild and evidence validation are recorded
+without force push. The pre-repair exported-commit rebuild and evidence validation are recorded
 in `results/delivery-check.json`.
 
 ## Remaining limits and target gap
 
-Formal stdin/stdout framing, ready/error/mode contract, resource/time limits,
-certified I/O baseline and complete 29-case admission still require the organizer
-package/platform. The adapter is LOCAL. ann currently has exact fallback rather
-than sublinear approximate search. Append/COW storage has no compaction and
-accumulates unreachable data/tombstones. Largest-request memory budgets still
-need checking against frozen limits. Cross-container macOS bind-mount flock is
-not supported in the observed environment; Linux volumes were verified.
+The released JSONL stdin/stdout contract is now implemented and verified with the
+unchanged official driver: 20/20 public cases and 95 SQL pass on native and
+linux/amd64 Docker builds. Hidden 9-case admission, ranking baselines and platform
+results remain unverified. `ann` currently has exact fallback rather than sublinear
+approximate search. Append/COW storage has no compaction and accumulates unreachable
+data/tombstones. Cross-container macOS bind-mount flock is not supported in the
+observed environment; Linux volumes were verified.
 
 The learning artifact includes actual user authorization and engineering/test
 results. The user's later platform-failure report is retained as an actual

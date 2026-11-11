@@ -1,9 +1,9 @@
 # MiniVectorDB requirement ledger
 
-Baseline checked on 2026-11-09 (Asia/Shanghai):
-`upstream/2026-competition-round2` =
-`9f6df2ba5acf871376e22b64a3d0724e4b575044`.
-Public manifest: `minivectordb-public-v4`, 20 cases, 95 SQL statements.
+Initial baseline checked on 2026-11-09: `9f6df2ba5acf871376e22b64a3d0724e4b575044`.
+The official protocol and driver were added upstream on 2026-11-10 at
+`f4d4e26653af823a7601668802f80e374ad6643c` and merged unchanged. Public manifest:
+`minivectordb-public-v4`, 20 cases, 95 SQL statements.
 
 | Requirement | Source | Implementation | Verification | Status |
 | --- | --- | --- | --- | --- |
@@ -14,8 +14,8 @@ Public manifest: `minivectordb-public-v4`, 20 cases, 95 SQL statements.
 | Data exceeds memory, including transactions and sorting | public README + supplied requirements | disk pages, bounded cache and external runs | Linux cgroup test, swap disabled | PASS: 142734352-byte committed file in 96 MiB, 40000 rows |
 | Exact filtered TopK; deterministic ties; live index maintenance | public vector cases + supplied requirements | scan, bounded selection, disk index | independent float32 truth, mutation tests | LOCAL PASS: 375 sweep checks; three seeds per benchmark, both recall groups 1.0 |
 | Approximate acceleration | supplied requirements; frozen requirements unavailable | ann uses exact fallback, physical postings on explicit CREATE INDEX | measured exact comparison | no sublinear ANN claim; index resource tradeoff documented |
-| Container foreground, stdin/stdout, no runtime network, `/data` | supplied requirements; competition description | `Dockerfile`, local adapter | Linux amd64 container end to end | PASS on Docker Desktop emulation; formal adapter pending |
-| Formal framing, ready marker, error codes, mode switching | public README explicitly delegates to organizer driver | isolated local adapter | organizer driver | **not supplied / unverified** |
+| Container foreground, stdin/stdout, no runtime network, `/data` | supplied requirements; competition description | `Dockerfile`, official adapter | Linux amd64 container end to end | PASS on Docker Desktop emulation |
+| Formal JSONL framing, ready marker, errors, mode switching and shutdown | `STDIO_PROTOCOL.md`, official `protocol_check/` | `protocol.*`, `main.cpp` | unchanged official driver, native and Docker | **PASS: 20/20, 95 SQL** |
 | Frozen limits, timeouts, baseline and physical I/O device | public README delegates frozen configuration | benchmark scripts | organizer environment | **not supplied / unverified** |
 | Complete 29-case admission and both ranking results | public README + platform | platform | user-reported submission, authenticated record inspected | **FAIL admission at 3ccc14e; both ranked evaluations skipped; no case logs returned** |
 | One authentic learning artifact ≤128 KiB | supplied `req.md` | `agent/conversation.json` | `tests/evidence.py` | strict self-check; no student technical-learning contribution claimed |
@@ -35,8 +35,8 @@ Conflicts resolved for this work:
   empty root placeholder is not a second evidence artifact.
 * The user supplied a failed platform record for the delivered commit. The agent
   inspected it without submitting again. No authorization for a retry is inferred.
-* Public `.result` JSON is an assertion format, not a wire protocol. The local
-  adapter and its tests must not be described as a frozen organizer protocol.
+* Public `.result` JSON is an assertion format, while `STDIO_PROTOCOL.md` and
+  `protocol_check/` define the released wire protocol used by this revision.
 
 ## First vertical experiment
 
@@ -59,13 +59,12 @@ rankings and student learning scores remain unverified.
 
 ## Remaining admission and scoring gaps
 
-The formal driver and frozen limits/baseline remain absent. The platform result
-is now known: admission failed at the delivered commit; the platform returned no
-failure category, failing SQL, or build/runtime log. A matching reproduction and
-verified repair require that missing boundary information. See
-[platform investigation](platform-failure.md). Neither 29/29 admission nor any
-ranking/80-point result is claimed. The user's contrary platform feedback is
-retained; no student technical explanation or completed repair is invented.
+The official driver exposed that the delivered revision used an incompatible
+custom transport. Its handshake failure is retained in
+`results/protocol-before/result.json`; the official driver and all 20 public cases
+pass on the corrected native build and Docker image. The original platform record
+has not been resubmitted. The nine unpublished cases, platform admission and
+ranking remain unverified. See [platform investigation](platform-failure.md).
 
 All four supplied rule pages were read during this session. The TopicDetails
 performance page states one shared submission for both rankings. The agent did

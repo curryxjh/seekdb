@@ -41,7 +41,7 @@ def run(binary, temp_root=None):
                 client.ok("BEGIN;")
                 client.ok(f"UPDATE {order} SET n=7 WHERE id=0;")
                 result = client.sql(f"INSERT INTO {order} VALUES (3,1),(0,1);")
-                assert not result["ok"] and result["error"] == "duplicate_key"
+                assert not result["ok"] and result["error"]["code"] == "duplicate_key"
                 assert client.ok(f"SELECT id FROM {order} WHERE id=3;")["rows"] == []
                 client.ok("COMMIT;")
                 client.ok("BEGIN;")

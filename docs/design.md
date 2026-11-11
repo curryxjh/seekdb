@@ -2,12 +2,11 @@
 
 ## Boundaries
 
-`sql.*` owns incremental framing, UTF-8 validation, lexing, parsing and literals.
+`protocol.*` owns bounded JSONL request parsing and exact ID preservation. `sql.*` owns UTF-8 validation, lexing, parsing and literals.
 `storage.*` owns disk records, a COW B+ tree, bounded page cache and durable root
 publication. `database.*` owns schema/type binding, transaction roots, row/index
-maintenance, filtering, selection and external sorting. `main.cpp` is the isolated
-LOCAL wire adapter. Only the adapter needs replacement when the organizer driver
-is available.
+maintenance, filtering, selection and external sorting. `main.cpp` connects the
+official JSONL transport to the database.
 
 There are no third-party execution libraries, downloaded runtime artifacts,
 network services, hidden sample-answer dispatches or full-database heap maps.

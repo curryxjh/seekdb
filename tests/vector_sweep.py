@@ -60,7 +60,7 @@ def run(binary):
 
                 verify()
                 client.ok("CREATE VECTOR INDEX tv ON t(v);")
-                client.ok("\\mode ann")
+                client.mode = "ann"
                 verify()
                 saved = copy.deepcopy(rows)
                 client.ok("BEGIN;")

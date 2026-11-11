@@ -61,20 +61,4 @@ struct Statement {
 };
 Statement parse(std::string_view sql);
 
-// Incremental statement framing. Semicolons inside quotes/comments are data.
-class Framer {
- public:
-  // A complete statement is moved into output when this returns true.
-  bool feed(char ch, std::string &output);
-  std::string finish();
-  bool empty() const;
- private:
-  std::string buffer_;
-  char quote_ = 0;
-  bool escaped_ = false;
-  bool line_comment_ = false;
-  bool block_comment_ = false;
-  bool pending_quote_ = false;
-};
-
 }  // namespace mvdb

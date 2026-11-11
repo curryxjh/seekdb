@@ -1,0 +1,13 @@
+{
+  "scope": "public-protocol-check",
+  "passed": false,
+  "cases": [
+    {
+      "id": "handshake",
+      "status": "FAIL",
+      "message": "expected ready, got {'ready': True, 'protocol': 'minivectordb-local-v1'}",
+      "duration_ms": 14
+    }
+  ],
+  "note": "Local diagnostic only; no performance/Agent scores or platform callbacks."
+}

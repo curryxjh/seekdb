@@ -25,7 +25,7 @@ def bad(client, sql, code=None):
     result = client.sql(sql)
     assert not result["ok"] and result.get("error"), (sql, result)
     if code:
-        assert result["error"] == code, (sql, result, code)
+        assert result["error"]["code"] == code, (sql, result, code)
 
 
 def boundaries(client):
@@ -64,10 +64,9 @@ def boundaries(client):
     check_rows(client, "SELECT s FROM quoted ORDER BY id;", [["a;,b'c\nd"], ["x\\y"]])
     client.ok("INSERT INTO quoted VALUES(3,'first\nsecond');")
     check_rows(client, "SELECT s FROM quoted WHERE id=3;", [["first\nsecond"]])
-    # The stream permits separate SQL statements; trailing garbage *within* one
-    # frame is rejected. The parser API is never asked to silently ignore tails.
-    client.process.stdin.write(b"INSERT INTO quoted VALUES(4,'\xed\xa0\x80');\n")
-    assert client.receive()["error"] == "invalid_unicode"
+    # Invalid UTF-8 in an otherwise correctly wrapped request is rejected.
+    client.process.stdin.write(b'{"id":0,"op":"execute","sql":"INSERT INTO quoted VALUES(4,\'\xed\xa0\x80\');"}\n')
+    assert client.receive()["error"]["code"] == "invalid_unicode"
     check_rows(client, "SELECT id FROM quoted ORDER BY id;", [[1], [2], [3]])
     client.ok("BEGIN;")
     client.ok("UPDATE quoted SET s='kept' WHERE id=1;")
@@ -87,7 +86,7 @@ def boundaries(client):
     client.ok("INSERT INTO t VALUES(1,1,'重插','[0,0]');")
     client.ok("UPDATE t SET v='[0,0]',s='修改' WHERE id=2;")
     check_rows(client, "SELECT id FROM t ORDER BY L2_DISTANCE(v,'[0,0]') LIMIT 2;", [[1], [2]])
-    client.ok("\\mode ann")
+    client.mode = "ann"
     check_rows(client, "SELECT id FROM t WHERE n=1 ORDER BY L2_DISTANCE(v,'[0,0]') LIMIT 9;", [[1]])
     client.ok("ROLLBACK;")
     check_rows(client, "SELECT s FROM t WHERE id=2;", [["😀"]])

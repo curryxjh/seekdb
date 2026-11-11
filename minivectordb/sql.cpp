@@ -372,43 +372,4 @@ Statement parse(std::string_view sql) {
   return Parser(sql).statement();
 }
 
-bool Framer::feed(char ch, std::string &output) {
-  require(buffer_.size() < 16U * 1024U * 1024U, "request_limit", "local SQL request exceeds 16 MiB");
-  if (quote_ != 0) {
-    if (pending_quote_) {
-      pending_quote_ = false;
-      if (ch == quote_) { buffer_ += ch; return false; }
-      quote_ = 0;
-    } else {
-      buffer_ += ch;
-      if (escaped_) escaped_ = false;
-      else if (ch == '\\' && quote_ != '`') escaped_ = true;
-      else if (ch == quote_) pending_quote_ = true;
-      return false;
-    }
-  }
-  const char previous = buffer_.empty() ? '\0' : buffer_.back();
-  buffer_ += ch;
-  if (line_comment_) {
-    if (ch == '\n') line_comment_ = false;
-    return false;
-  }
-  if (block_comment_) {
-    if (previous == '*' && ch == '/') block_comment_ = false;
-    return false;
-  }
-  if ((previous == '-' && ch == '-') || ch == '#') line_comment_ = true;
-  else if (previous == '/' && ch == '*') block_comment_ = true;
-  else if (ch == '\'' || ch == '"' || ch == '`') quote_ = ch;
-  else if (ch == ';') { output.swap(buffer_); buffer_.clear(); return true; }
-  return false;
-}
-
-std::string Framer::finish() {
-  require((quote_ == 0 || pending_quote_) && !block_comment_,
-          "syntax", "incomplete statement at EOF");
-  std::string out; out.swap(buffer_); return out;
-}
-bool Framer::empty() const { return buffer_.find_first_not_of(" \t\r\n") == std::string::npos; }
-
 }  // namespace mvdb

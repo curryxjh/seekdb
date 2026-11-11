@@ -1,4 +1,4 @@
-"""Client for the explicitly LOCAL minivectordb-local-v1 adapter."""
+"""Test client using the official JSONL transport."""
 import json
 import os
 import select
@@ -16,8 +16,10 @@ class Client:
             [*command, "--data", str(directory)], stdin=subprocess.PIPE,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.env, bufsize=0)
         self.pending = bytearray()
+        self.sequence = 0
+        self.mode = "exact"
         ready = self.receive()
-        assert ready == {"ready": True, "protocol": "minivectordb-local-v1"}, ready
+        assert ready == {"type": "ready"}, ready
 
     def receive(self):
         # Keep surplus bytes explicitly, so readiness cannot hide a buffered line.
@@ -36,7 +38,12 @@ class Client:
             self.pending += chunk
 
     def send(self, sql):
-        payload = memoryview(sql.encode("utf-8") + b"\n")
+        self.sequence += 1
+        self.send_request({"id": self.sequence, "op": "execute", "sql": sql,
+                           "search_mode": self.mode})
+
+    def send_request(self, request):
+        payload = memoryview(json.dumps(request, ensure_ascii=False, allow_nan=False).encode("utf-8") + b"\n")
         while payload:
             n = self.process.stdin.write(payload)
             if n is None or n <= 0:
@@ -45,7 +52,9 @@ class Client:
 
     def sql(self, sql):
         self.send(sql)
-        return self.receive()
+        result = self.receive()
+        assert type(result["id"]) is int and result["id"] == self.sequence, result
+        return result
 
     def ok(self, sql):
         result = self.sql(sql)
@@ -54,11 +63,15 @@ class Client:
 
     def close(self):
         if self.process.poll() is None:
+            self.sequence += 1
+            self.send_request({"id": self.sequence, "op": "shutdown"})
+            assert self.receive() == {"id": self.sequence, "ok": True}
             self.process.stdin.close()
             self.process.wait(timeout=self.timeout)
         stderr = self.process.stderr.read().decode("utf-8", "replace")
         assert self.process.returncode == 0, (self.process.returncode, stderr)
         assert not stderr, stderr
+        assert not self.pending and not self.process.stdout.read(), "extra stdout after shutdown"
         self.process.stdout.close()
         self.process.stderr.close()
 

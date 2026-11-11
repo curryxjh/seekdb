@@ -4,14 +4,13 @@
 解析与执行、向量索引、事务和恢复均自行实现，没有复用 SeekDB 引擎，也没有
 SQLite、RocksDB 或向量数据库依赖。
 
-当前使用 **`minivectordb-local-v1` 本地接口**。公开题包没有提供完整的组织方
-通信驱动、冻结协议和资源配置，不能据本地通过结果声称正式 29 个用例通过、
-正式协议兼容或取得比赛名次。
+程序遵循官方 `2026-competition-round2` 的 JSONL stdin/stdout 协议。协议说明与
+公开驱动 `protocol_check/run.py` 已合入本仓库，原样驱动和验证结果均保留。
+公开 20/20 用例通过不代表其余 9 个正式用例通过，也不代表获得比赛名次。
 
-**平台验收：未通过。** 2026-11-09 21:54 提测的 `3ccc14effd6501ffb10d5e6aaa0ba2853032cb86`
-未通过 MySQL 功能准入，性能及 Agent Prompt 均未执行。平台没有提供具体失败
-用例或日志；根因尚未确认。见 [平台排查记录](docs/platform-failure.md)。
-下面的本地测试结果不能作为再次正式提测的依据。
+**旧交付未通过平台验收。** 2026-11-09 21:54 提测的 `3ccc14effd6501ffb10d5e6aaa0ba2853032cb86`
+未通过 MySQL 功能准入，性能及 Agent Prompt 均未执行。官方驱动已复现旧交付的通信不兼容，修复记录见 [平台排查记录](docs/platform-failure.md)。
+下面的验证结果不能替代新的正式提测。
 
 ## 构建与运行
 
@@ -24,24 +23,21 @@ docker build --platform linux/amd64 -t minivectordb:local .
 docker volume create minivectordb-data
 docker run --rm -i --platform linux/amd64 --network none \
   --memory 128m --memory-swap 128m \
-  -v minivectordb-data:/data minivectordb:local <<'SQL'
-CREATE TABLE items(id BIGINT PRIMARY KEY, tag VARCHAR(16), v VECTOR(2));
-INSERT INTO items VALUES(1,'中文','[0,0]'),(2,'example','[3,4]');
-SELECT id,tag FROM items ORDER BY id;
-SELECT id,L2_DISTANCE(v,'[0,0]') AS d FROM items ORDER BY d LIMIT 10;
-BEGIN;
-UPDATE items SET tag='committed' WHERE id=1;
-COMMIT;
-BEGIN;
-DELETE FROM items WHERE id=2;
-ROLLBACK;
-CREATE VECTOR INDEX items_v ON items(v);
-SQL
+  -v minivectordb-data:/data minivectordb:local <<'JSONL'
+{"id":1,"op":"execute","sql":"CREATE TABLE items(id BIGINT PRIMARY KEY, tag VARCHAR(16), v VECTOR(2));","search_mode":"exact"}
+{"id":2,"op":"execute","sql":"INSERT INTO items VALUES(1,'中文','[0,0]'),(2,'example','[3,4]');","search_mode":"exact"}
+{"id":3,"op":"execute","sql":"SELECT id,tag FROM items ORDER BY id;","search_mode":"exact"}
+{"id":4,"op":"execute","sql":"SELECT id,L2_DISTANCE(v,'[0,0]') AS d FROM items ORDER BY d LIMIT 10;","search_mode":"exact"}
+{"id":5,"op":"execute","sql":"BEGIN;","search_mode":"exact"}
+{"id":6,"op":"execute","sql":"UPDATE items SET tag='committed' WHERE id=1;","search_mode":"exact"}
+{"id":7,"op":"execute","sql":"COMMIT;","search_mode":"exact"}
+{"id":8,"op":"execute","sql":"CREATE VECTOR INDEX items_v ON items(v);","search_mode":"exact"}
+{"id":9,"op":"shutdown"}
+JSONL
 ```
 
-EOF 正常退出；再次运行并挂载同一个数据卷可以读取已提交内容。未提交的显式
-事务在 EOF、SIGTERM、SIGINT 和重启恢复时回滚。所有数据、元数据、锁及匿名
-结果/排序临时文件都在 `/data`。不启动监听服务。
+正常关闭会先回滚未提交事务；再次运行并挂载同一个数据卷可以读取已提交内容。
+所有数据、元数据、锁及匿名结果/排序临时文件都在 `/data`。不启动监听服务。
 
 推荐使用 Docker 数据卷。已观察到 Docker Desktop/macOS 的两个独立主机目录
 挂载不能可靠互斥文件锁；同一 Linux 数据卷的竞争进程锁检查通过。在原生 Linux
@@ -51,7 +47,7 @@ EOF 正常退出；再次运行并挂载同一个数据卷可以读取已提交�
 
 ```sh
 ./build.sh
-./build/minivectordb --data /absolute/path/to/database --mode exact
+./build/minivectordb --data /absolute/path/to/database
 ```
 
 也提供 CMake 配置。地址/未定义行为检查与故障注入是独立的测试构建选项：
@@ -60,31 +56,28 @@ EOF 正常退出；再次运行并挂载同一个数据卷可以读取已提交�
 SANITIZE=1 FAULTS=1 OUTPUT=build/minivectordb-sanitize ./build.sh
 ```
 
-## 本地通信接口
+## 官方 JSONL 通信接口
 
 恢复完成后输出并刷新：
 
 ```json
-{"ready":true,"protocol":"minivectordb-local-v1"}
+{"type":"ready"}
 ```
 
-输入是以分号结束的 SQL 流，支持多行、注释、引号内分号、双写引号和反斜线
-转义。EOF 也会执行最后一条完整但没有分号的 SQL。每条语句输出一行严格 JSON：
+输入是每行一个 JSON 请求，SQL 位于 `sql` 字段，模式位于 `search_mode` 字段。
+每条请求输出一行严格 JSON，并原样回传 `id`：
 
 ```json
-{"ok":true,"affected_rows":2}
-{"ok":true,"columns":["id","d"],"rows":[[1,0],[2,5]]}
-{"ok":false,"error":"duplicate_key","message":"duplicate primary key"}
+{"id":1,"ok":true,"affected_rows":2}
+{"id":2,"ok":true,"columns":["id","d"],"rows":[[1,0],[2,5]]}
+{"id":3,"ok":false,"error":{"code":"duplicate_key","message":"duplicate primary key"}}
 ```
 
-普通 SQL 错误后可以继续下一条语句。stdout 仅输出结果并逐条刷新，诊断写
-stderr。输出故障或发布提交后无法确认目录同步时终止进程，不再输出误导性的
-“已回滚”响应。
-
-独立控制行 `\mode exact` / `\mode ann` 返回 `{"ok":true}`。
-CLI 也接受 `--mode exact|ann`。目前两者都进行精确检索；`ann` 是明确的精确
-回退，没有宣称实现近似搜索。公开题包中的 `--restart` 和 `--mode ann` 由
-测试驱动转换，不是 SQL，也不是组织方协议的实现依据。
+普通 SQL 错误后可以继续下一条请求。关闭请求使用
+`{"id":4,"op":"shutdown"}`，服务端返回成功后退出。stdout 仅输出协议报文并
+逐条刷新，诊断写 stderr。`exact` 与 `ann` 目前都进行精确检索；`ann` 是精确回退，
+没有宣称实现近似搜索。完整约定见 [STDIO_PROTOCOL.md](STDIO_PROTOCOL.md)，原样
+公开驱动见 [protocol_check/run.py](protocol_check/run.py)。
 
 ## 支持范围
 
@@ -102,7 +95,7 @@ CLI 也接受 `--mode exact|ann`。目前两者都进行精确检索；`ann` 是
 错误。向量拒绝 NaN、Infinity、溢出、非数值及维度不符；L2 对外返回欧氏距离。
 过滤先于 TopK，结果不足 K 时返回全部。
 
-本地防护上限为每条 SQL 16 MiB、catalog 4 MiB、4096 表、每表 1024 列、
+本地防护上限为每条 JSONL 请求 16 MiB、catalog 4 MiB、4096 表、每表 1024 列、
 类型参数 1–1048576；这些不是组织方冻结限制。整条 SQL 的解析树在内存中，
 最大请求能否适合最终内存预算仍须按正式配置校准。
 
@@ -112,6 +105,7 @@ CLI 也接受 `--mode exact|ann`。目前两者都进行精确检索；`ann` 是
 
 ```sh
 python3 tests/public.py --binary build/minivectordb
+python3 tests/protocol.py --binary build/minivectordb
 python3 tests/regression.py --binary build/minivectordb
 python3 tests/storage_splits.py --binary build/minivectordb
 python3 tests/public.py --binary build/minivectordb-sanitize
@@ -147,7 +141,7 @@ Apple Silicon 上模拟的 Linux x86_64；这些是本地结果。
 
 持久化文件采用追加与写时复制，尚无压缩/空间回收；反复修改与大量 tombstone
 会增长磁盘并增加扫描成本。精确扫描和物理向量扫描的查询复杂度仍为 O(ND)，
-不将它包装成次线性 ANN。正式驱动、冻结配置、官方基线和平台失败诊断仍待补齐。
+不将它包装成次线性 ANN。冻结配置、官方性能基线和新版本的平台准入结果仍待确认。
 
 唯一学习材料是 `agent/conversation.json`。它区分用户原话、Agent 工作和工具
 结果；当前没有用户对技术实验作出的解释或复盘，不把自动开发算作学生贡献。

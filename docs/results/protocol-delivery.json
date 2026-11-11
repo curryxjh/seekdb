@@ -1,0 +1,145 @@
+{
+  "status": "PASS",
+  "scope": "Clean staged-tree export; offline Linux amd64 Docker build and unchanged official public driver; no platform submission",
+  "source_tree_before_delivery_report": "4501baa97874c0072317c5ec6b73c1430a68023e",
+  "source_sha256": "1399594fad6d6684dd91517c3556d11961d7598a1134176a392f335ae8364492",
+  "image_id": "sha256:8a5bb8b34757c5174c73bb88d12fc18dd56636efecd2a49e7ba394045aaf506b",
+  "platform": "linux/amd64",
+  "previous_test_image_id": "sha256:989a25956bf38d296ce217a59b806c305015aff8548aeacdb837a40b617a65b9",
+  "executable_sha256": "065f0269af1166e3f3c186ca1ed5fc19cb3f32f655f753ae86bb862838886545",
+  "executable_identical_to_prior_protocol_resource_checks": true,
+  "image_identity_note": "Image config IDs differ after the archive rebuild; executable hashes are identical. Official public and boundary tests rerun on rebuilt image.",
+  "official_driver_commit": "f4d4e26653af823a7601668802f80e374ad6643c",
+  "public_cases": 20,
+  "public_sql": 95,
+  "protocol_boundary": "PASS",
+  "evidence_validation": "PASS",
+  "seconds": 7.561,
+  "official_result": {
+    "scope": "public-protocol-check",
+    "passed": true,
+    "cases": [
+      {
+        "id": "sql_crud",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 272
+      },
+      {
+        "id": "sql_comparisons",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 246
+      },
+      {
+        "id": "sql_ordering",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 253
+      },
+      {
+        "id": "sql_empty",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 240
+      },
+      {
+        "id": "sql_primary_key",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 244
+      },
+      {
+        "id": "sql_unicode",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 247
+      },
+      {
+        "id": "sql_bigint",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 252
+      },
+      {
+        "id": "sql_unsupported",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 232
+      },
+      {
+        "id": "storage_restart",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 404
+      },
+      {
+        "id": "vector_euclidean",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 235
+      },
+      {
+        "id": "transaction_commit",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 231
+      },
+      {
+        "id": "transaction_rollback",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 242
+      },
+      {
+        "id": "storage_mutations",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 431
+      },
+      {
+        "id": "storage_multiple_tables",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 426
+      },
+      {
+        "id": "vector_ties_and_filter",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 244
+      },
+      {
+        "id": "vector_float32",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 224
+      },
+      {
+        "id": "vector_index_maintenance",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 435
+      },
+      {
+        "id": "transaction_failed_insert",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 437
+      },
+      {
+        "id": "transaction_autocommit_atomic",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 425
+      },
+      {
+        "id": "transaction_shutdown_rollback",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 422
+      }
+    ],
+    "note": "Local diagnostic only; no performance/Agent scores or platform callbacks."
+  }
+}

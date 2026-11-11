@@ -22,7 +22,7 @@ class Spool {
   void write(std::string_view bytes);
   void start_read();
   bool read(void *destination, size_t size);
-  void output(FILE *stream);
+  void output(FILE *stream, std::string_view id);
  private:
   FILE *file_ = nullptr;
 };

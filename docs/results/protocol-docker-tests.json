@@ -1,0 +1,47 @@
+{
+  "source_sha256": "1399594fad6d6684dd91517c3556d11961d7598a1134176a392f335ae8364492",
+  "image_id": "sha256:989a25956bf38d296ce217a59b806c305015aff8548aeacdb837a40b617a65b9",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "protocol_check/run.py",
+        "--image",
+        "minivectordb:protocol-fixed",
+        "--handshake-only",
+        "--output",
+        "docs/results/protocol-docker-handshake"
+      ],
+      "exit_code": 0,
+      "seconds": 0.347,
+      "log": "docs/results/protocol-docker-0.txt",
+      "sha256": "97123f08c3dc0a2e39e7d7e43419404ee8ddc369f1f4a87088081e254dadc312"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/protocol.py",
+        "--image",
+        "minivectordb:protocol-fixed"
+      ],
+      "exit_code": 0,
+      "seconds": 0.488,
+      "log": "docs/results/protocol-docker-1.txt",
+      "sha256": "c31329cbe08cdf44d791e867ce77658852f2cea68dff87bfae01f0d3799dcd67"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/container_checks.py",
+        "--image",
+        "minivectordb:protocol-fixed",
+        "--output",
+        "docs/results/protocol-resources.json"
+      ],
+      "exit_code": 0,
+      "seconds": 12.77,
+      "log": "docs/results/protocol-docker-2.txt",
+      "sha256": "eb8ac264db3471b13428dd63294621b50f272c465da14f5e23fe47c4b8808f0c"
+    }
+  ]
+}

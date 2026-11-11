@@ -11,5 +11,5 @@ fi
 if [ "${FAULTS:-0}" = 1 ]; then
   set -- "$@" -DMINIVECTORDB_FAULTS
 fi
-"${CXX:-c++}" "$@" minivectordb/main.cpp minivectordb/sql.cpp \
+"${CXX:-c++}" "$@" minivectordb/main.cpp minivectordb/protocol.cpp minivectordb/sql.cpp \
   minivectordb/storage.cpp minivectordb/database.cpp -o "${OUTPUT:-build/minivectordb}"

@@ -1,0 +1,67 @@
+{
+  "source_sha256": "1399594fad6d6684dd91517c3556d11961d7598a1134176a392f335ae8364492",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "tests/protocol.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "exit_code": 0,
+      "seconds": 0.831,
+      "log": "docs/results/protocol-sanitize-0.txt",
+      "sha256": "c31329cbe08cdf44d791e867ce77658852f2cea68dff87bfae01f0d3799dcd67"
+    },
+    {
+      "command": [
+        "python3",
+        "protocol_check/run.py",
+        "--command",
+        "[\"/Users/oxidaner/develop/coding/open-source/seekdb-minivectordb/build/minivectordb-sanitize\", \"--data\", \"{data_dir}\"]",
+        "--output",
+        "docs/results/protocol-sanitize-public"
+      ],
+      "exit_code": 0,
+      "seconds": 1.421,
+      "log": "docs/results/protocol-sanitize-1.txt",
+      "sha256": "beb69fff72500423c316d964578393579c9aa61e563b5dc0c70189ec946974a0"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/regression.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "exit_code": 0,
+      "seconds": 4.64,
+      "log": "docs/results/protocol-sanitize-2.txt",
+      "sha256": "1c3c65c657d40765f96a0e5f0d7cf65138e4a58f9278ab9a0db1ac957f8cc811"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/crash.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "exit_code": 0,
+      "seconds": 4.537,
+      "log": "docs/results/protocol-sanitize-3.txt",
+      "sha256": "3b2e248674e7b91c28a6cf945af915f301ff5e01c31a4b36e46679097b0ab0b9"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/vector_sweep.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "exit_code": 0,
+      "seconds": 2.351,
+      "log": "docs/results/protocol-sanitize-4.txt",
+      "sha256": "af76ae26a4c9605f16912e7edcb0420c46f10fe9a2e3d527d75ea00c64e31f25"
+    }
+  ]
+}

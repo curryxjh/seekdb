@@ -240,8 +240,11 @@ bool Spool::read(void *destination, size_t size) {
   if (n == 0 && std::feof(file_)) return false;
   checked(n == size); return true;
 }
-void Spool::output(FILE *stream) {
+void Spool::output(FILE *stream, std::string_view id) {
   start_read(); std::array<char, 16384> buffer{};
+  checked(std::fgetc(file_) == '{');
+  const auto prefix = "{\"id\":" + std::string(id) + ",";
+  checked(std::fwrite(prefix.data(), 1, prefix.size(), stream) == prefix.size());
   while (true) {
     const auto n = std::fread(buffer.data(), 1, buffer.size(), file_);
     checked(std::ferror(file_) == 0);

@@ -1,4 +1,4 @@
-"""Run untouched public assertions through the LOCAL adapter, not an official driver."""
+"""Supplementary assertions over official JSONL; protocol_check/run.py is authoritative."""
 import argparse
 import json
 import math
@@ -54,7 +54,7 @@ def run(command, package, temp_root=None):
                         client.close()
                         client = Client(command, directory)
                     elif line.startswith("--mode "):
-                        client.ok("\\mode " + line[7:])
+                        client.mode = line[7:]
                     else:
                         assertion(client.sql(line), results[position])
                         position += 1
@@ -63,7 +63,7 @@ def run(command, package, temp_root=None):
             finally:
                 client.close()
         print(f"PASS {case['id']} ({position} SQL)")
-    print(f"PASS public: {len(manifest['cases'])} cases, {total} SQL, {manifest['version']}; LOCAL adapter")
+    print(f"PASS public: {len(manifest['cases'])} cases, {total} SQL, {manifest['version']}; official JSONL")
 
 
 if __name__ == "__main__":
