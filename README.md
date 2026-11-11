@@ -93,3 +93,5 @@ python3 scripts/benchmark.py --rows 10000 --dim 128 --queries 1000 --index --out
 WSL 未开启 Docker 集成时，可以将 `scripts/windows-docker` 加到 PATH，使用转发到 Docker Desktop 的 CLI 适配器；题包本身不需修改。Windows 直接运行扩展测试可用 `python -X utf8 -m unittest discover -s tests -v`。官方驱动使用 POSIX 管道选择和进程组，应在 Linux/WSL 运行。
 
 已执行的检查与边界见 [验证记录](docs/VALIDATION.md)；存储、恢复和索引设计见 [设计说明](docs/DESIGN.md)。公开测试及本地烟测通过不代表全部 29 个正式用例通过。未发起正式提测，也未取得正式性能或 Agent 评分。
+
+Agent Prompt 材料为 `agent/conversation.json`，格式、来源和本次修订见 [材料说明](docs/PROMPT_MATERIAL.md)。可运行 `python scripts/check_material.py` 核对格式、大小、引用及精确文件 SHA256；此命令不会计算学习分数或调用平台评测。

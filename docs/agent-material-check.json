@@ -1,0 +1,20 @@
+{
+  "scope": "local-material-structure-check",
+  "passed": true,
+  "bytes": 39868,
+  "max_bytes": 131072,
+  "sha256": "76ac4fa99f5ebc23c7c7cc6f603dc103f165cfa8430c12882645c76eb4d96ac6",
+  "checks": [
+    "UTF-8 object",
+    "unique keys",
+    "finite JSON numbers",
+    "within 128 KiB",
+    "recognizable GitHub credential patterns absent",
+    "local evidence references resolve"
+  ],
+  "evidence_citations_checked": 13,
+  "student_messages": 7,
+  "summary_present": true,
+  "limitations": "Structural validation only. Secret scan covers recognizable GitHub patterns. No official score, review status, accepted branch configuration, or platform material digest is inferred. summary and evidence_index are local optional fields, not a claimed official schema.",
+  "material_path": "agent/conversation.json"
+}
