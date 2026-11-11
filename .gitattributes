@@ -10,3 +10,5 @@
 *.i filter=codeformat
 *.ic filter=codeformat
 *.js filter=codeformat
+# Preserve the WSL adapter's POSIX shebang on Windows checkouts.
+scripts/windows-docker/docker text eol=lf

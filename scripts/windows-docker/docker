@@ -1,0 +1,4 @@
+#!/bin/sh
+# WSL adapter for Docker Desktop when the distro has no daemon integration.
+# All arguments are forwarded unchanged to the Windows Docker CLI.
+exec "/mnt/c/Program Files/Docker/Docker/resources/bin/docker.exe" "$@"

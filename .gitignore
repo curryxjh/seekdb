@@ -410,3 +410,9 @@ seekdb_data/
 deps/ios-build/__pycache__/
 /protocol-results/
 /protocol_check/__pycache__/
+
+# MiniVectorDB local artifacts (runtime data belongs in /data in the container).
+**/__pycache__/
+/local-results/
+/data/
+/.venv/

@@ -1,58 +1,95 @@
-# MiniVectorDB Round 2 开发工作区
+# MiniVectorDB
 
-## 仓库与分支
+单机、单进程、单客户端的磁盘向量数据库。Python 实现 SQL 解析、记录存储、哈希索引、事务、提交日志和向量索引；NumPy 2.2.6 仅用于通用数组运算。支持数据大于内存预算时的流式查询和磁盘排序。
 
-- 上游：`https://github.com/oceanbase/seekdb.git`
-- 起点：`2026-competition-round2`，commit `f4d4e26653af823a7601668802f80e374ad6643c`
-- 提测代码目标：`https://github.com/curryxjh/seekdb.git`（本地 `origin`）
-- 当前开发分支：`round2-dev`，按用户要求改名；保留目标仓库原有分支。
-- 本地 `upstream` 指向组织方仓库，默认推送目标为 `origin`。
+## 仓库与版本
 
-题目附件第 4.1、4.4 节仍指定正式分支名 `2026-competition-round2`。当前开发分支名不是平台分支规则已更改的证明。正式提测前须核实平台是否支持选择 `round2-dev`；若仅接受固定名称，应将同一已验证提交发布至要求的分支，不覆盖已有远端工作。
+- 上游起点：`oceanbase/seekdb` 的 `2026-competition-round2`，`f4d4e26653af823a7601668802f80e374ad6643c`。
+- 提测目标：`https://github.com/curryxjh/seekdb.git`（本地 `origin`）；组织方为 `upstream`。
+- 按用户要求，开发分支改名为 `round2-dev`。题目仍指定正式分支 `2026-competition-round2`，正式提交前须按平台接受的名称提供同一个已验证 commit；当前开发分支名不表示平台规则已变更。
+- 代码、Dockerfile、设计说明及 `agent/conversation.json` 必须来自同一次提交。学习材料仅含真实来源记录，不能把 Agent 的解释当作学生的技术贡献。
 
-## 当前状态
+## 构建与启动
 
-2026-11-11：已完成题包拉取、开发分支和远端配置、协议核对与真实学习记录初始化。**数据库尚未实现，不能正式提测。** 上游根目录 `Dockerfile`、`conversation.json` 均为空；本项目的有效学习记录使用题目指定的 `agent/conversation.json`。
-
-当前题包含 20 个公开样例；公开通过不代表全部正式准入通过。容器引擎目前不可连接，未执行 Docker 构建、SQL 用例、性能或恢复测试。
-
-## 协议依据
-
-优先核对 `STDIO_PROTOCOL.md`、`protocol_check/run.py`、`protocol_check/_transport.py` 和当前公开用例。用户提供的背景说明称不再使用 JSON 封装，但指定上游提交中的文档及驱动实际使用 **JSON Lines**：
-
-1. 恢复完成后主动输出 `{"type":"ready"}` 并立即 flush。
-2. 每行接收一个含 `id`、`op` 的 JSON 对象；`execute` 携带 SQL 与 `search_mode`。
-3. 每个请求仅回复一行 JSON，保留 `id` 值及类型，`ok` 为布尔值；日志只写 stderr。
-4. `shutdown` 回滚未提交事务、完成清理，回复成功后以 0 退出。
-
-此处为 Agent 对当前题包的核对结果，不代表学生已经解释或验证了该机制。协议仍须以组织方后续冻结配置为准。
-
-## 开发顺序（计划，尚未执行）
-
-1. 先实现可交互的 JSONL 入口，验证主动 ready、逐请求 flush、错误后继续、shutdown 退出。上游 `example_stdio.py` 仅为骨架，其 SQL 固定返回 `NOT_IMPLEMENTED`。
-2. 实现 SQL 子集、类型与约束校验。BIGINT 保持有符号 64 位精度；VARCHAR 按 Unicode 字符计数、按码点比较；向量先验证并转为有限 float32。拒绝不支持的语法。
-3. 实现磁盘记录布局、有界缓存、普通查询和精确向量扫描。过滤应先于 TopK；距离为欧氏距离，并列按主键升序。设计不能依赖全量数据驻留内存。
-4. 自行实现语句原子性、显式事务及持久化提交。失败语句不污染之前的事务状态，已确认提交不依赖正常退出才落盘。
-5. 增加重启、强杀、恢复中再次强杀测试，交叉验证普通查询与向量检索看到相同版本。
-6. 基础正确后实现并评估自研索引、维护与 ANN 路径；exact 模式始终保留精确语义。依据测量决定优化，禁止预存答案和使用现成数据库或向量索引引擎代执行。
-7. 锁定依赖、补齐从源码构建的 Dockerfile，在 Linux x86_64 和实际资源约束下复测。
-
-## 后续自测与提交
-
-题包驱动依赖 POSIX 管道选择及进程组操作；完整自测应在 Linux/WSL 或相应开发环境进行。正式镜像以前台 stdin/stdout 模式启动，数据、日志、索引和临时文件统一位于 `/data`，正式执行不联网。完整数据库和镜像实现后运行：
+正式目标为 Linux x86_64。基础镜像锁定 Python 3.12.8 的镜像摘要，NumPy wheel 随仓库交付并由 `requirements.lock` 校验 SHA256。基础镜像就绪后，安装和编译步骤可完全离线完成：
 
 ```bash
-docker build -t minivectordb:local .
-python3 protocol_check/run.py --image minivectordb:local --handshake-only --output protocol-results/handshake-001
-python3 protocol_check/run.py --image minivectordb:local --output protocol-results/public-001
+docker build --network=none -t minivectordb:local .
+docker run --rm -i --network=none --read-only \
+  --cpus=2 --memory=2g --memory-swap=2g \
+  -v minivectordb-data:/data minivectordb:local
 ```
 
-这些命令当前只是后续操作说明，未执行且不表示通过。不得放宽题包参数后声称满足正式要求。
+若默认 registry 无法访问，可使用同摘要镜像：
 
-源码、可构建 Dockerfile、运行与设计说明、`agent/conversation.json` 应进入同一提交。正式提测使用不含凭据的 HTTPS URL、平台接受的分支名及完整 40 位 SHA；推送代码本身不等于申请正式评测。
+```bash
+docker build --build-arg BASE_IMAGE=public.ecr.aws/docker/library/python:3.12.8-slim-bookworm@sha256:2199a62885a12290dc9c5be3ca0681d367576ab7bf037da120e564723292a2f0 -t minivectordb:local .
+```
 
-## 学习材料
+镜像直接以前台进程运行，不暴露端口，不启动网络服务。存储、事务暂存、索引和磁盘排序文件均位于 `/data`。不要使用 `-t`。本地源代码也可运行：
 
-只记录真实用户输入、必要题目上下文、Agent 输出、实际工具结果和明确标为计划的内容。学生贡献只能引用学生本人的发言；Agent 的规划或解释不能改写成学生理解。实验结果须直接包含在 `agent/conversation.json` 中，不能仅提供文件链接。后续记录需保留修正和复测的前后关系，禁止虚构问答、成绩、测试或复盘。
+```bash
+python -m minivectordb --data-dir ./data
+```
 
-材料为 UTF-8 JSON 对象，最多 128 KiB，不含重复键、非标准数字或密钥。当前没有学生针对技术机制的解释、独立实验反馈或复盘，材料如实注明缺失。
+无 NumPy 时源代码保留流式精确查询路径；正式镜像固定安装锁定的 NumPy 版本。
+
+## stdin/stdout 协议与示例
+
+指定分支的 `STDIO_PROTOCOL.md` 和实际题包驱动要求 **JSON Lines**，与背景文案中的纯 SQL 描述有差异。程序完成日志恢复及磁盘索引重建后，主动输出 `{"type":"ready"}`。每次请求仅产生一行 JSON 响应并立即 flush；日志仅写 stderr。
+
+以下每行依次输入；请求中的 SQL 不应直接作为裸文本发送：
+
+```json
+{"id":1,"op":"execute","sql":"CREATE TABLE docs (id BIGINT PRIMARY KEY, tag VARCHAR(16), embedding VECTOR(2));"}
+{"id":2,"op":"execute","sql":"INSERT INTO docs VALUES (1,'初始','[3,4]'),(2,'保留','[0,0]');"}
+{"id":3,"op":"execute","sql":"SELECT id,tag FROM docs ORDER BY id;"}
+{"id":4,"op":"execute","sql":"CREATE VECTOR INDEX docs_vec ON docs(embedding);"}
+{"id":5,"op":"execute","sql":"SELECT id,L2_DISTANCE(embedding,'[0,0]') AS distance FROM docs WHERE tag='保留' ORDER BY distance LIMIT 10;","search_mode":"exact"}
+{"id":6,"op":"execute","sql":"BEGIN;"}
+{"id":7,"op":"execute","sql":"UPDATE docs SET tag='已提交' WHERE id=1;"}
+{"id":8,"op":"execute","sql":"COMMIT;"}
+{"id":9,"op":"execute","sql":"BEGIN;"}
+{"id":10,"op":"execute","sql":"DELETE FROM docs WHERE id=2;"}
+{"id":11,"op":"execute","sql":"ROLLBACK;"}
+{"id":12,"op":"shutdown"}
+```
+
+重新运行相同 `docker run` 命令、复用 `minivectordb-data` 卷，再输入：
+
+```json
+{"id":"restart-check","op":"execute","sql":"SELECT id,tag FROM docs ORDER BY id;"}
+{"id":"done","op":"shutdown"}
+```
+
+查询应返回 `[[1,"已提交"],[2,"保留"]]`。`shutdown`、stdin EOF 和 SIGTERM 均丢弃未提交事务；强杀通过日志恢复处理。提交成功响应发出前已对提交日志完成 fsync。
+
+## SQL 范围
+
+- `CREATE TABLE`：一个 BIGINT 主键，可使用列内或表级 PRIMARY KEY；最多一个 VECTOR 列。
+- `INSERT INTO ... [(columns)] VALUES (...) [, ...]`，每行须提供全部列。
+- `SELECT *` 或列投影、`AS` 别名、`WHERE` 比较 `= < <= > >=`、`AND` 和条件括号、单列或多列 `ORDER BY ... ASC/DESC`、非负 `LIMIT`。
+- `UPDATE ... SET column=literal [, ...] [WHERE ...]`、`DELETE FROM ... [WHERE ...]`。
+- `L2_DISTANCE`、精确过滤 TopK，距离并列按主键升序；普通排序也以主键升序作为最终并列规则。
+- `CREATE VECTOR INDEX name ON table(vector_column)`，`exact` 与 `ann` 均返回精确结果；ANN 请求采用更强的精确语义，不以降低召回率换速度。
+- `BEGIN`、`COMMIT`、`ROLLBACK`，同时至多一个显式事务；事务内可见自己的修改。失败语句独立回滚，之前成功的语句仍可继续提交。
+
+BIGINT 使用有符号 64 位整数；VARCHAR 按 Unicode 字符数限制长度，按码点比较。向量在写入和查询常量解析时转换为有限 float32，距离使用转换后的值，以 float64 累加后开平方。不支持 NULL、JOIN、聚合、子查询、ALTER、主键更新、嵌套事务及其他未实现语法，均返回错误，不能部分解析后执行。
+
+错误响应含 `ok:false`、非空 `error.code` 和消息；常见语义码有 `duplicate_key`、`type_error`、`invalid_vector`、`unknown_table`、`unknown_column`、`unsupported_sql`、`syntax_error`。题包当前没有冻结错误码映射，若组织方发布正式映射须对应更新。底层存储 I/O 故障会终止进程，避免在提交状态不确定时继续追加日志。
+
+## 验证
+
+Linux 下运行题包原始驱动：
+
+```bash
+python3 protocol_check/run.py --image minivectordb:local --handshake-only --output protocol-results/handshake-001
+python3 protocol_check/run.py --image minivectordb:local --output protocol-results/public-001
+python3 -m unittest discover -s tests -v
+python3 scripts/stress_docker.py --image minivectordb:local --output local-results/stress-001
+python3 scripts/benchmark.py --rows 10000 --dim 128 --queries 1000 --index --output local-results/benchmark-001.json
+```
+
+WSL 未开启 Docker 集成时，可以将 `scripts/windows-docker` 加到 PATH，使用转发到 Docker Desktop 的 CLI 适配器；题包本身不需修改。Windows 直接运行扩展测试可用 `python -X utf8 -m unittest discover -s tests -v`。官方驱动使用 POSIX 管道选择和进程组，应在 Linux/WSL 运行。
+
+已执行的检查与边界见 [验证记录](docs/VALIDATION.md)；存储、恢复和索引设计见 [设计说明](docs/DESIGN.md)。公开测试及本地烟测通过不代表全部 29 个正式用例通过。未发起正式提测，也未取得正式性能或 Agent 评分。
