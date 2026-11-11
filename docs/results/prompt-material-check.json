@@ -1,0 +1,26 @@
+{
+  "scope": "local material validation; no platform score or admission claim",
+  "passed": true,
+  "baseline_commit": "b3b16af1e8429b3daed14bbdfedc89bf67c6e2a8",
+  "bytes": 130506,
+  "sha256": "46b681318cab7292cf3a513e32a2dd745e1b555f18077daa134af4001fc275f0",
+  "baseline_material_sha256": "dd28c0aa4cbae1578f2e8ca52c41a47a7a69c7f4fadbbf3f994fa1e92557860c",
+  "source_sha256": "1399594fad6d6684dd91517c3556d11961d7598a1134176a392f335ae8364492",
+  "messages": 16,
+  "experiments": 43,
+  "artifact_hashes": 82,
+  "references": 55,
+  "json_output_whitespace_only_indices": [
+    8,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    35
+  ],
+  "inherited_records_preserved": true
+}
