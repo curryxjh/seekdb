@@ -1,0 +1,61 @@
+{
+  "scope": "LOCAL paired single-factor probe, seed 20261109, 10000 rows, 128D, 200 queries",
+  "trials": [
+    {
+      "image": "minivectordb:protocol-delivery",
+      "query": {
+        "T_ms": 474.4776670122519,
+        "memory_peak": 27271168,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=3235840 wbytes=7241728 rios=10 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00012497184798121452,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:distance-lanes",
+      "query": {
+        "T_ms": 334.59933401900344,
+        "memory_peak": 23887872,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00029199873097240925,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:protocol-delivery",
+      "query": {
+        "T_ms": 496.45974999293685,
+        "memory_peak": 23621632,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00012500095181167126,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:distance-lanes",
+      "query": {
+        "T_ms": 346.6500829963479,
+        "memory_peak": 21512192,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 8.300412446260452e-05,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    }
+  ]
+}

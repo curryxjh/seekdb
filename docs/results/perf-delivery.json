@@ -1,0 +1,203 @@
+{
+  "status": "PASS",
+  "scope": "Clean staged-tree export; network-disabled build RUN steps, linux/amd64 rebuild and unchanged official driver. Registry metadata resolution used network. No platform submission.",
+  "source_tree_before_delivery_report": "3311680592c141449fb295be73bd579fdfe5a47c",
+  "source_sha256": "b45723f072914196b18dfc9b79a4716a2a4422a728b65938097a645c1854648e",
+  "image_id": "sha256:acda8dd3840c951ac0dd04a5c284a48d3a2ad1a12edb2d5a5f9de1524e3e8c2e",
+  "previous_test_image_id": "sha256:ae380805ffe66f2ace4db33d01e395bc9b9b2d5bd915c54c6da8ec4dae74097a",
+  "executable_sha256": "dfb1730bb48ec654be15fa38a2db99d19cc1cc728315e8a510076f4848695c95",
+  "executable_identical_to_final_test_image": true,
+  "official_driver_commit": "f4d4e26653af823a7601668802f80e374ad6643c",
+  "official_files_unchanged": true,
+  "public_cases": 20,
+  "public_sql": 95,
+  "protocol_boundary": "PASS official transport: ID types/precision, UTF-8/escapes, fragmented input, strict JSON, one response, SQL errors, modes, atomic rejection, shutdown rollback and restart",
+  "initial_commands": [
+    {
+      "command": [
+        "python3",
+        "protocol_check/run.py",
+        "--image",
+        "minivectordb:perf-delivery",
+        "--output",
+        "build/delivery-public"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "tests/protocol.py",
+        "--image",
+        "minivectordb:perf-delivery"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "python3",
+        "tests/query_cache.py",
+        "--image",
+        "minivectordb:perf-delivery"
+      ],
+      "exit_code": 2,
+      "output": "usage: query_cache.py [-h] --binary BINARY\nquery_cache.py: error: the following arguments are required: --binary",
+      "interpretation": "Test-runner invocation error; corrected below using the existing Docker binary adapter. No database test executed in this attempt."
+    }
+  ],
+  "adapter_environment": {
+    "MVDB_IMAGE": "minivectordb:perf-delivery",
+    "MVDB_VOLUME_PREFIX": "unique per test run, removed after tests"
+  },
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "tests/query_cache.py",
+        "--binary",
+        "tests/docker_db.py"
+      ],
+      "exit_code": 0,
+      "seconds": 2.175,
+      "output": "PASS query cache: 35 checks; prefix/tail, dimensions, rollback, failed statement, restart, spill\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/vector_numbers.py",
+        "--binary",
+        "tests/docker_db.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.976,
+      "output": "PASS vector numbers: 323 checks; double-to-float rounding, signs, subnormals/underflow, overflow, strict syntax, query literals and restart\n"
+    }
+  ],
+  "official_result": {
+    "scope": "public-protocol-check",
+    "passed": true,
+    "cases": [
+      {
+        "id": "sql_crud",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 623
+      },
+      {
+        "id": "sql_comparisons",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 381
+      },
+      {
+        "id": "sql_ordering",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 458
+      },
+      {
+        "id": "sql_empty",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 344
+      },
+      {
+        "id": "sql_primary_key",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 315
+      },
+      {
+        "id": "sql_unicode",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 402
+      },
+      {
+        "id": "sql_bigint",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 378
+      },
+      {
+        "id": "sql_unsupported",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 416
+      },
+      {
+        "id": "storage_restart",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 698
+      },
+      {
+        "id": "vector_euclidean",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 296
+      },
+      {
+        "id": "transaction_commit",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 485
+      },
+      {
+        "id": "transaction_rollback",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 538
+      },
+      {
+        "id": "storage_mutations",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 926
+      },
+      {
+        "id": "storage_multiple_tables",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 951
+      },
+      {
+        "id": "vector_ties_and_filter",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 526
+      },
+      {
+        "id": "vector_float32",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 657
+      },
+      {
+        "id": "vector_index_maintenance",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 880
+      },
+      {
+        "id": "transaction_failed_insert",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 655
+      },
+      {
+        "id": "transaction_autocommit_atomic",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 568
+      },
+      {
+        "id": "transaction_shutdown_rollback",
+        "status": "PASS",
+        "message": "",
+        "duration_ms": 592
+      }
+    ],
+    "note": "Local diagnostic only; no performance/Agent scores or platform callbacks."
+  }
+}

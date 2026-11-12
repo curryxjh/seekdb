@@ -14,7 +14,7 @@ import unittest
 
 import evidence
 
-BASELINE = "b3b16af1e8429b3daed14bbdfedc89bf67c6e2a8"
+BASELINE = "12b8554683f8f3208e46d74ccf048d76a592c102"
 
 
 def require(condition, message):
@@ -85,7 +85,7 @@ def check_references(document):
 
 
 def check_preservation(current, baseline):
-    """Only whitespace of JSON-valued output strings may change in old records."""
+    """Expand shared context before comparing inherited records to the merge source."""
     require(current["messages"][:len(baseline["messages"])] == baseline["messages"],
             "inherited messages changed")
     for key in ["engineering_decisions", "learning_units", "learning_opportunities",
@@ -98,6 +98,13 @@ def check_preservation(current, baseline):
     changed = []
     for index, (now, old) in enumerate(zip(current["experiments"], baseline["experiments"])):
         restored = copy.deepcopy(now)
+        for field in ["environment", "limitations", "scope", "working_directory_note"]:
+            refs = restored.pop(field + "_refs", None)
+            if refs is not None:
+                require(field not in restored and len(refs) == 1,
+                        "ambiguous experiment context")
+                restored[field] = pointer(current, refs[0])
+                require(isinstance(restored[field], str), "context must be a string")
         if now.get("output") != old.get("output"):
             # Parse with duplicate-key and finite-number checks before comparison.
             require(json.dumps(strict_load(now["output"].encode()), sort_keys=True) ==
@@ -147,6 +154,20 @@ class InputChecks(unittest.TestCase):
         with self.assertRaises(ValueError):
             check_preservation(now, old)
         now["experiments"][0]["output"] = '{"passed":0}'
+        with self.assertRaises(ValueError):
+            check_preservation(now, old)
+
+    def test_shared_context_guard(self):
+        old = {key: [] for key in ["messages", "experiments", "engineering_decisions",
+               "learning_units", "learning_opportunities", "artifacts", "remaining_limits", "excerpts"]}
+        old["metadata"] = {"source_sha256": "source"}
+        old["experiments"] = [{"output": "unchanged", "environment": "real environment"}]
+        now = copy.deepcopy(old)
+        now["contexts"] = ["real environment"]
+        del now["experiments"][0]["environment"]
+        now["experiments"][0]["environment_refs"] = ["/contexts/0"]
+        self.assertEqual(check_preservation(now, old), [])
+        now["contexts"][0] = "different environment"
         with self.assertRaises(ValueError):
             check_preservation(now, old)
 

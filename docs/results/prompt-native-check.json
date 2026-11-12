@@ -1,9 +1,10 @@
 {
-  "scope": "local native smoke; unchanged baseline source; no platform evaluation",
+  "scope": "local native merge validation; no platform evaluation",
+  "merged_commit": "12b8554683f8f3208e46d74ccf048d76a592c102",
   "environment": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
-  "passed": true,
-  "source_sha256": "1399594fad6d6684dd91517c3556d11961d7598a1134176a392f335ae8364492",
-  "build_command": "sh build.sh (GCC, C++20, -O3)",
+  "build_command": "sh build.sh (C++20, -O3)",
+  "compiler": "c++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "source_sha256": "b45723f072914196b18dfc9b79a4716a2a4422a728b65938097a645c1854648e",
   "commands": [
     {
       "argv": [
@@ -12,11 +13,11 @@
         "--command",
         "[\"build/minivectordb\", \"--data\", \"{data_dir}\"]",
         "--output",
-        "prompt-native-public"
+        "merge-native-public"
       ],
       "exit_status": 0,
-      "elapsed_s": 1.732,
-      "stdout": "sql_crud: PASS \nsql_comparisons: PASS \nsql_ordering: PASS \nsql_empty: PASS \nsql_primary_key: PASS \nsql_unicode: PASS \nsql_bigint: PASS \nsql_unsupported: PASS \nstorage_restart: PASS \nvector_euclidean: PASS \ntransaction_commit: PASS \ntransaction_rollback: PASS \nstorage_mutations: PASS \nstorage_multiple_tables: PASS \nvector_ties_and_filter: PASS \nvector_float32: PASS \nvector_index_maintenance: PASS \ntransaction_failed_insert: PASS \ntransaction_autocommit_atomic: PASS \ntransaction_shutdown_rollback: PASS \nReport: prompt-native-public/result.json\n",
+      "elapsed_s": 1.174,
+      "stdout": "sql_crud: PASS \nsql_comparisons: PASS \nsql_ordering: PASS \nsql_empty: PASS \nsql_primary_key: PASS \nsql_unicode: PASS \nsql_bigint: PASS \nsql_unsupported: PASS \nstorage_restart: PASS \nvector_euclidean: PASS \ntransaction_commit: PASS \ntransaction_rollback: PASS \nstorage_mutations: PASS \nstorage_multiple_tables: PASS \nvector_ties_and_filter: PASS \nvector_float32: PASS \nvector_index_maintenance: PASS \ntransaction_failed_insert: PASS \ntransaction_autocommit_atomic: PASS \ntransaction_shutdown_rollback: PASS \nReport: merge-native-public/result.json\n",
       "stderr": ""
     },
     {
@@ -27,11 +28,60 @@
         "build/minivectordb"
       ],
       "exit_status": 0,
-      "elapsed_s": 0.187,
+      "elapsed_s": 0.141,
       "stdout": "PASS official transport: ID types/precision, UTF-8/escapes, fragmented input, strict JSON, one response, SQL errors, modes, atomic rejection, shutdown rollback and restart\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/query_cache.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.505,
+      "stdout": "PASS query cache: 35 checks; prefix/tail, dimensions, rollback, failed statement, restart, spill\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/vector_numbers.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.177,
+      "stdout": "PASS vector numbers: 323 checks; double-to-float rounding, signs, subnormals/underflow, overflow, strict syntax, query literals and restart\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/regression.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 2.402,
+      "stdout": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/vector_sweep.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 1.324,
+      "stdout": "PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\n",
       "stderr": ""
     }
   ],
+  "passed": true,
   "official_driver_report": {
     "scope": "public-protocol-check",
     "passed": true,
@@ -40,121 +90,121 @@
         "id": "sql_crud",
         "status": "PASS",
         "message": "",
-        "duration_ms": 61
+        "duration_ms": 63
       },
       {
         "id": "sql_comparisons",
         "status": "PASS",
         "message": "",
-        "duration_ms": 71
+        "duration_ms": 47
       },
       {
         "id": "sql_ordering",
         "status": "PASS",
         "message": "",
-        "duration_ms": 83
+        "duration_ms": 48
       },
       {
         "id": "sql_empty",
         "status": "PASS",
         "message": "",
-        "duration_ms": 80
+        "duration_ms": 43
       },
       {
         "id": "sql_primary_key",
         "status": "PASS",
         "message": "",
-        "duration_ms": 79
+        "duration_ms": 45
       },
       {
         "id": "sql_unicode",
         "status": "PASS",
         "message": "",
-        "duration_ms": 84
+        "duration_ms": 45
       },
       {
         "id": "sql_bigint",
         "status": "PASS",
         "message": "",
-        "duration_ms": 85
+        "duration_ms": 44
       },
       {
         "id": "sql_unsupported",
         "status": "PASS",
         "message": "",
-        "duration_ms": 92
+        "duration_ms": 37
       },
       {
         "id": "storage_restart",
         "status": "PASS",
         "message": "",
-        "duration_ms": 99
+        "duration_ms": 47
       },
       {
         "id": "vector_euclidean",
         "status": "PASS",
         "message": "",
-        "duration_ms": 98
+        "duration_ms": 41
       },
       {
         "id": "transaction_commit",
         "status": "PASS",
         "message": "",
-        "duration_ms": 81
+        "duration_ms": 48
       },
       {
         "id": "transaction_rollback",
         "status": "PASS",
         "message": "",
-        "duration_ms": 68
+        "duration_ms": 45
       },
       {
         "id": "storage_mutations",
         "status": "PASS",
         "message": "",
-        "duration_ms": 69
+        "duration_ms": 65
       },
       {
         "id": "storage_multiple_tables",
         "status": "PASS",
         "message": "",
-        "duration_ms": 77
+        "duration_ms": 60
       },
       {
         "id": "vector_ties_and_filter",
         "status": "PASS",
         "message": "",
-        "duration_ms": 54
+        "duration_ms": 40
       },
       {
         "id": "vector_float32",
         "status": "PASS",
         "message": "",
-        "duration_ms": 44
+        "duration_ms": 40
       },
       {
         "id": "vector_index_maintenance",
         "status": "PASS",
         "message": "",
-        "duration_ms": 71
+        "duration_ms": 73
       },
       {
         "id": "transaction_failed_insert",
         "status": "PASS",
         "message": "",
-        "duration_ms": 63
+        "duration_ms": 54
       },
       {
         "id": "transaction_autocommit_atomic",
         "status": "PASS",
         "message": "",
-        "duration_ms": 52
+        "duration_ms": 49
       },
       {
         "id": "transaction_shutdown_rollback",
         "status": "PASS",
         "message": "",
-        "duration_ms": 56
+        "duration_ms": 64
       }
     ],
     "note": "Local diagnostic only; no performance/Agent scores or platform callbacks."

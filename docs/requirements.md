@@ -17,7 +17,7 @@ The official protocol and driver were added upstream on 2026-11-10 at
 | Container foreground, stdin/stdout, no runtime network, `/data` | supplied requirements; competition description | `Dockerfile`, official adapter | Linux amd64 container end to end | PASS on Docker Desktop emulation |
 | Formal JSONL framing, ready marker, errors, mode switching and shutdown | `STDIO_PROTOCOL.md`, official `protocol_check/` | `protocol.*`, `main.cpp` | unchanged official driver, native and Docker | **PASS: 20/20, 95 SQL** |
 | Frozen limits, timeouts, baseline and physical I/O device | public README delegates frozen configuration | benchmark scripts | organizer environment | **not supplied / unverified** |
-| Complete 29-case admission and both ranking results | public README + platform | platform | user-reported submission, authenticated record inspected | **FAIL admission at 3ccc14e; both ranked evaluations skipped; no case logs returned** |
+| Complete 29-case admission and both ranking results | public README + platform | platform | user-reported submission, authenticated record inspected | **PASS admission at b3b16af (2026-11-11 19:58); raw performance 1968.948310, raw Agent 1; per-metric diagnostics absent** |
 | One authentic learning artifact ≤128 KiB | supplied `req.md` | `agent/conversation.json` | `tests/evidence.py` | strict self-check; no student technical-learning contribution claimed |
 | Same revision for source, container recipe and evidence | supplied `req.md` | final Git commit | clean exported build and remote SHA check | delivery checks recorded in validation report |
 
@@ -47,7 +47,7 @@ ROLLBACK. These checks passed in the public transaction cases and the independen
 regression suite; the successful statements remain, the failed statement's rows
 are absent, and ROLLBACK restores the prior snapshot.
 
-## Latest performance iteration
+## Historical performance iteration
 
 Final core cf294bbc8a664988ef11b5884d35ae57c1dd12cb passed native, ASan/UBSan,
 Linux fault-build and production-container checks. Each of three 66002-row key
@@ -55,19 +55,27 @@ orders covers multi-level splits, eviction, rollback, failed statements and
 SIGKILL/restart. All commands and hashes are in `docs/results/opt-final-tests.json`.
 The three-metric LOCAL comparison pairs entire rounds before taking the median;
 it retains an unfavorable spool experiment and its withdrawal. Official E,
-rankings and student learning scores remain unverified.
+rankings and student learning scores were unverified at that revision.
 
 ## Remaining admission and scoring gaps
 
 The official driver exposed that the delivered revision used an incompatible
 custom transport. Its handshake failure is retained in
 `results/protocol-before/result.json`; the official driver and all 20 public cases
-pass on the corrected native build and Docker image. The original platform record
-has not been resubmitted. The nine unpublished cases, platform admission and
-ranking remain unverified. See [platform investigation](platform-failure.md).
+pass on the corrected native build and Docker image. The user subsequently
+submitted b3b16af and passed formal admission. Platform raw performance is
+1968.948310 and raw Agent score is 1. This iteration has not been submitted;
+its 5300 target remains unverified. See [platform investigation](platform-failure.md).
 
 All four supplied rule pages were read during this session. The TopicDetails
 performance page states one shared submission for both rankings. The agent did
 not submit or retry; older wording about daily frequency/default version selection
 does not authorize that action. The user's explicit fork/any-branch instruction
 governs this Git delivery.
+
+## 2026-11-12 performance iteration
+
+The official protocol, driver and public assertions remain unchanged. Exact
+retrieval gains bounded vector/predicate caching, vectorized double accumulation,
+and small-response buffering. Build and parser changes use no new dependencies.
+Results and rejected alternatives are recorded in [performance-iteration.md](performance-iteration.md).

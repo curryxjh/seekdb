@@ -1,0 +1,29 @@
+{
+  "scope": "pipelined input isolated total wall time, same 10000x128D 100 auto commits; includes docker launch",
+  "trials": [
+    {
+      "image": "minivectordb:protocol-delivery",
+      "ms": 1362.8637089859694
+    },
+    {
+      "image": "minivectordb:buffered-input",
+      "ms": 763.8843749882653
+    },
+    {
+      "image": "minivectordb:protocol-delivery",
+      "ms": 1334.627875010483
+    },
+    {
+      "image": "minivectordb:buffered-input",
+      "ms": 765.6194169830997
+    },
+    {
+      "image": "minivectordb:protocol-delivery",
+      "ms": 1339.2039999889676
+    },
+    {
+      "image": "minivectordb:buffered-input",
+      "ms": 772.1345409809146
+    }
+  ]
+}

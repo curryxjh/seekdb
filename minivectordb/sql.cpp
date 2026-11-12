@@ -7,10 +7,6 @@
 
 namespace mvdb {
 
-void require(bool condition, std::string_view code, std::string_view message) {
-  if (!condition) throw Error(std::string(code), std::string(message));
-}
-
 std::string lower(std::string text) {
   for (char &ch : text) {
     if (ch >= 'A' && ch <= 'Z') ch = static_cast<char>(ch + ('a' - 'A'));
@@ -105,6 +101,24 @@ bool number_syntax(std::string_view value) {
     if (i == before) return false;
   }
   return i == value.size();
+}
+
+template <typename Number>
+Number vector_number(std::string_view token) {
+  Number value = 0;
+  if constexpr (requires { std::from_chars(token.data(), token.data() + token.size(), value); }) {
+    auto number = token;
+    if (number.front() == '+') number.remove_prefix(1);
+    const auto result = std::from_chars(number.data(), number.data() + number.size(), value);
+    if (result.ec == std::errc{} && result.ptr == number.data() + number.size()) return value;
+  }
+  // Preserve strtod underflow rounding and support libraries without floating from_chars.
+  const std::string copy(token);
+  char *end = nullptr;
+  value = std::strtod(copy.c_str(), &end);
+  require(end == copy.c_str() + copy.size(),
+          "invalid_vector", "float32 vector element overflow or non-finite value");
+  return value;
 }
 
 struct Token {
@@ -346,12 +360,11 @@ std::vector<float> vector_literal(std::string_view text, size_t dimension) {
     while (true) {
       skip(); const size_t start = pos;
       while (pos < text.size() && text[pos] != ',' && text[pos] != ']' && !space(text[pos])) ++pos;
-      std::string token(text.substr(start, pos - start));
+      const auto token = text.substr(start, pos - start);
       require(number_syntax(token), "invalid_vector", "vector element must be a finite number");
-      char *end = nullptr;
-      const double n = std::strtod(token.c_str(), &end);
+      const double n = vector_number<double>(token);
       const float f = static_cast<float>(n);
-      require(end == token.c_str() + token.size() && std::isfinite(n) && std::isfinite(f),
+      require(std::isfinite(n) && std::isfinite(f),
               "invalid_vector", "float32 vector element overflow or non-finite value");
       out.push_back(f);
       require(out.size() <= dimension, "invalid_vector", "vector dimension mismatch");

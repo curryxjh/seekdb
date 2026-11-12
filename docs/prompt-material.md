@@ -1,75 +1,69 @@
-# Agent Prompt material revision
+# Agent Prompt material and performance merge
 
-This branch starts at `minivectordb-round2`, commit
-`b3b16af1e8429b3daed14bbdfedc89bf67c6e2a8`. The user reports that branch
-receives an Agent Prompt score; the numerical score and evaluated commit were
-not supplied. Earlier failed admission records remain attached to their original
-commits. This revision makes no platform submission or score claim.
+On 2026-11-12 this branch merges `minivectordb-round2` commit
+`12b8554683f8f3208e46d74ccf048d76a592c102` into the Prompt branch at
+`9043810731ed75090b8305521b4e00b692e42f5c`. The optimized source and its
+new tests, reports and documentation are taken unchanged from that commit.
+Both parent histories remain available in the merge commit.
 
-The evaluated material is **`agent/conversation.json`**. Its embedded `summary`
-and `evidence_guide` cover the four requested dimensions with RFC6901 references
-to embedded messages and experiment outputs. External documents are supporting
-audit records, not required to understand those four entries. The empty root
-`conversation.json` is an inherited placeholder.
+The evaluated artifact remains **`agent/conversation.json`**. Its `summary`
+and four `evidence_guide` entries retain the Prompt branch's navigation to
+embedded messages and outputs. Current metadata, source identity, 47 experiments,
+101 artifact hashes and reported historical platform scores come from the new
+performance baseline. Historical scores belong to the original evaluated commit;
+they are not measurements of the merge. No platform evaluation was initiated.
 
-## What changed
+## Conflict resolution
 
-- Added a concise material summary, four evidence navigation entries, exact
-  excerpts of the actual user challenge and protocol diagnosis, and current
-  user/Agent provenance.
-- Preserved all 14 inherited messages, all 43 experiments, the single existing
-  learning unit, engineering decisions, unanswered opportunities, limitations,
-  original excerpt entries and all 82 artifact hashes.
-- Compacted formatting whitespace in 10 embedded JSON output strings. Their
-  parsed values remain identical; no measurements, failures, experiment order,
-  status, command or source identity were changed. Original bytes are recoverable
-  from the baseline commit. `tests/prompt_material.py` checks these constraints.
-- Distinguished the user's actual platform counterexample from Agent diagnosis,
-  Agent technical reflections and tool measurements. The current summary is
-  explicitly a retrospective, not a fabricated historical prompt transcript.
-- Added strict checks for duplicate keys, nonfinite numbers including exponent
-  overflow, size, UTF-8, RFC6901 array indices, exact quotations and preservation.
-  The original evidence checker additionally verifies all file hashes and source
-  digests. These checks validate the package, not its eventual score.
+- Keep all 16 messages from the new baseline, followed by the two messages
+  previously added by the Prompt branch and the actual merge instruction.
+  Existing upstream message indices and experiment references remain valid.
+- Keep all 47 upstream experiments and their output strings exactly. Repeated
+  environment/limitation/scope/working-directory strings are stored once in
+  `contexts`, with RFC6901 arrays named `<field>_refs` in each affected record.
+  Expanding these pointers reconstructs the original records exactly. The
+  references and strings are embedded within the sole evaluated JSON file.
+- Keep the new baseline's engineering decisions, single learning unit,
+  unanswered opportunities, limitations and historical excerpts. Add the Prompt
+  branch's exact excerpts of the user challenge and handshake error.
+- Shorten Agent-authored summary text and revision notes to satisfy 128 KiB.
+  They remain explicitly attributed retrospective descriptions, not fabricated
+  historical prompt transcripts or student technical answers. Earlier wording
+  and reports remain recoverable from the Prompt parent.
 
-Database source, build recipe, official driver and SQL assertions are unchanged.
-Historical experiments retain their original environments and dates; they were
-not rerun or relabeled as Windows measurements.
+`tests/prompt_material.py` now compares against `12b8554`. It expands shared
+context and verifies record equality, all original metadata except the destination
+branch, source identity, strict UTF-8 JSON, finite numbers, exact quotations and
+RFC6901 references. `tests/evidence.py` checks every historical artifact hash and
+final-source digest. Local reports are in `docs/results/prompt-material-check.json`
+and `docs/results/prompt-native-check.json`. Previous reports are preserved with
+`-20261111` suffixes and describe only their original source revision.
 
-## Reproduce validation
+## Reproduce
 
-Use Python 3.9+ with its standard library. Work from the repository root and a
-clean **LF** checkout/export: historical hashes identify Git blob bytes. On
-Windows, `core.autocrlf=true` also affects `git archive`; use an explicit override.
-Ignore local Python caches in the working tree, since the inherited source-digest
-routine hashes every immediate entry in `minivectordb/`.
-
-After committing, export the relevant paths using:
+Use Python 3.9+ and a clean LF export. On Windows override `core.autocrlf`, which
+also affects `git archive`. Do not include working-tree Python caches in the
+source directory: the inherited digest routine reads every immediate entry.
 
 ```text
 git -c core.autocrlf=false archive --format=zip --output=CHECKOUT.zip HEAD minivectordb tests docs Dockerfile build.sh CMakeLists.txt README.md protocol_check mysqltest STDIO_PROTOCOL.md agent conversation.json
 ```
 
-Extract into a new directory. Save the original baseline JSON outside that export
-using a binary-safe API (PowerShell redirection may transcode it):
+Save the baseline using a binary-safe API, then extract the archive and run the
+checker from its root. PowerShell redirection may transcode the original bytes.
 
 ```python
 import pathlib, subprocess
 pathlib.Path("BASELINE.json").write_bytes(subprocess.check_output([
     "git", "show",
-    "b3b16af1e8429b3daed14bbdfedc89bf67c6e2a8:agent/conversation.json"
+    "12b8554683f8f3208e46d74ccf048d76a592c102:agent/conversation.json"
 ]))
 ```
-
-From the exported root, run:
 
 ```text
 python tests/prompt_material.py --self-test --baseline /absolute/path/BASELINE.json --report /absolute/path/material-check.json
 ```
 
-The report computes the final material's SHA256 outside the material to avoid
-self-reference. The committed local results are in
-`docs/results/prompt-material-check.json`; the official native protocol smoke
-check is recorded separately. Neither report estimates a score or declares
-hidden platform tests passed. Adding a summary locally cannot guarantee that
-the platform will produce its own evaluation summary.
+The checker computes the material SHA256 outside the JSON to avoid self-reference.
+These checks validate packaging and preservation; they do not predict a score.
+The empty root `conversation.json` remains an inherited placeholder.

@@ -1,0 +1,62 @@
+{
+  "scope": "LOCAL exact-v1 versus four bounded predicate masks; no official E",
+  "source_sha256": "f6c90f2d49dffec3c280161bd76c96757643d5d660dd0c3eebe859eef53927c3",
+  "trials": [
+    {
+      "image": "minivectordb:exact-v1",
+      "query": {
+        "T_ms": 269.11520899739116,
+        "memory_peak": 29487104,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00020902371034026146,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:predicate-cache",
+      "query": {
+        "T_ms": 181.43795899231918,
+        "memory_peak": 23990272,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.0002500019036233425,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:exact-v1",
+      "query": {
+        "T_ms": 235.12666701572016,
+        "memory_peak": 27971584,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.0002500019036233425,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:predicate-cache",
+      "query": {
+        "T_ms": 210.91516700107604,
+        "memory_peak": 29241344,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00020800507627427578,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    }
+  ]
+}
