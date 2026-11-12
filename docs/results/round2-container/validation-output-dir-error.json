@@ -1,0 +1,18 @@
+{
+  "source_sha256": "3cd4d076b45ce782f426e2e4318f5b8dfb1750fbf7cc3fc60ad7fc8a82d8e04d",
+  "image_id": "sha256:502e5cb83ac5c0f4c1c0117d81346e1619c8458841f287b02f213de52da81b8e",
+  "runs": [
+    {
+      "command": [
+        "python3",
+        "protocol_check/run.py",
+        "--image",
+        "minivectordb:round2-final",
+        "--output",
+        "docs/results/round2-container/official-final"
+      ],
+      "exit_status": 1,
+      "output": "Traceback (most recent call last):\n  File \"/Volumes/expand/coding/open_source/seekdb/protocol_check/run.py\", line 128, in <module>\n    sys.exit(main())\n  File \"/Volumes/expand/coding/open_source/seekdb/protocol_check/run.py\", line 81, in main\n    args.output.mkdir(parents=True, exist_ok=False)\n  File \"/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py\", line 1313, in mkdir\n    self._accessor.mkdir(self, mode)\nFileExistsError: [Errno 17] File exists: 'docs/results/round2-container/official-final'\n"
+    }
+  ]
+}

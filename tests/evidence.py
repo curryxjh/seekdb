@@ -58,10 +58,26 @@ def run(path):
                 walk(item)
 
     walk(document)
-    for excerpt in document.get("excerpts", []):
+    def check_excerpt(excerpt):
         original = resolve(document, excerpt["pointer"])
-        assert isinstance(original, str) and len(excerpt["text"]) <= 240
+        assert isinstance(original, str) and 0 < len(excerpt["text"]) <= 240
         assert excerpt["text"] in original
+    for excerpt in document.get("excerpts", []):
+        check_excerpt(excerpt)
+    used_evidence = {}
+    for unit in document.get("learning_units", []):
+        for field in ["student_evidence", "result_evidence"]:
+            for excerpt in unit.get(field, []):
+                check_excerpt(excerpt)
+                identity = (excerpt["pointer"], excerpt["text"])
+                previous = used_evidence.setdefault(identity, unit["id"])
+                assert previous == unit["id"], "evidence reused across units"
+                if field == "student_evidence":
+                    match = re.fullmatch(r"/messages/(\d+)/content", excerpt["pointer"])
+                    assert match and document["messages"][int(match[1])]["role"] == "student"
+        student = {x["pointer"] for x in unit.get("student_evidence", [])}
+        results = {x["pointer"] for x in unit.get("result_evidence", [])}
+        assert not student & results, "student and result citations must be distinct"
     for message in document["messages"]:
         assert message["role"] in ["student", "agent", "tool"]
         assert isinstance(message["content"], str)

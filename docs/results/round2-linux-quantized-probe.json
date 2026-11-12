@@ -1,0 +1,35 @@
+{
+  "minivectordb:round2-origin": {
+    "T_ms": 187.10004199999997,
+    "memory_peak": 22106112,
+    "memory_max": "134217728",
+    "swap_max": "0",
+    "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+    "preparation_ms": 0.00020899999952916914,
+    "recall_unfiltered": 1.0,
+    "recall_filtered": 1.0,
+    "all_query_assertions": true
+  },
+  "minivectordb:round2-quantized": {
+    "T_ms": 160.14795899999967,
+    "memory_peak": 23494656,
+    "memory_max": "134217728",
+    "swap_max": "0",
+    "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+    "preparation_ms": 0.00033300000001901253,
+    "recall_unfiltered": 1.0,
+    "recall_filtered": 1.0,
+    "all_query_assertions": true
+  },
+  "minivectordb:round2-cutoff": {
+    "T_ms": 138.34004199999939,
+    "memory_peak": 23277568,
+    "memory_max": "134217728",
+    "swap_max": "0",
+    "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+    "preparation_ms": 0.0001660000013004037,
+    "recall_unfiltered": 1.0,
+    "recall_filtered": 1.0,
+    "all_query_assertions": true
+  }
+}

@@ -93,64 +93,75 @@ class RowView {
     return std::bit_cast<int64_t>(read_u64(bytes));
   }
 };
-double distance(const std::vector<float> &a, const std::vector<float> &b) {
-  double sum = 0;
-  for (size_t i = 0; i < a.size(); ++i) {
-    const double delta = static_cast<double>(a[i]) - static_cast<double>(b[i]);
-    sum += delta * delta;
+double refined_distance(std::string_view bytes, const std::vector<float> &query) {
+  double sum = 0, correction = 0;
+  for (size_t i = 0; i < query.size(); ++i) {
+    const double delta = static_cast<double>(load_float(bytes.data() + i * 4)) - query[i];
+    const double term = delta * delta;
+    const double next = sum + term;
+    correction += (sum >= term ? (sum - next) + term : (term - next) + sum);
+    sum = next;
   }
-  return std::sqrt(sum);
+  const double root = std::sqrt(sum);
+  if (root == 0) return 0;
+  // Correct sqrt as well as summation: rounding the squared sum first can
+  // split mathematically tied permutations into adjacent distance values.
+  return root + (std::fma(-root, root, sum) + correction) / (2 * root);
 }
-double squared_distance(std::string_view bytes, const std::vector<float> &query) {
-  // Independent double accumulators let the compiler vectorize without
-  // fast-math, float32 overflow, or a long scalar dependency chain.
-  double sums[4]{};
+double distance(const std::vector<float> &a, const std::vector<float> &b) {
+  return refined_distance({reinterpret_cast<const char *>(a.data()), a.size() * sizeof(float)}, b);
+}
+// A float32 screening pass is never used as a reported distance. Its conservative
+// error interval may only reject candidates outside the current exact heap.
+float screening_square(std::string_view bytes, const std::vector<float> &query) {
+  float sums[8]{};
   size_t i = 0;
-  for (; i + 4 <= query.size(); i += 4) {
-    for (size_t lane = 0; lane < 4; ++lane) {
-      const double delta = static_cast<double>(load_float(bytes.data() + (i + lane) * 4)) - query[i + lane];
+  for (; i + 8 <= query.size(); i += 8) {
+    for (size_t lane = 0; lane < 8; ++lane) {
+      const float delta = load_float(bytes.data() + (i + lane) * 4) - query[i + lane];
       sums[lane] += delta * delta;
     }
   }
-  double sum = (sums[0] + sums[1]) + (sums[2] + sums[3]);
+  float sum = ((sums[0] + sums[1]) + (sums[2] + sums[3])) +
+              ((sums[4] + sums[5]) + (sums[6] + sums[7]));
   for (; i < query.size(); ++i) {
-    const double delta = static_cast<double>(load_float(bytes.data() + i * 4)) - query[i];
+    const float delta = load_float(bytes.data() + i * 4) - query[i];
     sum += delta * delta;
   }
   return sum;
 }
 #if defined(__x86_64__)
 __attribute__((target("avx2")))
-double squared_avx2(std::string_view bytes, const std::vector<float> &query) {
-  __m256d a = _mm256_setzero_pd(), b = _mm256_setzero_pd();
+float screening_avx2(std::string_view bytes, const std::vector<float> &query) {
+  __m256 a = _mm256_setzero_ps(), b = _mm256_setzero_ps();
   size_t i = 0;
-  for (; i + 8 <= query.size(); i += 8) {
-    const auto x = _mm256_sub_pd(_mm256_cvtps_pd(_mm_loadu_ps(reinterpret_cast<const float *>(bytes.data() + i * 4))),
-                                 _mm256_cvtps_pd(_mm_loadu_ps(query.data() + i)));
-    const auto y = _mm256_sub_pd(_mm256_cvtps_pd(_mm_loadu_ps(reinterpret_cast<const float *>(bytes.data() + (i + 4) * 4))),
-                                 _mm256_cvtps_pd(_mm_loadu_ps(query.data() + i + 4)));
-    a = _mm256_add_pd(a, _mm256_mul_pd(x, x));
-    b = _mm256_add_pd(b, _mm256_mul_pd(y, y));
+  for (; i + 16 <= query.size(); i += 16) {
+    const auto x = _mm256_sub_ps(_mm256_loadu_ps(reinterpret_cast<const float *>(bytes.data() + i * 4)),
+                                _mm256_loadu_ps(query.data() + i));
+    const auto y = _mm256_sub_ps(_mm256_loadu_ps(reinterpret_cast<const float *>(bytes.data() + (i + 8) * 4)),
+                                _mm256_loadu_ps(query.data() + i + 8));
+    a = _mm256_add_ps(a, _mm256_mul_ps(x, x));
+    b = _mm256_add_ps(b, _mm256_mul_ps(y, y));
   }
-  double lanes[4]; _mm256_storeu_pd(lanes, _mm256_add_pd(a, b));
-  double sum = (lanes[0] + lanes[1]) + (lanes[2] + lanes[3]);
+  float lanes[8]; _mm256_storeu_ps(lanes, _mm256_add_ps(a, b));
+  float sum = ((lanes[0] + lanes[1]) + (lanes[2] + lanes[3])) +
+              ((lanes[4] + lanes[5]) + (lanes[6] + lanes[7]));
   for (; i < query.size(); ++i) {
-    const double delta = static_cast<double>(load_float(bytes.data() + i * 4)) - query[i];
+    const float delta = load_float(bytes.data() + i * 4) - query[i];
     sum += delta * delta;
   }
   return sum;
 }
 #endif
-using DistanceKernel = double (*)(std::string_view, const std::vector<float> &);
-DistanceKernel distance_kernel() {
+using ScreeningKernel = float (*)(std::string_view, const std::vector<float> &);
+ScreeningKernel screening_kernel() {
 #if defined(__x86_64__)
-  if (__builtin_cpu_supports("avx2")) return squared_avx2;
+  if (__builtin_cpu_supports("avx2")) return screening_avx2;
 #endif
-  return squared_distance;
+  return screening_square;
 }
 double distance(std::string_view bytes, const std::vector<float> &query) {
-  static const auto kernel = distance_kernel();
-  return std::sqrt(kernel(bytes, query));
+  return refined_distance(bytes, query);
 }
 struct BoundExpr {
   uint32_t column;
@@ -255,6 +266,8 @@ class Sorter {
       run = merge(*runs_[level], *run); runs_[level].reset(); ++level;
     }
     if (level == runs_.size()) runs_.push_back(nullptr);
+    // Retained runs must not accumulate one dirty tail per merge level.
+    run->start_read();
     runs_[level] = std::move(run);
   }
 };
@@ -264,12 +277,12 @@ Spool::Spool(const std::string &directory) : directory_(directory) {}
 Spool::~Spool() { if (file_ != nullptr) std::fclose(file_); }
 Spool::Spool(Spool &&other) noexcept
     : directory_(std::move(other.directory_)), buffer_(std::move(other.buffer_)),
-      position_(other.position_), file_(other.file_) { other.file_ = nullptr; }
+      position_(other.position_), unsynced_(other.unsynced_), file_(other.file_) { other.file_ = nullptr; }
 Spool &Spool::operator=(Spool &&other) noexcept {
   if (this != &other) {
     if (file_ != nullptr) std::fclose(file_);
     directory_ = std::move(other.directory_); buffer_ = std::move(other.buffer_);
-    position_ = other.position_; file_ = other.file_; other.file_ = nullptr;
+    position_ = other.position_; unsynced_ = other.unsynced_; file_ = other.file_; other.file_ = nullptr;
   }
   return *this;
 }
@@ -283,13 +296,27 @@ void Spool::write(std::string_view value) {
     file_ = ::fdopen(fd, "w+b");
     if (file_ == nullptr) { ::close(fd); throw Error("io_error", "cannot open temporary result"); }
     checked(std::fwrite(buffer_.data(), 1, buffer_.size(), file_) == buffer_.size());
+    unsynced_ = buffer_.size();
     std::string().swap(buffer_);
   }
-  checked(std::fwrite(value.data(), 1, value.size(), file_) == value.size());
+  while (!value.empty()) {
+    const size_t size = std::min(value.size(), 8U * 1024U * 1024U - unsynced_);
+    checked(std::fwrite(value.data(), 1, size, file_) == size);
+    unsynced_ += size; value.remove_prefix(size);
+    if (unsynced_ == 8U * 1024U * 1024U) {
+      checked(std::fflush(file_) == 0); sync_file(::fileno(file_)); unsynced_ = 0;
+    }
+  }
 }
 void Spool::start_read() {
   position_ = 0;
-  if (file_ != nullptr) checked(std::fseek(file_, 0, SEEK_SET) == 0);
+  if (file_ != nullptr) {
+    // Completed runs must be reclaimable before a merge opens more runs.
+    if (unsynced_ != 0) {
+      checked(std::fflush(file_) == 0); sync_file(::fileno(file_)); unsynced_ = 0;
+    }
+    checked(std::fseek(file_, 0, SEEK_SET) == 0);
+  }
 }
 bool Spool::read(void *destination, size_t size) {
   if (file_ == nullptr) {
@@ -303,7 +330,7 @@ bool Spool::read(void *destination, size_t size) {
   checked(n == size); return true;
 }
 void Spool::output(FILE *stream, std::string_view id) {
-  start_read(); std::array<char, 16384> buffer{};
+  start_read();
   char first = 0; checked(read(&first, 1) && first == '{');
   const auto prefix = "{\"id\":" + std::string(id) + ",";
   checked(std::fwrite(prefix.data(), 1, prefix.size(), stream) == prefix.size());
@@ -311,6 +338,7 @@ void Spool::output(FILE *stream, std::string_view id) {
     checked(std::fwrite(buffer_.data() + position_, 1, buffer_.size() - position_, stream) == buffer_.size() - position_);
     return;
   }
+  std::array<char, 16384> buffer;
   while (true) {
     const auto n = std::fread(buffer.data(), 1, buffer.size(), file_);
     checked(std::ferror(file_) == 0);
@@ -398,7 +426,7 @@ void Database::commit() {
 }
 void Database::shutdown() {
   if (transaction_) {
-    scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_root_ = 0;
+    scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_screen_ = {}; scan_root_ = 0;
     catalog_ = committed_; storage_.rewind(committed_end_); transaction_ = false;
   }
 }
@@ -419,7 +447,7 @@ Spool Database::execute(const Statement &s) {
   const Catalog savepoint = catalog_;
   // Root offsets may be reused after rollback/statement failure. Invalidate
   // before any mutation, even one that ultimately fails.
-  scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_root_ = 0;
+  scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_screen_ = {}; scan_root_ = 0;
   const uint64_t boundary = storage_.end();
   uint64_t affected = 0;
   try {
@@ -559,14 +587,25 @@ Spool Database::select(const Statement &s, const Table &t) {
   }
   output.write("],\"rows\":[");
   bool first = true;
+  bool project_vectors = false;
+  std::vector<bool> reuse_order;
+  for (const auto &e : projection) {
+    project_vectors = project_vectors || (!e.distance && t.columns[e.column].type == Type::Vector);
+    reuse_order.push_back(s.ordered && order.distance && e.distance &&
+                          e.column == order.column && e.query == order.query);
+  }
   const auto emit = [&](const Candidate &value) {
-    const Row row = decode(t, value.offset);
+    Row row;
+    RowView view(t);
+    if (project_vectors) row = decode(t, value.offset);
+    else view.reset(storage_.blob(value.offset));
     if (!first) output.write(",");
     first = false;
     output.write("[");
     for (size_t i = 0; i < projection.size(); ++i) {
       if (i != 0) output.write(",");
-      output.write(value_json(projection[i].eval(row)));
+      if (reuse_order[i]) output.write(value_json(value.key));
+      else output.write(value_json(project_vectors ? projection[i].eval(row) : projection[i].eval(view)));
     }
     output.write("]");
   };
@@ -576,7 +615,15 @@ Spool Database::select(const Statement &s, const Table &t) {
                     (order.distance || t.columns[order.column].type == Type::Bigint);
   const auto better = [&](const Candidate &a, const Candidate &b) { return sorter.better(a, b); };
   std::priority_queue<Candidate, std::vector<Candidate>, decltype(better)> top(better);
-  double worst_distance = -1, reject_square = 0;
+  double worst_distance = -1, reject_square = 0, accept_square = 0;
+  // With u <= float epsilon, <= D+4 rounded operations on each term's
+  // path and two subtractions/squarings, 8*(D+4)*epsilon exceeds the
+  // usual gamma bound when < 1/8. The additive term covers subnormal
+  // operations (including FTZ/DAZ); non-finite screens always fall back.
+  const double screen_error = 8.0 * static_cast<double>(order.query.size() + 4) *
+                              std::numeric_limits<float>::epsilon();
+  const double screen_slack = 16.0 * static_cast<double>(order.query.size() + 4) *
+                              std::numeric_limits<float>::min();
   uint64_t remaining = s.limit;
   const auto accept = [&](Candidate value) {
     if (!s.ordered) { emit(value); return --remaining != 0; }
@@ -587,20 +634,26 @@ Spool Database::select(const Statement &s, const Table &t) {
     return true;
   };
   const auto accept_vector = [&](int64_t id, uint64_t offset, std::string_view input) {
-    static const auto kernel = distance_kernel();
-    const double square = kernel(input, order.query);
+    static const auto screen = screening_kernel();
     if (heap && top.size() == s.limit) {
       const double worst = std::get<double>(top.top().key);
       if (worst != worst_distance) {
         // One ULP above the current distance also covers sqrt rounding ties.
         const double upper = std::nextafter(worst, std::numeric_limits<double>::infinity());
         reject_square = std::nextafter(upper * upper, std::numeric_limits<double>::infinity());
+        const double lower = std::nextafter(worst, -std::numeric_limits<double>::infinity());
+        accept_square = std::nextafter(lower * lower, -std::numeric_limits<double>::infinity());
         worst_distance = worst;
       }
-      if ((!s.descending && square > reject_square) ||
-          (s.descending && std::sqrt(square) < worst)) return true;
+      if (screen_error < 0.125 && order.query.size() >= 16) {
+        const double approximate = screen(input, order.query);
+        if (std::isfinite(approximate) &&
+            ((!s.descending && approximate * (1.0 - screen_error) - screen_slack > reject_square) ||
+             (s.descending && worst > 0 &&
+              approximate * (1.0 + screen_error) + screen_slack < accept_square))) return true;
+      }
     }
-    return accept({std::sqrt(square), id, offset});
+    return accept({refined_distance(input, order.query), id, offset});
   };
   RowView row(t);
   const auto visit = [&](int64_t id, uint64_t offset) {
@@ -626,7 +679,7 @@ Spool Database::select(const Statement &s, const Table &t) {
     const size_t row_limit = (8U * 1024U * 1024U) /
                              (sizeof(ScanRow) + dimension * sizeof(float));
     if (scan_root_ == 0 || scan_root_ != t.root) {
-      scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_root_ = 0; scan_complete_ = false;
+      scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_screen_ = {}; scan_root_ = 0; scan_complete_ = false;
       // Release capacity left by a different vector dimension before resizing.
       std::vector<ScanRow>().swap(scan_rows_); std::vector<float>().swap(scan_vectors_);
       if (row_limit != 0) {
@@ -643,6 +696,7 @@ Spool Database::select(const Statement &s, const Table &t) {
           scan_rows_.push_back({id, offset});
           return true;
         });
+        scan_screen_.build(scan_vectors_, dimension);
         scan_root_ = t.root;
       }
     }
@@ -671,17 +725,57 @@ Spool Database::select(const Statement &s, const Table &t) {
         }
       }
     }
-    for (size_t i = 0; i < scan_rows_.size(); ++i) {
-      const auto &cached = scan_rows_[i];
+    const auto screening_query = scan_screen_.query(order.query);
+    const auto eligible = [&](size_t i) {
       if (filter != nullptr) {
-        if (((*filter)[i / 64] & (uint64_t{1} << (i % 64))) == 0) continue;
+        if (((*filter)[i / 64] & (uint64_t{1} << (i % 64))) == 0) return false;
       } else if (!where.empty()) {
-        row.reset(storage_.blob(cached.offset));
-        if (!row.matches(where)) continue;
+        row.reset(storage_.blob(scan_rows_[i].offset));
+        if (!row.matches(where)) return false;
       }
+      return true;
+    };
+    const auto for_each_cached = [&](auto &&callback) {
+      if (filter != nullptr) {
+        for (size_t word = 0; word < filter->size(); ++word) {
+          uint64_t bits = (*filter)[word];
+          while (bits != 0) {
+            const size_t i = word * 64 + static_cast<size_t>(std::countr_zero(bits));
+            bits &= bits - 1;
+            callback(i);
+          }
+        }
+      } else for (size_t i = 0; i < scan_rows_.size(); ++i) if (eligible(i)) callback(i);
+    };
+    const auto refine = [&](size_t i) {
+      const auto &cached = scan_rows_[i];
       const auto *data = reinterpret_cast<const char *>(scan_vectors_.data() + i * dimension);
       accept_vector(cached.id, cached.offset, std::string_view(data, dimension * 4));
-    }
+    };
+    if (!scan_screen_.empty() && s.limit <= 64 && scan_rows_.size() >= 256) {
+      // K upper bounds certify a cutoff before any exact refinement. This
+      // avoids repeatedly refining merely improving (but ultimately losing)
+      // candidates encountered early in primary-key scan order.
+      std::vector<uint32_t> rows; rows.reserve(scan_rows_.size());
+      for_each_cached([&](size_t i) { rows.push_back(static_cast<uint32_t>(i)); });
+      const auto distances = scan_screen_.code_distances(rows, screening_query);
+      std::priority_queue<int32_t> cutoffs;
+      for (int32_t distance : distances) {
+        const int32_t upper = s.descending ? -distance : distance;
+        if (cutoffs.size() < s.limit) cutoffs.push(upper);
+        else if (upper < cutoffs.top()) { cutoffs.pop(); cutoffs.push(upper); }
+      }
+      if (!cutoffs.empty()) {
+        const int32_t kth = s.descending ? -cutoffs.top() : cutoffs.top();
+        const double cutoff = scan_screen_.code_cutoff(screening_query, kth, s.descending);
+        for (size_t i = 0; i < rows.size(); ++i)
+          if (s.descending ? distances[i] >= cutoff : distances[i] <= cutoff) refine(rows[i]);
+      }
+    } else for_each_cached([&](size_t i) {
+      if (!scan_screen_.empty() && top.size() == s.limit &&
+          scan_screen_.rejects(i, screening_query, std::get<double>(top.top().key), s.descending)) return;
+      refine(i);
+    });
     if (scan_rows_.empty() || !scan_complete_) {
       storage_.scan(t.root, [&](int64_t id, uint64_t offset) {
         if (!scan_rows_.empty() && id <= scan_rows_.back().id) return true;

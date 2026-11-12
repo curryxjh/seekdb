@@ -1,0 +1,64 @@
+{
+  "source_sha256": "5e704c398080004c66a233b6b535805923aafb572d734f9cb4a1f8cb5552a904",
+  "scope": "LOCAL parser+executor only; transport and I/O output excluded; not a platform score",
+  "rounds": [
+    {
+      "origin": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 499.291
+      },
+      "candidate": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 157.546
+      },
+      "speedup": 3.1691759866959495
+    },
+    {
+      "candidate": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 164.928
+      },
+      "origin": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 501.311
+      },
+      "speedup": 3.039574844780753
+    },
+    {
+      "origin": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 500.308
+      },
+      "candidate": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 165.651
+      },
+      "speedup": 3.020253424368099
+    }
+  ],
+  "median_paired_speedup": 3.039574844780753
+}

@@ -1,0 +1,1 @@
+PASS query cache: 41 checks; prefix/tail, dimensions, rollback, failed statement, restart, spill

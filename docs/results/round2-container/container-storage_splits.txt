@@ -1,0 +1,4 @@
+PASS tree splits order=ascending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart
+PASS tree splits order=descending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart
+PASS tree splits order=shuffled, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart
+PASS all split trees after a second restart

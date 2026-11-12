@@ -169,3 +169,47 @@ fragmented writes, surplus input, shutdown behavior and per-response flushing.
 The immutable approximate graph experiment was not integrated: construction and
 filtered traversal costs outweighed its query benefit; its unfavorable records
 and sanitizer caveat are retained separately. ANN mode keeps exact fallback.
+
+## 2026-11-13: exact integer screening and bounded dirty pages
+
+The vector prefix remains bounded to 8 MiB, including row offsets. `screen.*` adds
+at most 3 MiB of signed int8 codes, integer norms and reconstruction-error bounds,
+for dimensions 32–4096. Larger dimensions and uncached tails keep exact streaming.
+Mutations, failed statements and rollback invalidate both representations before
+root offsets can be reused. No query answers are cached.
+
+For scale s, reconstructed vectors x' and q' satisfy
+`abs(||x-q|| - ||x'-q'||) <= e_x + e_q`. Bounds include reconstruction and
+arithmetic rounding. If E bounds every row's error plus query error, the Kth
+integer candidate distance provides an exact-safe cutoff with a 2E margin.
+Strict rejection and an integer rounding guard preserve boundary candidates;
+remaining records use the original stored float32 vectors and compensated double
+accumulation. Sparse predicate masks are traversed by set bits before distances.
+The prefix's cutoff is also safe when an uncached tail is subsequently scanned:
+adding records can only improve the final cutoff.
+
+AVX2 uses abs/sign plus maddubs/madd on [-127,127] codes. Excluding -128 avoids
+sign overflow; pair products are at most 32258, so int16 saturation cannot occur.
+At 4096 dimensions, squared integer distances remain below INT32_MAX. ISA
+dispatch happens once for a batch. ARM dot-product builds use four independent
+accumulators; scalar execution remains available on other CPUs.
+
+ASCII/quoted-string fast paths retain UTF-8, escape, raw-control and complete-token
+validation. Floating from_chars supplies decimal syntax validation on successful
+full consumption; fallback parsing still checks the explicit grammar, preserves
+double-to-float32 rounding, and rejects hexadecimal/non-finite/malformed values.
+Distance projections reuse the ordering key only for identical bound expressions.
+Ordinary scalar projections borrow row fields; vector projections still decode
+vectors. No fast-math or relaxed transaction semantics are introduced.
+
+Data and temporary-file dirty pages require bounds independent of heap caches.
+Data-file growth is synchronized at 8 MiB intervals without publishing catalog
+roots. Spilled results/runs are drained in 8 MiB chunks; a retained sorted run is
+finished and synchronized before it is stored for a later merge. Thus dirty tails
+do not accumulate with merge depth. Small in-memory TopK responses avoid this I/O.
+
+Early data synchronization is not a commit: only the existing catalog publication
+protocol changes visible durable roots. Recovery truncates unpublished data to the
+last committed end. Fault point `after_early_writeback` proves a kill after early
+synchronization still exposes only committed records. Publication still synchronizes
+all final data, catalog and directory before acknowledgement.

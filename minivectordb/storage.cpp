@@ -182,6 +182,7 @@ Catalog Storage::load() {
   }
   fault("recovery_before_truncate");
   rewind(end_);
+  writeback_end_ = end_;
   fault("recovery_after_truncate");
   if (::unlinkat(dir_fd_, "catalog.next", 0) != 0 && errno != ENOENT) io_error("remove unpublished catalog");
   // All anonymous query/merge spools are unlinked on creation. No replay is needed.
@@ -195,6 +196,7 @@ void Storage::publish(const Catalog &catalog) {
   if (::ftruncate(data_fd_, static_cast<off_t>(end_)) != 0) io_error("size data");
   fault("after_data_flush");
   sync_file(data_fd_);
+  writeback_end_ = end_;
   fault("after_data_sync");
   std::string body;
   append_u32(body, static_cast<uint32_t>(catalog.size()));
@@ -235,6 +237,17 @@ void Storage::rewind(uint64_t end) {
   }
   if (::ftruncate(data_fd_, static_cast<off_t>(end)) != 0) io_error("truncate unpublished data");
   end_ = end;
+  writeback_end_ = std::min(writeback_end_, end_);
+}
+void Storage::bound_dirty_pages() {
+  // A transaction may be larger than the container memory limit. Drain dirty
+  // file pages while its roots remain unpublished; durability of bytes is not
+  // visibility of a transaction. The catalog is still the only commit point.
+  if (end_ - writeback_end_ >= 8U * 1024U * 1024U) {
+    sync_file(data_fd_);
+    writeback_end_ = end_;
+    fault("after_early_writeback");
+  }
 }
 uint64_t Storage::blob(std::string_view value) {
   require(value.size() <= UINT32_MAX, "resource_limit", "row exceeds storage limit");
@@ -244,6 +257,7 @@ uint64_t Storage::blob(std::string_view value) {
   fault("before_blob_write");
   write_all(data_fd_, std::span(encoded.data(), encoded.size()), end_);
   end_ += encoded.size();
+  bound_dirty_pages();
   fault("after_blob_write");
   return offset;
 }
@@ -264,6 +278,7 @@ void Storage::flush_node(uint64_t offset, Cached &cached) {
   page.resize(page_size, '\0');
   write_all(data_fd_, std::span(page.data(), page.size()), offset);
   cached.dirty = false;
+  bound_dirty_pages();
 }
 void Storage::flush() { for (auto &[offset, value] : cache_) flush_node(offset, value); }
 void Storage::cache_node(uint64_t offset, Node value, bool dirty) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "storage.h"
+#include "screen.h"
 
 #include <cstdio>
 #include <memory>
@@ -27,6 +28,7 @@ class Spool {
   std::string directory_;
   std::string buffer_;
   size_t position_ = 0;
+  size_t unsynced_ = 0;
   FILE *file_ = nullptr;
 };
 
@@ -46,6 +48,7 @@ class Database {
   // One table's prefix, at most 8 MiB; larger tables still stream their tail.
   std::vector<ScanRow> scan_rows_;
   std::vector<float> scan_vectors_;
+  QuantizedScreen scan_screen_;
   struct ScanFilter { std::string key; std::vector<uint64_t> bits; };
   // Four packed predicate masks, bounded by the cached prefix, not table size.
   std::vector<ScanFilter> scan_filters_;

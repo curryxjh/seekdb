@@ -1,3 +1,11 @@
+# 2026-11-13 当前交付
+
+当前开发分支为 `codex/minivectordb-round2-optimize`，基于 origin 的
+`12b8554683f8f3208e46d74ccf048d76a592c102`。当前验证和结果以
+[本轮优化记录](round2-optimization.md)、`results/round2-validation-native.json`、
+`results/round2-container/validation.json` 和 `results/round2-final/` 为准。
+以下记录保留原来的历史源码与时间关联，不代表当前交付的官方成绩。
+
 # Current verification status
 
 Formal admission passed for b3b16af1e8429b3daed14bbdfedc89bf67c6e2a8 in the user's

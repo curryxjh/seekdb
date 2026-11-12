@@ -1,5 +1,10 @@
 # MiniVectorDB requirement ledger
 
+2026-11-13 当前分支为 `codex/minivectordb-round2-optimize`；
+基线为 `origin/minivectordb-round2` 的完整提交
+`12b8554683f8f3208e46d74ccf048d76a592c102`。当前验收见
+[本轮记录](round2-optimization.md)。以下初始版本信息保留作历史。
+
 Initial baseline checked on 2026-11-09: `9f6df2ba5acf871376e22b64a3d0724e4b575044`.
 The official protocol and driver were added upstream on 2026-11-10 at
 `f4d4e26653af823a7601668802f80e374ad6643c` and merged unchanged. Public manifest:
@@ -18,7 +23,7 @@ The official protocol and driver were added upstream on 2026-11-10 at
 | Formal JSONL framing, ready marker, errors, mode switching and shutdown | `STDIO_PROTOCOL.md`, official `protocol_check/` | `protocol.*`, `main.cpp` | unchanged official driver, native and Docker | **PASS: 20/20, 95 SQL** |
 | Frozen limits, timeouts, baseline and physical I/O device | public README delegates frozen configuration | benchmark scripts | organizer environment | **not supplied / unverified** |
 | Complete 29-case admission and both ranking results | public README + platform | platform | user-reported submission, authenticated record inspected | **PASS admission at b3b16af (2026-11-11 19:58); raw performance 1968.948310, raw Agent 1; per-metric diagnostics absent** |
-| One authentic learning artifact ≤128 KiB | supplied `req.md` | `agent/conversation.json` | `tests/evidence.py` | strict self-check; no student technical-learning contribution claimed |
+| One authentic learning artifact ≤128 KiB | supplied `req.md` | `agent/conversation.json` | `tests/evidence.py` | strict self-check; actual student explanations and canonical experiment citations; no fabricated authorship |
 | Same revision for source, container recipe and evidence | supplied `req.md` | final Git commit | clean exported build and remote SHA check | delivery checks recorded in validation report |
 
 The documents are task references, not evidence that a student performed their
@@ -26,11 +31,9 @@ embedded plans. Only actual user utterances are student contributions.
 
 Conflicts resolved for this work:
 
-* The supplied older `/Volumes/expand/...` checkout is not the current workspace.
-  Development uses an isolated sibling worktree based on the verified upstream.
-* Current AGENTS guidance forbids the `codex/` prefix: use `minivectordb-round2`.
-* The user's latest instruction permits any branch in the registered fork:
-  deliver `minivectordb-round2` without force push.
+* 本轮使用当前 `/Volumes/expand/coding/open_source/seekdb` 工作区。
+* 从 origin 的 `minivectordb-round2` 拉取基线，在新的 `codex/minivectordb-round2-optimize` 开发。
+* 按用户要求删除旧本地 `codex/minivectordb-round2`，保留原远端分支，不强制推送。
 * Maintain the one active learning file at `agent/conversation.json`; the upstream
   empty root placeholder is not a second evidence artifact.
 * The user supplied a failed platform record for the delivered commit. The agent

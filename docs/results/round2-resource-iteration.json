@@ -1,0 +1,103 @@
+{
+  "scope": "Actual resource failures and corrective iteration; local 96 MiB limit, not official results",
+  "baseline_commit": "12b8554683f8f3208e46d74ccf048d76a592c102",
+  "attempts": [
+    {
+      "implementation": "origin baseline",
+      "observed_exit_status": 137,
+      "phase": "bulk insert within explicit transaction",
+      "evidence_origin": "tool transcript excerpt",
+      "output": "EOFError: database exited: 137"
+    },
+    {
+      "implementation": "screening candidate before writeback fixes",
+      "observed_exit_status": 137,
+      "phase": "bulk insert within explicit transaction",
+      "report": "docs/results/round2-container/initial-failure.json"
+    },
+    {
+      "implementation": "periodic data-file sync only",
+      "observed_exit_status": 137,
+      "phase": "SELECT id FROM t ORDER BY s DESC LIMIT 12;",
+      "evidence_origin": "tool transcript excerpt",
+      "output": "EOFError: database exited: 137"
+    },
+    {
+      "implementation": "data and spool dirty-page drains",
+      "observed_exit_status": 0,
+      "report": "docs/results/round2-writeback-resources.json",
+      "result": {
+        "status": "PASS",
+        "platform": "linux/amd64",
+        "network": "none",
+        "local_memory_limit": 100663296,
+        "swap": 0,
+        "rows": 40000,
+        "data_bytes_before_index": 142734352,
+        "phases": [
+          "large_transaction_commit",
+          "index_build",
+          "filtered_topk",
+          "external_sort",
+          "large_update_delete_rollback",
+          "delete_commit",
+          "uncommitted_delete_sigkill",
+          "restart"
+        ],
+        "before_kill": {
+          "memory_peak": 100663296,
+          "memory_max": "100663296",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=1568317440 wbytes=924073984 rios=14048 wios=1847 dbytes=0 dios=0"
+        },
+        "after_restart": {
+          "memory_peak": 84672512,
+          "memory_max": "100663296",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=65560576 wbytes=233472 rios=579 wios=1 dbytes=0 dios=0"
+        },
+        "seconds": 4.522536583,
+        "io_caveat": "Raw cgroup io.stat; dedicated device/writeback attribution not certified."
+      }
+    },
+    {
+      "implementation": "final retained-run drains",
+      "observed_exit_status": 0,
+      "report": "docs/results/round2-writeback-resources.json",
+      "result": {
+        "status": "PASS",
+        "platform": "linux/amd64",
+        "network": "none",
+        "local_memory_limit": 100663296,
+        "swap": 0,
+        "rows": 40000,
+        "data_bytes_before_index": 142734352,
+        "phases": [
+          "large_transaction_commit",
+          "index_build",
+          "filtered_topk",
+          "external_sort",
+          "large_update_delete_rollback",
+          "delete_commit",
+          "uncommitted_delete_sigkill",
+          "restart"
+        ],
+        "before_kill": {
+          "memory_peak": 100663296,
+          "memory_max": "100663296",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=1695924224 wbytes=924073984 rios=15041 wios=1907 dbytes=0 dios=0"
+        },
+        "after_restart": {
+          "memory_peak": 85049344,
+          "memory_max": "100663296",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=66105344 wbytes=233472 rios=588 wios=1 dbytes=0 dios=0"
+        },
+        "seconds": 4.564011792,
+        "io_caveat": "Raw cgroup io.stat; dedicated device/writeback attribution not certified."
+      }
+    }
+  ],
+  "limits": "Exit 137 was observed; individual removed containers do not retain an OOMKilled flag. Baseline control plus phase progression and passing drain fix support memory-pressure diagnosis."
+}

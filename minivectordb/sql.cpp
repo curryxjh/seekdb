@@ -1,8 +1,10 @@
 #include "sql.h"
 
+#include <algorithm>
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <limits>
 
 namespace mvdb {
@@ -16,7 +18,17 @@ std::string lower(std::string text) {
 
 size_t unicode_length(std::string_view text) {
   size_t count = 0;
-  for (size_t i = 0; i < text.size(); ++count) {
+  for (size_t i = 0; i < text.size();) {
+    // ASCII spans are frequent in vector literals. memcpy is alignment safe;
+    // non-ASCII still takes the same complete scalar-value validation below.
+    while (text.size() - i >= sizeof(uint64_t)) {
+      uint64_t word;
+      std::memcpy(&word, text.data() + i, sizeof(word));
+      if ((word & 0x8080808080808080ULL) != 0) break;
+      i += sizeof(word); count += sizeof(word);
+    }
+    if (i == text.size()) break;
+    ++count;
     const auto first = static_cast<unsigned char>(text[i++]);
     if (first < 0x80) continue;
     unsigned tail = 0;
@@ -105,14 +117,22 @@ bool number_syntax(std::string_view value) {
 
 template <typename Number>
 Number vector_number(std::string_view token) {
+  require(!token.empty(), "invalid_vector", "vector element must be a finite number");
   Number value = 0;
   if constexpr (requires { std::from_chars(token.data(), token.data() + token.size(), value); }) {
     auto number = token;
-    if (number.front() == '+') number.remove_prefix(1);
+    if (number.front() == '+') {
+      number.remove_prefix(1);
+      require(!number.empty() && number.front() != '+' && number.front() != '-',
+              "invalid_vector", "vector element must be a finite number");
+    }
     const auto result = std::from_chars(number.data(), number.data() + number.size(), value);
     if (result.ec == std::errc{} && result.ptr == number.data() + number.size()) return value;
   }
   // Preserve strtod underflow rounding and support libraries without floating from_chars.
+  // from_chars already validated a fully consumed decimal on the common path.
+  // The fallback needs explicit grammar checks because strtod accepts hex.
+  require(number_syntax(token), "invalid_vector", "vector element must be a finite number");
   const std::string copy(token);
   char *end = nullptr;
   value = std::strtod(copy.c_str(), &end);
@@ -248,6 +268,16 @@ class Parser {
     if (ch == '\'' || ch == '"' || ch == '`') {
       current_.tag = ch == '`' ? Token::Identifier : Token::String;
       bool closed = false;
+      const auto quote = sql_.find(ch, pos_);
+      if (quote != std::string_view::npos &&
+          (quote + 1 == sql_.size() || sql_[quote + 1] != ch)) {
+        const auto plain = sql_.substr(pos_, quote - pos_);
+        if (ch == '`' || plain.find('\\') == std::string_view::npos) {
+          current_.text.assign(plain);
+          pos_ = quote + 1;
+          return;
+        }
+      }
       while (pos_ < sql_.size()) {
         char c = sql_[pos_++];
         if (c == ch) {
@@ -355,13 +385,13 @@ std::vector<float> vector_literal(std::string_view text, size_t dimension) {
   skip();
   require(pos < text.size() && text[pos++] == '[', "invalid_vector", "expected vector array");
   std::vector<float> out;
+  out.reserve(std::min(dimension, text.size() / 2 + 1));
   skip();
   if (pos < text.size() && text[pos] != ']') {
     while (true) {
       skip(); const size_t start = pos;
       while (pos < text.size() && text[pos] != ',' && text[pos] != ']' && !space(text[pos])) ++pos;
       const auto token = text.substr(start, pos - start);
-      require(number_syntax(token), "invalid_vector", "vector element must be a finite number");
       const double n = vector_number<double>(token);
       const float f = static_cast<float>(n);
       require(std::isfinite(n) && std::isfinite(f),

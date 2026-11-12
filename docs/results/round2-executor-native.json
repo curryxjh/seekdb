@@ -1,0 +1,63 @@
+{
+  "scope": "LOCAL executor+parser only; no stdin/stdout transport, no score",
+  "rounds": [
+    {
+      "origin": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 533.227
+      },
+      "candidate": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 209.286
+      },
+      "speedup": 2.547838842540829
+    },
+    {
+      "candidate": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 196.931
+      },
+      "origin": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 523.339
+      },
+      "speedup": 2.657473937572043
+    },
+    {
+      "origin": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 525.732
+      },
+      "candidate": {
+        "scope": "executor+parser only, not end-to-end",
+        "seed": 20261112,
+        "rows": 10000,
+        "dimensions": 128,
+        "queries": 3000,
+        "query_ms": 228.859
+      },
+      "speedup": 2.297187351163817
+    }
+  ],
+  "median_paired_speedup": 2.547838842540829
+}

@@ -1,0 +1,74 @@
+{
+  "scope": "LOCAL native end-to-end timings; no cgroup resources or official score",
+  "source_sha256": "5e704c398080004c66a233b6b535805923aafb572d734f9cb4a1f8cb5552a904",
+  "rows": 10000,
+  "dimensions": 128,
+  "queries": 1000,
+  "rounds": [
+    {
+      "seed": 20261112,
+      "baseline": {
+        "write_ms": 279.64658399999996,
+        "query_ms": 204.01791600000064,
+        "exact_ID_order_distance_checks": 1000,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "candidate": {
+        "write_ms": 157.91287500000007,
+        "query_ms": 79.46920899999998,
+        "exact_ID_order_distance_checks": 1000,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "query_speedup": 2.5672574141262774
+    },
+    {
+      "seed": 39034843,
+      "candidate": {
+        "write_ms": 157.05516699999933,
+        "query_ms": 81.92424999999837,
+        "exact_ID_order_distance_checks": 1000,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "baseline": {
+        "write_ms": 284.86070900000016,
+        "query_ms": 205.30337499999973,
+        "exact_ID_order_distance_checks": 1000,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "query_speedup": 2.506014702606418
+    },
+    {
+      "seed": 774193,
+      "baseline": {
+        "write_ms": 289.86825000000135,
+        "query_ms": 209.19379100000057,
+        "exact_ID_order_distance_checks": 1000,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "candidate": {
+        "write_ms": 161.4796250000019,
+        "query_ms": 80.06308399999895,
+        "exact_ID_order_distance_checks": 1000,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "query_speedup": 2.6128620151579884
+    }
+  ],
+  "binaries": {
+    "baseline": {
+      "path": "/Volumes/expand/coding/open_source/seekdb/build/minivectordb-origin",
+      "sha256": "7f48120621da9449805f6a3a64988d3c0d4afe0f38aa6f3dad55922381e0c313"
+    },
+    "candidate": {
+      "path": "/Volumes/expand/coding/open_source/seekdb/build/minivectordb",
+      "sha256": "a888ca12f303620327ab6aa589c9ff28a074aab42ac7b5d1da7775c49d3e0fa2"
+    }
+  },
+  "median_paired_query_speedup": 2.5672574141262774
+}

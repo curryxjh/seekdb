@@ -1,0 +1,3 @@
+PASS large uncommitted insert: >24 MiB written; SIGKILL -> only seed visible
+PASS large commit: 6000 durable rows and original marker after restart
+PASS failed >8 MiB statement: no partial rows, prior statement commits

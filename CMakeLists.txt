@@ -7,6 +7,7 @@ add_executable(minivectordb
   minivectordb/protocol.cpp
   minivectordb/sql.cpp
   minivectordb/storage.cpp
+  minivectordb/screen.cpp
   minivectordb/database.cpp)
 target_compile_options(minivectordb PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
 option(MINIVECTORDB_SANITIZE "Build with address and undefined behavior checks" OFF)

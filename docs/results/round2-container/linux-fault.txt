@@ -1,0 +1,68 @@
+PASS sql_crud (7 SQL)
+PASS sql_comparisons (4 SQL)
+PASS sql_ordering (4 SQL)
+PASS sql_empty (3 SQL)
+PASS sql_primary_key (4 SQL)
+PASS sql_unicode (3 SQL)
+PASS sql_bigint (3 SQL)
+PASS sql_unsupported (3 SQL)
+PASS storage_restart (3 SQL)
+PASS vector_euclidean (3 SQL)
+PASS transaction_commit (6 SQL)
+PASS transaction_rollback (6 SQL)
+PASS storage_mutations (6 SQL)
+PASS storage_multiple_tables (6 SQL)
+PASS vector_ties_and_filter (5 SQL)
+PASS vector_float32 (3 SQL)
+PASS vector_index_maintenance (9 SQL)
+PASS transaction_failed_insert (8 SQL)
+PASS transaction_autocommit_atomic (4 SQL)
+PASS transaction_shutdown_rollback (5 SQL)
+PASS public: 20 cases, 95 SQL, minivectordb-public-v4; official JSONL
+PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity
+PASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance
+PASS differential seed=7, steps=150, index_attempted=True
+PASS differential seed=42, steps=150, index_attempted=True
+PASS differential seed=20261109, steps=150, index_attempted=True
+PASS differential seed=8675309, steps=150, index_attempted=True
+PASS differential seed=39034843, steps=150, index_attempted=True
+PASS tree splits order=ascending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart
+PASS tree splits order=descending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart
+PASS tree splits order=shuffled, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart
+PASS all split trees after a second restart
+PASS crash=before_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_data_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_catalog_write, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_catalog_sync, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2
+PASS crash=after_catalog_rename, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS crash=after_directory_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS crash=before_success_response, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2
+PASS SIGKILL without COMMIT: entire multi-table transaction absent
+PASS autocommit crash=before_data_flush: atomic batch
+PASS autocommit crash=after_data_flush: atomic batch
+PASS autocommit crash=after_data_sync: atomic batch
+PASS autocommit crash=after_catalog_write: atomic batch
+PASS autocommit crash=after_catalog_sync: atomic batch
+PASS autocommit crash=after_catalog_rename: atomic batch
+PASS autocommit crash=after_directory_sync: atomic batch
+PASS crash suite: 17 kill scenarios, 36 repeated recovery kills, 18 idempotent restarts
+PASS indexed crash=index-append: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=index-publish: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=row-before-write: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=row-append: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=posting-append: rows, postings, filtered and unfiltered TopK consistent
+PASS indexed crash=indexed-publish: rows, postings, filtered and unfiltered TopK consistent
+PASS query cache: 41 checks; prefix/tail, dimensions, rollback, failed statement, restart, spill
+FILTER counterexample: global Top10 ids=0..9 (all g=0); WHERE g=1 -> ids=[[9900], [9901], [9902], [9903], [9904], [9905], [9906], [9907], [9908], [9909]]
+FILTER transfer LIMIT 200: returned_count=100, first=9900, last=9999
+QUANTIZATION counterexample: approximate Top1 would choose id=1 (code tie); exact returned id=2, distance=1.0099999904632568
+PASS screening: 1176 exact ID/order/distance checks; seed=927431, ties, near-ties, overflow, subnormals, sparse filters, DESC, scan/index
+PASS vector numbers: 323 checks; double-to-float rounding, signs, subnormals/underflow, overflow, strict syntax, query literals and restart
+PASS deterministic kill at after_early_writeback, before catalog publication
+PASS large uncommitted insert: early sync confirmed; SIGKILL -> only seed visible
+PASS large commit: 6000 durable rows and original marker after restart
+PASS failed >8 MiB statement: no partial rows, prior statement commits
+CPU x86_64 avx2=1 fma=1
+PASS quantized intervals: 27305 cases; seed=20261112, mixed scales, clipped queries, tails, ties, ASC/DESC

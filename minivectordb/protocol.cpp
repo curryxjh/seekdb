@@ -93,6 +93,17 @@ class JsonParser {
   }
   std::string string() {
     expect('"');
+    const auto quote = input_.find('"', pos_);
+    if (quote != std::string_view::npos) {
+      const auto plain = input_.substr(pos_, quote - pos_);
+      if (plain.find('\\') == std::string_view::npos) {
+        unsigned controls = 0;
+        for (char ch : plain) controls |= static_cast<unsigned char>(ch) < 0x20;
+        require(controls == 0, "protocol", "unescaped control character");
+        pos_ = quote + 1;
+        return std::string(plain);
+      }
+    }
     std::string out;
     while (pos_ < input_.size()) {
       const char ch = input_[pos_++];

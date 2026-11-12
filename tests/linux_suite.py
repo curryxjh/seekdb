@@ -18,6 +18,13 @@ python3 tests/public.py --binary /data/minivectordb-fault --temp-root /data
 python3 tests/regression.py --binary /data/minivectordb-fault --temp-root /data
 python3 tests/storage_splits.py --binary /data/minivectordb-fault --temp-root /data
 python3 tests/crash.py --binary /data/minivectordb-fault --temp-root /data
+python3 tests/query_cache.py --binary /data/minivectordb-fault
+python3 tests/screening.py --binary /data/minivectordb-fault
+python3 tests/vector_numbers.py --binary /data/minivectordb-fault
+python3 tests/large_transaction.py --binary /data/minivectordb-fault --fault-writeback
+g++ -std=c++20 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
+    tests/screen_bounds.cpp minivectordb/screen.cpp -o /data/screen-bounds-sanitize
+ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 /data/screen-bounds-sanitize
 """
     try:
         result = subprocess.run(

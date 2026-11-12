@@ -12,7 +12,7 @@ def run(binary):
     with tempfile.TemporaryDirectory(prefix="mvdb-cache-") as directory:
         c = Client([binary], directory, timeout=120)
         try:
-            for name, dim, count in [("wide", 1024, 2200), ("tiny", 1, 53)]:
+            for name, dim, count in [("wide", 1024, 2200), ("tiny", 1, 53), ("quantized", 128, 600)]:
                 c.ok(f"CREATE TABLE {name}(id BIGINT PRIMARY KEY,g BIGINT,v VECTOR({dim}));")
                 c.ok("BEGIN;")
                 for start in range(0, count, 100):
@@ -55,6 +55,23 @@ def run(binary):
                     check("tiny", 1, 31, [i for i in range(53) if i != 31])
                 c.ok("ROLLBACK;")
                 check("tiny", 1, 31, range(53))
+            # Exercise quantized screening + interval cutoffs on a live root,
+            # a transaction root, root-offset reuse after failure, and rollback.
+            check("quantized", 128, 310, range(600))
+            c.ok("BEGIN;")
+            c.ok("DELETE FROM quantized WHERE id=310;")
+            check("quantized", 128, 310, [i for i in range(600) if i != 310])
+            result = c.sql("INSERT INTO quantized VALUES(999,0,'[" + ",".join(["310"]*128) +
+                           "]'),(1,0,'[" + ",".join(["999"]*128) + "]');")
+            assert not result["ok"]
+            check("quantized", 128, 310, [i for i in range(600) if i != 310])
+            c.ok("ROLLBACK;")
+            check("quantized", 128, 310, range(600))
+            c.ok("BEGIN;")
+            c.ok("UPDATE quantized SET v='[" + ",".join(["10000"]*128) + "]' WHERE id=310;")
+            check("quantized", 128, 310, [i for i in range(600) if i != 310])
+            c.ok("COMMIT;")
+            check("quantized", 128, 310, [i for i in range(600) if i != 310])
             c.ok("CREATE TABLE empty(id BIGINT PRIMARY KEY,v VECTOR(1));")
             assert c.ok("SELECT id FROM empty ORDER BY L2_DISTANCE(v,'[0]') LIMIT 10;")["rows"] == []
             # Small response, >4KiB response, small response on one connection.
