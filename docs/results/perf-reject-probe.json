@@ -1,0 +1,61 @@
+{
+  "scope": "LOCAL sqrt/candidate rejection plus reserved cache probe",
+  "trials": [
+    {
+      "image": "minivectordb:row-cache",
+      "query": {
+        "T_ms": 226.53695801272988,
+        "memory_peak": 29360128,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00012500095181167126,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:exact-fast",
+      "query": {
+        "T_ms": 223.75354100950062,
+        "memory_peak": 29032448,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00033300602808594704,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:row-cache",
+      "query": {
+        "T_ms": 226.80954201496206,
+        "memory_peak": 26648576,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00012500095181167126,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:exact-fast",
+      "query": {
+        "T_ms": 220.0346250028815,
+        "memory_peak": 29040640,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 4.1996827349066734e-05,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    }
+  ]
+}

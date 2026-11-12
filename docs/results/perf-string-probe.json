@@ -1,0 +1,97 @@
+{
+  "scope": "LOCAL contiguous string parsing probe; piped wall time includes docker startup",
+  "source_sha256": "de35ba35a1873eb7fe7d8fb7505d56df2cdbf4d7a745aea4000f1c07709f9f39",
+  "trials": [
+    {
+      "image": "minivectordb:predicate-cache",
+      "piped_write_wall_ms": 1287.531250010943,
+      "query": {
+        "T_ms": 211.743124993518,
+        "memory_peak": 29421568,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00012500095181167126,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:string-runs",
+      "piped_write_wall_ms": 875.7890830165707,
+      "query": {
+        "T_ms": 200.26262500323355,
+        "memory_peak": 28270592,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00016600824892520905,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:predicate-cache",
+      "piped_write_wall_ms": 1045.434125000611,
+      "query": {
+        "T_ms": 189.87808300880715,
+        "memory_peak": 29220864,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 4.1996827349066734e-05,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:string-runs",
+      "piped_write_wall_ms": 954.099499998847,
+      "query": {
+        "T_ms": 230.37474998272955,
+        "memory_peak": 28598272,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00012500095181167126,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:predicate-cache",
+      "piped_write_wall_ms": 995.5150840105489,
+      "query": {
+        "T_ms": 204.01116699213162,
+        "memory_peak": 29622272,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00012500095181167126,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:string-runs",
+      "piped_write_wall_ms": 1225.3031250147615,
+      "query": {
+        "T_ms": 308.71820799075067,
+        "memory_peak": 28622848,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 8.300412446260452e-05,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    }
+  ],
+  "decision": "withdrawn; end-to-end results unstable, no reliable gain established"
+}

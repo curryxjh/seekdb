@@ -1,0 +1,93 @@
+{
+  "scope": "LOCAL bulk input versus per-byte reader probe",
+  "trials": [
+    {
+      "image": "minivectordb:exact-fast",
+      "write": {
+        "T_ms": 1669.8751660005655,
+        "memory_peak": 21692416,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "restart_content_check": true
+      },
+      "query": {
+        "T_ms": 272.82087499042973,
+        "memory_peak": 29659136,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00020899460650980473,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:buffered-input",
+      "write": {
+        "T_ms": 1657.1022499992978,
+        "memory_peak": 23502848,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "restart_content_check": true
+      },
+      "query": {
+        "T_ms": 207.4387499887962,
+        "memory_peak": 27684864,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.0006250047590583563,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:exact-fast",
+      "write": {
+        "T_ms": 1665.678708028281,
+        "memory_peak": 23912448,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "restart_content_check": true
+      },
+      "query": {
+        "T_ms": 272.27045901236124,
+        "memory_peak": 28725248,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00016600824892520905,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "image": "minivectordb:buffered-input",
+      "write": {
+        "T_ms": 1684.1793750063516,
+        "memory_peak": 23683072,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "restart_content_check": true
+      },
+      "query": {
+        "T_ms": 262.5108749780338,
+        "memory_peak": 27373568,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0",
+        "preparation_ms": 0.00012500095181167126,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    }
+  ]
+}

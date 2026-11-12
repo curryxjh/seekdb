@@ -9,6 +9,9 @@
 #include <queue>
 #include <set>
 #include <unistd.h>
+#if defined(__x86_64__)
+#include <immintrin.h>
+#endif
 
 namespace mvdb {
 namespace {
@@ -98,13 +101,56 @@ double distance(const std::vector<float> &a, const std::vector<float> &b) {
   }
   return std::sqrt(sum);
 }
-double distance(std::string_view bytes, const std::vector<float> &query) {
-  double sum = 0;
-  for (size_t i = 0; i < query.size(); ++i) {
+double squared_distance(std::string_view bytes, const std::vector<float> &query) {
+  // Independent double accumulators let the compiler vectorize without
+  // fast-math, float32 overflow, or a long scalar dependency chain.
+  double sums[4]{};
+  size_t i = 0;
+  for (; i + 4 <= query.size(); i += 4) {
+    for (size_t lane = 0; lane < 4; ++lane) {
+      const double delta = static_cast<double>(load_float(bytes.data() + (i + lane) * 4)) - query[i + lane];
+      sums[lane] += delta * delta;
+    }
+  }
+  double sum = (sums[0] + sums[1]) + (sums[2] + sums[3]);
+  for (; i < query.size(); ++i) {
     const double delta = static_cast<double>(load_float(bytes.data() + i * 4)) - query[i];
     sum += delta * delta;
   }
-  return std::sqrt(sum);
+  return sum;
+}
+#if defined(__x86_64__)
+__attribute__((target("avx2")))
+double squared_avx2(std::string_view bytes, const std::vector<float> &query) {
+  __m256d a = _mm256_setzero_pd(), b = _mm256_setzero_pd();
+  size_t i = 0;
+  for (; i + 8 <= query.size(); i += 8) {
+    const auto x = _mm256_sub_pd(_mm256_cvtps_pd(_mm_loadu_ps(reinterpret_cast<const float *>(bytes.data() + i * 4))),
+                                 _mm256_cvtps_pd(_mm_loadu_ps(query.data() + i)));
+    const auto y = _mm256_sub_pd(_mm256_cvtps_pd(_mm_loadu_ps(reinterpret_cast<const float *>(bytes.data() + (i + 4) * 4))),
+                                 _mm256_cvtps_pd(_mm_loadu_ps(query.data() + i + 4)));
+    a = _mm256_add_pd(a, _mm256_mul_pd(x, x));
+    b = _mm256_add_pd(b, _mm256_mul_pd(y, y));
+  }
+  double lanes[4]; _mm256_storeu_pd(lanes, _mm256_add_pd(a, b));
+  double sum = (lanes[0] + lanes[1]) + (lanes[2] + lanes[3]);
+  for (; i < query.size(); ++i) {
+    const double delta = static_cast<double>(load_float(bytes.data() + i * 4)) - query[i];
+    sum += delta * delta;
+  }
+  return sum;
+}
+#endif
+using DistanceKernel = double (*)(std::string_view, const std::vector<float> &);
+DistanceKernel distance_kernel() {
+#if defined(__x86_64__)
+  if (__builtin_cpu_supports("avx2")) return squared_avx2;
+#endif
+  return squared_distance;
+}
+double distance(std::string_view bytes, const std::vector<float> &query) {
+  static const auto kernel = distance_kernel();
+  return std::sqrt(kernel(bytes, query));
 }
 struct BoundExpr {
   uint32_t column;
@@ -214,37 +260,57 @@ class Sorter {
 };
 }  // namespace
 
-Spool::Spool(const std::string &directory) {
-  std::string pattern = directory + "/spool-XXXXXX";
-  const int fd = ::mkstemp(pattern.data());
-  require(fd >= 0, "io_error", "cannot create temporary result");
-  if (::unlink(pattern.c_str()) != 0) { ::close(fd); throw Error("io_error", "cannot unlink temporary result"); }
-  file_ = ::fdopen(fd, "w+b");
-  if (file_ == nullptr) { ::close(fd); throw Error("io_error", "cannot open temporary result"); }
-}
+Spool::Spool(const std::string &directory) : directory_(directory) {}
 Spool::~Spool() { if (file_ != nullptr) std::fclose(file_); }
-Spool::Spool(Spool &&other) noexcept : file_(other.file_) { other.file_ = nullptr; }
+Spool::Spool(Spool &&other) noexcept
+    : directory_(std::move(other.directory_)), buffer_(std::move(other.buffer_)),
+      position_(other.position_), file_(other.file_) { other.file_ = nullptr; }
 Spool &Spool::operator=(Spool &&other) noexcept {
   if (this != &other) {
     if (file_ != nullptr) std::fclose(file_);
-    file_ = other.file_; other.file_ = nullptr;
+    directory_ = std::move(other.directory_); buffer_ = std::move(other.buffer_);
+    position_ = other.position_; file_ = other.file_; other.file_ = nullptr;
   }
   return *this;
 }
 void Spool::write(std::string_view value) {
+  if (file_ == nullptr) {
+    if (value.size() <= 4096 - buffer_.size()) { buffer_ += value; return; }
+    std::string pattern = directory_ + "/spool-XXXXXX";
+    const int fd = ::mkstemp(pattern.data());
+    require(fd >= 0, "io_error", "cannot create temporary result");
+    if (::unlink(pattern.c_str()) != 0) { ::close(fd); throw Error("io_error", "cannot unlink temporary result"); }
+    file_ = ::fdopen(fd, "w+b");
+    if (file_ == nullptr) { ::close(fd); throw Error("io_error", "cannot open temporary result"); }
+    checked(std::fwrite(buffer_.data(), 1, buffer_.size(), file_) == buffer_.size());
+    std::string().swap(buffer_);
+  }
   checked(std::fwrite(value.data(), 1, value.size(), file_) == value.size());
 }
-void Spool::start_read() { checked(std::fseek(file_, 0, SEEK_SET) == 0); }
+void Spool::start_read() {
+  position_ = 0;
+  if (file_ != nullptr) checked(std::fseek(file_, 0, SEEK_SET) == 0);
+}
 bool Spool::read(void *destination, size_t size) {
+  if (file_ == nullptr) {
+    if (position_ == buffer_.size()) return false;
+    checked(size <= buffer_.size() - position_);
+    std::memcpy(destination, buffer_.data() + position_, size); position_ += size;
+    return true;
+  }
   const auto n = std::fread(destination, 1, size, file_);
   if (n == 0 && std::feof(file_)) return false;
   checked(n == size); return true;
 }
 void Spool::output(FILE *stream, std::string_view id) {
   start_read(); std::array<char, 16384> buffer{};
-  checked(std::fgetc(file_) == '{');
+  char first = 0; checked(read(&first, 1) && first == '{');
   const auto prefix = "{\"id\":" + std::string(id) + ",";
   checked(std::fwrite(prefix.data(), 1, prefix.size(), stream) == prefix.size());
+  if (file_ == nullptr) {
+    checked(std::fwrite(buffer_.data() + position_, 1, buffer_.size() - position_, stream) == buffer_.size() - position_);
+    return;
+  }
   while (true) {
     const auto n = std::fread(buffer.data(), 1, buffer.size(), file_);
     checked(std::ferror(file_) == 0);
@@ -331,7 +397,10 @@ void Database::commit() {
   catch (...) { ::_exit(74); }
 }
 void Database::shutdown() {
-  if (transaction_) { catalog_ = committed_; storage_.rewind(committed_end_); transaction_ = false; }
+  if (transaction_) {
+    scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_root_ = 0;
+    catalog_ = committed_; storage_.rewind(committed_end_); transaction_ = false;
+  }
 }
 
 Spool Database::execute(const Statement &s) {
@@ -348,6 +417,9 @@ Spool Database::execute(const Statement &s) {
     result.write("{\"ok\":true}"); shutdown(); return result;
   }
   const Catalog savepoint = catalog_;
+  // Root offsets may be reused after rollback/statement failure. Invalidate
+  // before any mutation, even one that ultimately fails.
+  scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_root_ = 0;
   const uint64_t boundary = storage_.end();
   uint64_t affected = 0;
   try {
@@ -504,6 +576,7 @@ Spool Database::select(const Statement &s, const Table &t) {
                     (order.distance || t.columns[order.column].type == Type::Bigint);
   const auto better = [&](const Candidate &a, const Candidate &b) { return sorter.better(a, b); };
   std::priority_queue<Candidate, std::vector<Candidate>, decltype(better)> top(better);
+  double worst_distance = -1, reject_square = 0;
   uint64_t remaining = s.limit;
   const auto accept = [&](Candidate value) {
     if (!s.ordered) { emit(value); return --remaining != 0; }
@@ -513,10 +586,27 @@ Spool Database::select(const Statement &s, const Table &t) {
     } else sorter.add(std::move(value));
     return true;
   };
+  const auto accept_vector = [&](int64_t id, uint64_t offset, std::string_view input) {
+    static const auto kernel = distance_kernel();
+    const double square = kernel(input, order.query);
+    if (heap && top.size() == s.limit) {
+      const double worst = std::get<double>(top.top().key);
+      if (worst != worst_distance) {
+        // One ULP above the current distance also covers sqrt rounding ties.
+        const double upper = std::nextafter(worst, std::numeric_limits<double>::infinity());
+        reject_square = std::nextafter(upper * upper, std::numeric_limits<double>::infinity());
+        worst_distance = worst;
+      }
+      if ((!s.descending && square > reject_square) ||
+          (s.descending && std::sqrt(square) < worst)) return true;
+    }
+    return accept({std::sqrt(square), id, offset});
+  };
   RowView row(t);
   const auto visit = [&](int64_t id, uint64_t offset) {
     row.reset(storage_.blob(offset));
     if (!row.matches(where)) return true;
+    if (s.ordered && order.distance) return accept_vector(id, offset, row.vector(order.column));
     Candidate value; value.id = id; value.offset = offset;
     value.key = s.ordered ? order.eval(row) : Value(id);
     return accept(std::move(value));
@@ -531,7 +621,74 @@ Spool Database::select(const Statement &s, const Table &t) {
       break;
     }
   }
-  if (!direct && s.ordered && order.distance && where.empty() && !t.index_name.empty()) {
+  if (!direct && heap && order.distance) {
+    const size_t dimension = order.query.size();
+    const size_t row_limit = (8U * 1024U * 1024U) /
+                             (sizeof(ScanRow) + dimension * sizeof(float));
+    if (scan_root_ == 0 || scan_root_ != t.root) {
+      scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_root_ = 0; scan_complete_ = false;
+      // Release capacity left by a different vector dimension before resizing.
+      std::vector<ScanRow>().swap(scan_rows_); std::vector<float>().swap(scan_vectors_);
+      if (row_limit != 0) {
+        scan_rows_.reserve(row_limit); scan_vectors_.reserve(row_limit * dimension);
+        scan_complete_ = true;
+        storage_.scan(t.root, [&](int64_t id, uint64_t offset) {
+          if (scan_rows_.size() == row_limit) { scan_complete_ = false; return false; }
+          row.reset(storage_.blob(offset));
+          const auto input = row.vector(order.column);
+          const size_t start = scan_vectors_.size();
+          scan_vectors_.resize(start + dimension);
+          for (size_t d = 0; d < dimension; ++d)
+            scan_vectors_[start + d] = load_float(input.data() + d * 4);
+          scan_rows_.push_back({id, offset});
+          return true;
+        });
+        scan_root_ = t.root;
+      }
+    }
+    const std::vector<uint64_t> *filter = nullptr;
+    if (!where.empty()) {
+      std::string key;
+      for (const auto &p : where) {
+        append_u32(key, p.column); append_string(key, p.op);
+        append_string(key, value_json(p.value));
+        if (key.size() > 4096) break;
+      }
+      // Long predicates still stream normally and cannot grow retained keys.
+      if (key.size() <= 4096) {
+        for (const auto &cached : scan_filters_)
+          if (cached.key == key) { filter = &cached.bits; break; }
+        if (filter == nullptr) {
+          ScanFilter mask{std::move(key), std::vector<uint64_t>((scan_rows_.size() + 63) / 64)};
+          for (size_t i = 0; i < scan_rows_.size(); ++i) {
+            row.reset(storage_.blob(scan_rows_[i].offset));
+            if (row.matches(where)) mask.bits[i / 64] |= uint64_t{1} << (i % 64);
+          }
+          const size_t slot = scan_filters_.size() < 4 ? scan_filters_.size() : scan_filter_next_++ % 4;
+          if (slot == scan_filters_.size()) scan_filters_.push_back(std::move(mask));
+          else scan_filters_[slot] = std::move(mask);
+          filter = &scan_filters_[slot].bits;
+        }
+      }
+    }
+    for (size_t i = 0; i < scan_rows_.size(); ++i) {
+      const auto &cached = scan_rows_[i];
+      if (filter != nullptr) {
+        if (((*filter)[i / 64] & (uint64_t{1} << (i % 64))) == 0) continue;
+      } else if (!where.empty()) {
+        row.reset(storage_.blob(cached.offset));
+        if (!row.matches(where)) continue;
+      }
+      const auto *data = reinterpret_cast<const char *>(scan_vectors_.data() + i * dimension);
+      accept_vector(cached.id, cached.offset, std::string_view(data, dimension * 4));
+    }
+    if (scan_rows_.empty() || !scan_complete_) {
+      storage_.scan(t.root, [&](int64_t id, uint64_t offset) {
+        if (!scan_rows_.empty() && id <= scan_rows_.back().id) return true;
+        return visit(id, offset);
+      });
+    }
+  } else if (!direct && s.ordered && order.distance && where.empty() && !t.index_name.empty()) {
     // Physical, transactionally maintained vector postings. Only winning rows
     // need ordinary-column decoding; ann deliberately retains exact recall.
     storage_.scan(t.vector_root, [&](int64_t id, uint64_t offset) {
@@ -539,7 +696,7 @@ Spool Database::select(const Statement &s, const Table &t) {
       Candidate value; value.id = id; value.offset = read_u64(bytes);
       const auto input = read_bytes(bytes, order.query.size() * 4);
       require(bytes.empty(), "corrupt_data", "trailing vector posting data");
-      value.key = distance(input, order.query); return accept(std::move(value));
+      return accept_vector(id, value.offset, input);
     });
   } else if (!direct) storage_.scan(t.root, visit);
   if (s.ordered) {

@@ -4,6 +4,8 @@
 #include <cerrno>
 #include <csignal>
 #include <cstdio>
+#include <cstring>
+#include <unistd.h>
 
 namespace {
 volatile std::sig_atomic_t stopping = 0;
@@ -17,17 +19,24 @@ void emit(std::string_view response) {
 
 // Read physical JSONL lines, never split the transport on SQL punctuation.
 bool read_line(std::string &line) {
+  static char buffer[65536];
+  static size_t begin = 0, end = 0;
   line.clear();
   while (!stopping) {
-    const int ch = std::getchar();
-    if (ch == EOF) {
-      if (std::ferror(stdin) && errno == EINTR && !stopping) { std::clearerr(stdin); continue; }
-      if (std::ferror(stdin) && !stopping) throw std::runtime_error("stdin failed");
-      return !stopping && !line.empty();
+    if (begin == end) {
+      const auto n = ::read(STDIN_FILENO, buffer, sizeof(buffer));
+      if (n < 0) {
+        if (errno == EINTR) continue;
+        throw std::runtime_error("stdin failed");
+      }
+      if (n == 0) return !line.empty();
+      begin = 0; end = static_cast<size_t>(n);
     }
-    if (ch == '\n') return true;
-    mvdb::require(line.size() < 16U * 1024U * 1024U, "request_limit", "JSON request exceeds 16 MiB");
-    line += static_cast<char>(ch);
+    const auto *newline = static_cast<const char *>(std::memchr(buffer + begin, '\n', end - begin));
+    const size_t length = newline ? static_cast<size_t>(newline - (buffer + begin)) : end - begin;
+    mvdb::require(length <= 16U * 1024U * 1024U - line.size(), "request_limit", "JSON request exceeds 16 MiB");
+    line.append(buffer + begin, length); begin += length;
+    if (newline) { ++begin; return true; }
   }
   return false;
 }

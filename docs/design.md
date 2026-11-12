@@ -99,18 +99,20 @@ row boundaries, compares scalar predicates without owning string allocations,
 and computes distance directly from serialized float32 fields. Spans are used
 inside the current callback before another storage access could remap the file.
 Sort keys own any strings that outlive a callback; full rows are decoded only
-when projecting selected results. The double accumulation order is unchanged.
+when projecting selected results. Distance kernels use double accumulation; the
+current SIMD grouping and roundoff checks are described below.
 Larger or string orderings use approximately 4 MiB sorted runs and binary
 levelled merges, bounding both active runs/file descriptors by O(log N).
-Results are first materialized to an anonymous `/data` spool, so evaluation
-failure cannot leak half of a successful result and large results do not stay in
-heap memory. Spools are unlinked immediately and close through RAII.
+Results complete in a bounded memory buffer or an anonymous `/data` spool, so
+evaluation failure cannot leak half of a successful result and large results do
+not stay in heap memory. Disk spools are unlinked immediately and close through RAII.
 
 CREATE VECTOR INDEX builds a second physical tree whose blobs contain the current
 row offset and float32 vector. Every insert/update/delete maintains both roots in
 the same statement. Unfiltered distance ordering can scan these narrow postings,
 decoding only winning full rows. This is an exact physical access path; both exact
-and ann retain precise recall. Filtered queries currently use primary-row scans.
+and ann retain precise recall. Bounded TopK queries use the vector-prefix cache
+described below, including predicates; other filtered queries use primary rows.
 There is no sublinear approximate-search claim.
 
 ## Resource bounds and tradeoffs
@@ -133,5 +135,37 @@ certified against an organizer data device. No official E is computed from them.
 `tests/compare.py` pairs equal seeds and workloads, checks correctness/recall and
 local hard limits, applies all three weights within each round, then takes the
 median. Per-metric medians are shown only for description. An 8 KiB in-memory
-spool experiment was withdrawn after its local weighted proxy regressed; results
-continue to use the existing anonymous disk spool.
+spool experiment was withdrawn after its local weighted proxy regressed. The
+2026-11-12 iteration below re-evaluates a smaller buffer with the new query path;
+the older result remains historical evidence.
+
+## 2026-11-12 bounded query acceleration
+
+Exact L2 uses four independent double accumulators; x86_64 dispatches to an AVX2
+implementation only if CPUID and OS support permit it. There is no fast-math or
+float32 subtraction/sum overflow. Only likely heap winners need a square root;
+a conservative nextafter threshold preserves rounded-distance ties. Projection
+still computes its own expression, including when it differs from ORDER BY.
+
+One table's vector prefix and row offsets occupy at most 8 MiB of vector/row
+capacity. Larger tables stream the remaining primary-key tail on every query.
+Four packed predicate masks retain at most four bits per cached row, with keys
+bounded to 4096 bytes each. Long predicates stream normally. Every mutation,
+including a failed statement, invalidates vectors and masks before offsets can
+be reused. Rollback also invalidates; committed immutable roots may be reused.
+Tables/dimensions release old vector capacities before reserving new buffers.
+This is a data cache, not a stored-answer or benchmark-specific cache.
+
+The minimal-diff audit retains only branches that enforce these bounds, select
+supported CPU instructions, preserve rollback visibility or handle the official
+input/result boundaries. The 8 MiB prefix, four masks, 4096-byte keys/results and
+64 KiB input buffer are local resource choices, not organizer defaults. No runtime
+configuration option, dependency, build flag or approximate-query mode was added.
+
+Results <=4096 bytes complete in memory; larger responses spill to an unlinked
+file under the data directory. Errors cannot emit partial successful responses.
+Input uses a fixed 64 KiB buffer while preserving JSONL request boundaries,
+fragmented writes, surplus input, shutdown behavior and per-response flushing.
+The immutable approximate graph experiment was not integrated: construction and
+filtered traversal costs outweighed its query benefit; its unfavorable records
+and sanitizer caveat are retained separately. ANN mode keeps exact fallback.

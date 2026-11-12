@@ -1,3 +1,12 @@
+# Current verification status
+
+Formal admission passed for b3b16af1e8429b3daed14bbdfedc89bf67c6e2a8 in the user's
+2026-11-11 19:58 submission. Platform raw performance: 1968.948310; raw Agent: 1.
+The 2026-11-12 optimized source has not been formally submitted. Current test and
+performance evidence is recorded in [performance-iteration.md](performance-iteration.md)
+and `results/perf-final-*.json`. The historical evidence below retains its original
+source associations.
+
 # Validation and performance record
 
 Date: 2026-11-11, Asia/Shanghai. Historical performance results below are LOCAL; the protocol checks use the official released driver.
@@ -54,7 +63,8 @@ config IDs differ and both identities are preserved in
 
 The performance numbers and broad split/fault results below describe the
 pre-repair revisions explicitly named in their reports. They are retained as
-history, not measurements of the new transport. No official retry has been made.
+history, not measurements of the new transport. The user subsequently submitted
+b3b16af and passed formal admission, as recorded at the top of this document.
 
 ## Pre-repair correctness, crash and resource results
 
@@ -236,7 +246,7 @@ scan median improved 11.80x from initial to final in this local environment.
 * Unimpressive initial index resource tradeoff is preserved in the raw rounds;
   index creation was not made automatic and no official gain is asserted.
 
-## Minimal-diff and delivery audit
+## Historical minimal-diff and delivery audit
 
 No storage/ANN/parser dependency or third-party default configuration was added.
 C++20 and warning flags define the build contract. The only build switches enable
@@ -262,8 +272,9 @@ in `results/delivery-check.json`.
 
 The released JSONL stdin/stdout contract is now implemented and verified with the
 unchanged official driver: 20/20 public cases and 95 SQL pass on native and
-linux/amd64 Docker builds. Hidden 9-case admission, ranking baselines and platform
-results remain unverified. `ann` currently has exact fallback rather than sublinear
+linux/amd64 Docker builds. The user subsequently passed formal admission on
+b3b16af; this optimized revision has only local verification. Official ranking
+baselines and the new platform result remain unavailable. `ann` currently has exact fallback rather than sublinear
 approximate search. Append/COW storage has no compaction and accumulates unreachable
 data/tombstones. Cross-container macOS bind-mount flock is not supported in the
 observed environment; Linux volumes were verified.
@@ -274,4 +285,5 @@ independent challenge to the delivery evidence. It has no assigned score or
 invented technical explanation, prediction, transfer response or completed
 repair. The Agent's work is not assigned to a student. Neither dual first
 places nor 80 points has been established. The latest observed formal admission
-failed; the agent did not submit or retry it.
+passed at b3b16af, with raw performance 1968.948310. The optimized revision has
+not been formally submitted; the agent did not submit or retry it.

@@ -1,0 +1,4 @@
+{
+  "scope": "temporary instrumented build, 10000x128D, fully piped input excludes host waits",
+  "timings": "[PROFILE] read=253.00 json=80.25 sql=67.65 exec=304.78 ms"
+}

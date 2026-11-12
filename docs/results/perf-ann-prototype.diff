@@ -1,0 +1,594 @@
+diff --git a/minivectordb/ann.h b/minivectordb/ann.h
+new file mode 100644
+index 000000000..76a561a65
+--- /dev/null
++++ b/minivectordb/ann.h
+@@ -0,0 +1,76 @@
++#pragma once
++
++#include <cstddef>
++#include <cstdint>
++#include <span>
++#include <utility>
++#include <vector>
++
++namespace mvdb {
++
++// Immutable, squared-L2 HNSW. The caller owns the contiguous vectors and must
++// keep them alive and unchanged, and rebuild after any change to rows/vectors.
++// No database, storage, transaction, or external ANN library dependencies.
++class AnnGraph {
++ public:
++  using Row = uint32_t;
++  using Distance = double (*)(const float *, const float *, size_t);
++  struct Stats { uint64_t distance_evaluations = 0; };
++
++  AnnGraph(std::span<const float> vectors, size_t dimension, size_t count,
++           uint64_t seed = 0x6a09e667f3bcc909ULL);
++
++  // Empty allowed means all rows; otherwise it must contain count bytes.
++  // Traversal includes disallowed rows. Returns min(k, allowed count) unique
++  // candidates; the caller performs final exact ranking/tie breaking. No exact
++  // fallback here: very selective filters and large k can approach a full scan.
++  // ef is the unfiltered routing beam, at least k. 256 trades recall for speed;
++  // use 512 for higher recall with filters. Optional distance must compute
++  // squared L2 in double (including subtraction), accepting finite float32.
++  // Concurrent queries are safe; each owns its scratch memory.
++  std::vector<Row> query(std::span<const float> q, size_t k,
++                         std::span<const uint8_t> allowed = {},
++                         Stats *stats = nullptr, size_t ef = 256,
++                         Distance distance = nullptr) const;
++
++  size_t size() const { return nodes_.size(); }
++  size_t heap_bytes() const;  // Retained allocations, excluding borrowed vectors.
++  Stats build_stats() const { return build_stats_; }
++
++ private:
++  static constexpr size_t kDegree = 24;
++  static constexpr size_t kBaseDegree = 2 * kDegree;
++  static constexpr size_t kBuildEf = 256;
++  struct Node { uint32_t upper = 0; uint32_t level = 0; };
++  using Neighbor = std::pair<double, Row>;
++  struct Scratch {
++    explicit Scratch(size_t count) : seen(count, 0) {}
++    std::vector<uint32_t> seen;
++    uint32_t epoch = 0;
++    Stats stats;
++    Distance kernel = nullptr;
++  };
++
++  std::span<const float> vectors_;
++  size_t dimension_;
++  std::vector<Node> nodes_;
++  // Each block stores [degree, neighbors...]; all allocations have fixed bounds.
++  std::vector<Row> base_, upper_;
++  Row entry_ = 0;
++  uint32_t top_ = 0;
++  Stats build_stats_;
++
++  const float *vector(Row row) const;
++  const Row *links(Row row, uint32_t level) const;
++  Row *links(Row row, uint32_t level);
++  double distance(const float *a, const float *b, Scratch &scratch) const;
++  Row greedy(const float *q, Row entry, uint32_t level, Scratch &scratch) const;
++  std::vector<Neighbor> search(const float *q, Row entry, size_t ef,
++                               uint32_t level, size_t inserted, size_t wanted,
++                               std::span<const uint8_t> allowed,
++                               Scratch &scratch) const;
++  std::vector<Row> select(const std::vector<Neighbor> &candidates, size_t degree,
++                           Scratch &scratch) const;
++};
++
++}  // namespace mvdb
+diff --git a/minivectordb/ann.cpp b/minivectordb/ann.cpp
+new file mode 100644
+index 000000000..772b0400d
+--- /dev/null
++++ b/minivectordb/ann.cpp
+@@ -0,0 +1,244 @@
++#include "ann.h"
++
++#include <algorithm>
++#include <cmath>
++#include <functional>
++#include <limits>
++#include <queue>
++#include <stdexcept>
++
++namespace mvdb {
++namespace {
++uint64_t random_bits(uint64_t &state) {
++  uint64_t z = (state += 0x9e3779b97f4a7c15ULL);
++  z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
++  z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
++  return z ^ (z >> 31);
++}
++void finite(std::span<const float> values) {
++  for (float value : values) {
++    if (!std::isfinite(value)) throw std::invalid_argument("ANN needs finite float32");
++  }
++}
++}  // namespace
++
++const float *AnnGraph::vector(Row row) const {
++  return vectors_.data() + static_cast<size_t>(row) * dimension_;
++}
++const AnnGraph::Row *AnnGraph::links(Row row, uint32_t level) const {
++  return level == 0 ? base_.data() + static_cast<size_t>(row) * (kBaseDegree + 1)
++                    : upper_.data() + nodes_[row].upper + (level - 1) * (kDegree + 1);
++}
++AnnGraph::Row *AnnGraph::links(Row row, uint32_t level) {
++  return const_cast<Row *>(std::as_const(*this).links(row, level));
++}
++double AnnGraph::distance(const float *a, const float *b, Scratch &scratch) const {
++  ++scratch.stats.distance_evaluations;
++  if (scratch.kernel) return scratch.kernel(a, b, dimension_);
++  // Convert BEFORE subtraction; even opposite FLT_MAX values stay finite.
++  double s0 = 0, s1 = 0, s2 = 0, s3 = 0;
++  size_t i = 0;
++  for (; dimension_ - i >= 4; i += 4) {
++    const double d0 = double(a[i]) - double(b[i]);
++    const double d1 = double(a[i + 1]) - double(b[i + 1]);
++    const double d2 = double(a[i + 2]) - double(b[i + 2]);
++    const double d3 = double(a[i + 3]) - double(b[i + 3]);
++    s0 += d0 * d0; s1 += d1 * d1; s2 += d2 * d2; s3 += d3 * d3;
++  }
++  for (; i < dimension_; ++i) {
++    const double delta = double(a[i]) - double(b[i]);
++    s0 += delta * delta;
++  }
++  return (s0 + s1) + (s2 + s3);
++}
++AnnGraph::Row AnnGraph::greedy(const float *q, Row entry, uint32_t level,
++                              Scratch &scratch) const {
++  Neighbor best{distance(q, vector(entry), scratch), entry};
++  for (;;) {
++    const Row previous = best.second;
++    const Row *adj = links(previous, level);
++    for (size_t i = 1; i <= adj[0]; ++i) {
++      best = std::min(best, Neighbor{distance(q, vector(adj[i]), scratch), adj[i]});
++    }
++    if (best.second == previous) return previous;
++  }
++}
++
++std::vector<AnnGraph::Neighbor> AnnGraph::search(
++    const float *q, Row entry, size_t ef, uint32_t level, size_t inserted,
++    size_t wanted, std::span<const uint8_t> allowed, Scratch &scratch) const {
++  if (++scratch.epoch == 0) {
++    std::fill(scratch.seen.begin(), scratch.seen.end(), 0);
++    ++scratch.epoch;
++  }
++  std::priority_queue<Neighbor, std::vector<Neighbor>, std::greater<Neighbor>> todo;
++  std::priority_queue<Neighbor> routing, matches;
++  const bool filtered = !allowed.empty();
++  const double infinity = std::numeric_limits<double>::infinity();
++  auto bound = [&] {
++    const double route = routing.size() < ef ? infinity : routing.top().first;
++    return filtered ? std::max(route, matches.size() < wanted ? infinity
++                                                             : matches.top().first)
++                    : route;
++  };
++  auto visit = [&](Row row) {
++    if (scratch.seen[row] == scratch.epoch) return;
++    scratch.seen[row] = scratch.epoch;
++    const Neighbor item{distance(q, vector(row), scratch), row};
++    if (item.first > bound()) return;
++    todo.push(item);
++    routing.push(item);
++    if (routing.size() > ef) routing.pop();
++    if (filtered && allowed[row]) {
++      matches.push(item);
++      if (matches.size() > wanted) matches.pop();
++    }
++  };
++  visit(entry);
++  while (!todo.empty() && todo.top().first <= bound()) {
++    const Row row = todo.top().second;
++    todo.pop();
++    const Row *adj = links(row, level);
++    for (size_t i = 1; i <= adj[0]; ++i) visit(adj[i]);
++    // An implicit insertion-order chain keeps EVERY row reachable, including
++    // duplicate vectors whose reciprocal geometric edges may all be pruned.
++    // No chain allocation and no edges to rows not yet inserted during build.
++    if (level == 0) {
++      if (row > 0) visit(row - 1);
++      if (static_cast<size_t>(row) + 1 < inserted) visit(row + 1);
++    }
++  }
++  auto &result = filtered ? matches : routing;
++  std::vector<Neighbor> output(result.size());
++  for (size_t i = output.size(); i > 0; --i) {
++    output[i - 1] = result.top();
++    result.pop();
++  }
++  return output;
++}
++
++std::vector<AnnGraph::Row> AnnGraph::select(
++    const std::vector<Neighbor> &candidates, size_t degree, Scratch &scratch) const {
++  std::vector<Row> selected;
++  selected.reserve(degree);
++  for (const auto &[to_center, row] : candidates) {
++    bool diverse = true;
++    for (Row other : selected) {
++      if (distance(vector(row), vector(other), scratch) < to_center) {
++        diverse = false;
++        break;
++      }
++    }
++    if (diverse) selected.push_back(row);
++    if (selected.size() == degree) break;
++  }
++  // Fill spare slots with nearest rejected candidates; degrees remain bounded.
++  for (const auto &[unused, row] : candidates) {
++    if (selected.size() == degree) break;
++    if (std::find(selected.begin(), selected.end(), row) == selected.end()) {
++      selected.push_back(row);
++    }
++  }
++  return selected;
++}
++
++AnnGraph::AnnGraph(std::span<const float> vectors, size_t dimension, size_t count,
++                   uint64_t seed) : vectors_(vectors), dimension_(dimension) {
++  if (dimension == 0 || count > std::numeric_limits<Row>::max() ||
++      count > std::numeric_limits<size_t>::max() / dimension ||
++      vectors.size() != count * dimension ||
++      count > std::numeric_limits<size_t>::max() / (kBaseDegree + 1)) {
++    throw std::invalid_argument("invalid ANN vector shape");
++  }
++  finite(vectors);
++  nodes_.resize(count);
++  size_t upper_slots = 0;
++  for (auto &node : nodes_) {
++    node.upper = static_cast<uint32_t>(upper_slots);
++    while (random_bits(seed) % kDegree == 0) ++node.level;
++    upper_slots += node.level * (kDegree + 1);
++    if (upper_slots > std::numeric_limits<uint32_t>::max()) {
++      throw std::length_error("ANN upper links exceed row address space");
++    }
++  }
++  base_.resize(count * (kBaseDegree + 1), 0);
++  upper_.resize(upper_slots, 0);
++  if (count != 0) top_ = nodes_[0].level;
++  Scratch scratch(count);
++  for (size_t index = 1; index < count; ++index) {
++    const Row row = static_cast<Row>(index);
++    const float *q = vector(row);
++    Row entry = entry_;
++    for (uint32_t level = top_; level > nodes_[row].level; --level) {
++      entry = greedy(q, entry, level, scratch);
++    }
++    for (int level = static_cast<int>(std::min(top_, nodes_[row].level));
++         level >= 0; --level) {
++      const auto layer = static_cast<uint32_t>(level);
++      const auto candidates = search(q, entry, std::min(kBuildEf, index), layer,
++                                     index, 0, {}, scratch);
++      const auto selected = select(candidates, kDegree, scratch);
++      Row *own = links(row, layer);
++      own[0] = static_cast<Row>(selected.size());
++      std::copy(selected.begin(), selected.end(), own + 1);
++      const size_t capacity = layer == 0 ? kBaseDegree : kDegree;
++      for (Row other : selected) {
++        Row *adj = links(other, layer);
++        if (adj[0] < capacity) {
++          adj[++adj[0]] = row;
++        } else {
++          std::vector<Neighbor> pool;
++          pool.reserve(capacity + 1);
++          for (size_t i = 1; i <= adj[0]; ++i) {
++            pool.emplace_back(distance(vector(other), vector(adj[i]), scratch), adj[i]);
++          }
++          pool.emplace_back(distance(vector(other), q, scratch), row);
++          std::sort(pool.begin(), pool.end());
++          const auto pruned = select(pool, capacity, scratch);
++          adj[0] = static_cast<Row>(pruned.size());
++          std::copy(pruned.begin(), pruned.end(), adj + 1);
++        }
++      }
++      entry = candidates.front().second;
++    }
++    if (nodes_[row].level > top_) {
++      entry_ = row;
++      top_ = nodes_[row].level;
++    }
++  }
++  build_stats_ = scratch.stats;
++}
++
++std::vector<AnnGraph::Row> AnnGraph::query(std::span<const float> q, size_t k,
++                                         std::span<const uint8_t> allowed,
++                                         Stats *stats, size_t ef, Distance kernel) const {
++  if (stats) *stats = {};
++  if (q.size() != dimension_ || (!allowed.empty() && allowed.size() != size())) {
++    throw std::invalid_argument("invalid ANN query shape");
++  }
++  finite(q);
++  const size_t eligible = allowed.empty() ? size() : static_cast<size_t>(
++      std::count_if(allowed.begin(), allowed.end(), [](uint8_t v) { return v != 0; }));
++  k = std::min(k, eligible);
++  if (k == 0) return {};
++  Scratch scratch(size());
++  scratch.kernel = kernel;
++  Row entry = entry_;
++  for (uint32_t level = top_; level > 0; --level) {
++    entry = greedy(q.data(), entry, level, scratch);
++  }
++  const auto candidates = search(q.data(), entry, std::min(size(), std::max(ef, k)),
++                                 0, size(), k, allowed, scratch);
++  std::vector<Row> result;
++  result.reserve(k);
++  for (size_t i = 0; i < k; ++i) result.push_back(candidates[i].second);
++  if (stats) *stats = scratch.stats;
++  return result;
++}
++
++size_t AnnGraph::heap_bytes() const {
++  return nodes_.capacity() * sizeof(Node) +
++         (base_.capacity() + upper_.capacity()) * sizeof(Row);
++}
++
++}  // namespace mvdb
+diff --git a/tests/ann_graph.cpp b/tests/ann_graph.cpp
+new file mode 100644
+index 000000000..04a8901ed
+--- /dev/null
++++ b/tests/ann_graph.cpp
+@@ -0,0 +1,256 @@
++// Standalone: c++ -std=c++20 -O3 -DNDEBUG -Wall -Wextra -Wpedantic \
++//   minivectordb/ann.cpp tests/ann_graph.cpp -o /tmp/ann_graph && /tmp/ann_graph
++#include "../minivectordb/ann.h"
++
++#include <algorithm>
++#include <chrono>
++#include <cmath>
++#include <cstdlib>
++#include <iomanip>
++#include <iostream>
++#include <limits>
++#include <memory>
++#include <new>
++#include <random>
++#include <stdexcept>
++#include <string>
++
++// Measure live requested allocation bytes plus this allocator's own headers.
++// Input/oracle allocations are made before resetting peak for each operation.
++namespace allocation {
++struct alignas(std::max_align_t) Header { size_t bytes; };
++size_t live = 0, peak = 0;
++}
++void *operator new(size_t bytes) {
++  if (bytes > std::numeric_limits<size_t>::max() - sizeof(allocation::Header)) {
++    throw std::bad_alloc();
++  }
++  auto *p = static_cast<allocation::Header *>(std::malloc(bytes + sizeof(allocation::Header)));
++  if (!p) throw std::bad_alloc();
++  p->bytes = bytes + sizeof(*p);
++  allocation::live += p->bytes;
++  allocation::peak = std::max(allocation::peak, allocation::live);
++  return p + 1;
++}
++void operator delete(void *ptr) noexcept {
++  if (ptr) {
++    auto *p = static_cast<allocation::Header *>(ptr) - 1;
++    allocation::live -= p->bytes;
++    std::free(p);
++  }
++}
++void *operator new[](size_t bytes) { return ::operator new(bytes); }
++void operator delete[](void *ptr) noexcept { ::operator delete(ptr); }
++#if defined(__cpp_sized_deallocation)
++void operator delete(void *ptr, size_t) noexcept { ::operator delete(ptr); }
++void operator delete[](void *ptr, size_t) noexcept { ::operator delete(ptr); }
++#endif
++
++namespace {
++using Graph = mvdb::AnnGraph;
++using Clock = std::chrono::steady_clock;
++constexpr size_t kBudget = 4 * 1024 * 1024;
++void check(bool ok, const char *message) {
++  if (!ok) throw std::runtime_error(message);
++}
++double milliseconds(Clock::time_point start) {
++  return std::chrono::duration<double, std::milli>(Clock::now() - start).count();
++}
++double exact(const float *a, const float *b, size_t dim) {
++  double sum = 0;
++  for (size_t d = 0; d < dim; ++d) {
++    const double delta = static_cast<double>(a[d]) - static_cast<double>(b[d]);
++    sum += delta * delta;
++  }
++  return sum;
++}
++uint64_t callback_calls = 0;
++double callback(const float *a, const float *b, size_t dim) {
++  ++callback_calls;
++  return exact(a, b, dim);
++}
++template <class F> void invalid(F f) {
++  bool threw = false;
++  try { f(); } catch (const std::invalid_argument &) { threw = true; }
++  check(threw, "invalid input accepted");
++}
++void edges() {
++  Graph empty({}, 17, 0);
++  std::vector<float> q(17, 0);
++  Graph::Stats stats{99};
++  check(empty.query(q, 10, {}, &stats).empty() && stats.distance_evaluations == 0,
++        "empty graph");
++  invalid([] { Graph bad({}, 0, 0); });
++  invalid([] { Graph bad({}, 2, 1); });
++  const float nan = std::numeric_limits<float>::quiet_NaN();
++  invalid([&] { Graph bad(std::span(&nan, 1), 1, 1); });
++  const float infinity = std::numeric_limits<float>::infinity();
++  invalid([&] { Graph bad(std::span(&infinity, 1), 1, 1); });
++  const float maximum = std::numeric_limits<float>::max();
++  std::vector<float> extremes{-maximum, maximum, 0, maximum / 2};
++  // Seed 33 promotes the first row: exercise an initially nonzero entry level.
++  Graph extreme(extremes, 1, extremes.size(), 33);
++  const float target = maximum * 0.75f;
++  auto result = extreme.query(std::span(&target, 1), 4);
++  std::vector<Graph::Row> oracle{0, 1, 2, 3};
++  std::sort(oracle.begin(), oracle.end(), [&](auto a, auto b) {
++    return std::pair(exact(&target, &extremes[a], 1), a) <
++           std::pair(exact(&target, &extremes[b], 1), b);
++  });
++  check(result == oracle, "finite float32 extremes overflowed");
++  callback_calls = 0;
++  check(extreme.query(std::span(&target, 1), 4, {}, &stats, 256, callback) == oracle &&
++        callback_calls > 0 && callback_calls == stats.distance_evaluations,
++        "distance callback");
++  invalid([&] { extreme.query(std::span(&nan, 1), 1); });
++  invalid([&] { extreme.query({}, 1); });
++  invalid([&] { extreme.query(std::span(&target, 1), 1, std::vector<uint8_t>(2)); });
++  std::vector<float> duplicates(513 * 17, 0.25f), dq(17, 0.25f);
++  Graph tied(duplicates, 17, 513);
++  std::vector<uint8_t> allowed(513, 0);
++  allowed.back() = 1;
++  check(tied.query(dq, 10, allowed) == std::vector<Graph::Row>{512},
++        "cannot reach disallowed bridge/duplicate row");
++  std::fill(allowed.begin(), allowed.end(), 1);
++  result = tied.query(dq, 999, allowed);
++  check(result.size() == 513, "k > count lost rows");
++  for (size_t i = 0; i < result.size(); ++i) check(result[i] == i, "duplicate tie order");
++  std::fill(allowed.begin(), allowed.end(), 0);
++  check(tied.query(dq, 10, allowed).empty(), "all disallowed");
++  check(tied.query(dq, 0).empty(), "k=0");
++  Graph again(duplicates, 17, 513);
++  check(again.query(dq, 10) == tied.query(dq, 10) &&
++        again.build_stats().distance_evaluations == tied.build_stats().distance_evaluations,
++        "seed is not deterministic");
++  std::cout << "PASS edges: empty, shape, nonfinite, float32 extremes, ties, "
++               "disallowed traversal, k=0/k>count, deterministic seed\n";
++}
++
++bool benchmark(size_t count, size_t dim, bool clustered, uint64_t seed,
++               size_t queries, bool duplicates = false) {
++  std::mt19937_64 rng(seed);
++  std::normal_distribution<float> normal;
++  std::vector<float> centers(32 * dim), data(count * dim), qs(queries * dim);
++  for (auto &x : centers) x = normal(rng) * 4;
++  auto generate = [&](std::vector<float> &values) {
++    for (size_t i = 0; i < values.size() / dim; ++i) {
++      // Randomize cluster assignment independently of insertion and filters.
++      const size_t cluster = static_cast<size_t>(rng() % 32);
++      for (size_t d = 0; d < dim; ++d) {
++        values[i * dim + d] = normal(rng) + (clustered ? centers[cluster * dim + d] : 0);
++      }
++    }
++  };
++  generate(data);
++  generate(qs);
++  if (duplicates) {
++    for (size_t i = 1; i < count; ++i) {
++      if (i % 4 != 0) std::copy_n(data.data() + (i / 4) * 4 * dim, dim,
++                                   data.data() + i * dim);
++    }
++  }
++  std::vector<uint8_t> allowed(count);
++  std::vector<size_t> permutation(count);
++  for (size_t i = 0; i < count; ++i) permutation[i] = i;
++  std::shuffle(permutation.begin(), permutation.end(), rng);
++  const size_t before = allocation::live;
++  allocation::peak = before;
++  auto start = Clock::now();
++  auto graph = std::make_unique<Graph>(data, dim, count, seed);
++  const double build_ms = milliseconds(start);
++  const size_t build_peak = allocation::peak - before;
++  check(graph->heap_bytes() <= kBudget, "retained graph exceeds 4 MiB");
++  check(build_peak <= kBudget, "build peak exceeds 4 MiB");
++  std::cout << "BUILD " << (duplicates ? "duplicates" : clustered ? "clustered" : "gaussian")
++            << " seed=" << seed << " n=" << count << " dim=" << dim
++            << " ms=" << build_ms << " distances=" << graph->build_stats().distance_evaluations
++            << " retained=" << graph->heap_bytes() << " peak=" << build_peak << '\n';
++  bool passed = true;
++  for (size_t percent : {100U, 25U, 1U}) {
++    std::fill(allowed.begin(), allowed.end(), 0);
++    for (size_t i = 0; i < std::max(size_t{1}, count * percent / 100); ++i) {
++      allowed[permutation[i]] = 1;
++    }
++    const size_t k = std::min(size_t{10}, count * percent / 100);
++    std::vector<std::vector<std::pair<double, Graph::Row>>> truth(queries);
++    start = Clock::now();
++    for (size_t qi = 0; qi < queries; ++qi) {
++      auto &rows = truth[qi];
++      for (size_t row = 0; row < count; ++row) {
++        if (allowed[row]) rows.emplace_back(exact(qs.data() + qi * dim,
++            data.data() + row * dim, dim), static_cast<Graph::Row>(row));
++      }
++      std::partial_sort(rows.begin(), rows.begin() + static_cast<ptrdiff_t>(k), rows.end());
++      rows.resize(k);
++    }
++    const double scan_us = milliseconds(start) * 1000 / double(queries);
++    for (size_t ef : {256U, 512U}) {
++      double recall = 0, query_ms = 0;
++      uint64_t distances = 0;
++      size_t query_peak = 0;
++      for (size_t qi = 0; qi < queries; ++qi) {
++        Graph::Stats stats;
++        const size_t live = allocation::live;
++        allocation::peak = live;
++        start = Clock::now();
++        auto result = graph->query(std::span(qs.data() + qi * dim, dim), k,
++            percent == 100 ? std::span<const uint8_t>{} : allowed, &stats, ef);
++        query_ms += milliseconds(start);
++        query_peak = std::max(query_peak, allocation::peak - live);
++        check(graph->heap_bytes() + query_peak <= kBudget, "query peak exceeds 4 MiB");
++        distances += stats.distance_evaluations;
++        check(result.size() == k, "wrong result count");
++        auto unique = result;
++        std::sort(unique.begin(), unique.end());
++        check(std::adjacent_find(unique.begin(), unique.end()) == unique.end(), "duplicate rows");
++        for (auto row : result) {
++          check(row < count && allowed[row], "returned disallowed/out of range row");
++          // Distance-aware recall accepts any true tie at the kth boundary.
++          const double d = exact(qs.data() + qi * dim, data.data() + row * dim, dim);
++          const double cutoff = truth[qi].back().first;
++          if (d <= cutoff + std::abs(cutoff) * 1e-12) recall += 1;
++        }
++      }
++      recall /= double(queries * k);
++      const double avg_distances = double(distances) / double(queries);
++      std::cout << "QUERY allowed=" << percent << "% ef=" << ef << " recall=" << recall
++                << " distances=" << avg_distances << " scan_fraction=" << avg_distances / double(count)
++                << " us=" << query_ms * 1000 / double(queries) << " exact_filtered_us=" << scan_us
++                << " scratch_peak=" << query_peak << '\n';
++      if (((ef == 256 && percent == 100) || (ef == 512 && percent == 25)) && !duplicates) {
++        passed &= recall >= 0.98;
++        if (count == 10000 && dim == 128) passed &= avg_distances < double(count) * 0.8;
++      }
++    }
++  }
++  return passed;
++}
++}  // namespace
++
++int main(int argc, char **argv) {
++  try {
++    std::cout << std::fixed << std::setprecision(4) << std::unitbuf;
++    edges();
++    if (argc > 1 && std::string(argv[1]) == "--edges") return 0;
++    const bool quick = argc > 1 && std::string(argv[1]) == "--quick";
++    bool passed = true;
++    const uint64_t seeds[]{11, 29, 47, 83, 131};
++    for (auto seed : seeds) {
++      for (bool clustered : {false, true}) {
++        passed &= benchmark(quick ? 1000 : 10000, 128, clustered, seed, quick ? 5 : 64);
++      }
++    }
++    for (size_t dim : {1U, 17U, 256U}) {
++      for (bool clustered : {false, true}) {
++        passed &= benchmark(quick ? 257 : 2048, dim, clustered, 197, quick ? 5 : 32);
++      }
++    }
++    passed &= benchmark(quick ? 257 : 2048, 128, false, 223, quick ? 5 : 32, true);
++    check(passed, "recall/distance target failed");
++    std::cout << "PASS ANN recall, distances, allocation bounds and edge cases\n";
++    return 0;
++  } catch (const std::exception &e) {
++    std::cerr << "FAIL: " << e.what() << '\n';
++    return 1;
++  }
++}
