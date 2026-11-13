@@ -1,5 +1,9 @@
 # MiniVectorDB requirement ledger
 
+当前 `minivectordb-perf5000` 基于 `cefca4665498c5c20e1f85ca4201190e3434499c`；
+新提交机制、缓存限额和本轮验证见 [perf5000.md](perf5000.md)。
+本页下方保留的是原分支的历史验收，不作为新源码的验证结论。
+
 2026-11-13 当前分支为 `codex/minivectordb-round2-optimize`；
 基线为 `origin/minivectordb-round2` 的完整提交
 `12b8554683f8f3208e46d74ccf048d76a592c102`。当前验收见

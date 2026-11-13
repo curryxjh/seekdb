@@ -1,0 +1,185 @@
+{
+  "scope": "LOCAL native paired T/B/M; no official score prediction",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "memory_limit": "2G",
+  "cpu_quota": "200%",
+  "swap_max": 0,
+  "rows": 50000,
+  "dimension": 128,
+  "queries": 200,
+  "rounds": [
+    {
+      "seed": 20261113,
+      "baseline": {
+        "write": {
+          "T_ms": 3793.154928000007,
+          "memory.peak": 37806080,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "query": {
+          "T_ms": 645.140127000019,
+          "memory.peak": 48025600,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "cold_query_ms": 26.72738999999069,
+        "data_bytes": 32129530,
+        "exact_queries": 200,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "candidate": {
+        "write": {
+          "T_ms": 2000.6154659999993,
+          "memory.peak": 37687296,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "query": {
+          "T_ms": 137.46722299998737,
+          "memory.peak": 71561216,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "cold_query_ms": 58.581341000007114,
+        "data_bytes": 32220804,
+        "exact_queries": 200,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "write_speedup": 1.8959940040771477,
+      "query_speedup": 4.693046916355314
+    },
+    {
+      "seed": 8675309,
+      "candidate": {
+        "write": {
+          "T_ms": 2336.730634000048,
+          "memory.peak": 37949440,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "query": {
+          "T_ms": 172.9400159999841,
+          "memory.peak": 71745536,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "cold_query_ms": 63.56120399999554,
+        "data_bytes": 32220804,
+        "exact_queries": 200,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "baseline": {
+        "write": {
+          "T_ms": 3745.493232000001,
+          "memory.peak": 38260736,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "query": {
+          "T_ms": 661.1579280000228,
+          "memory.peak": 48480256,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "cold_query_ms": 24.67877999998791,
+        "data_bytes": 32129530,
+        "exact_queries": 200,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "write_speedup": 1.6028776177716357,
+      "query_speedup": 3.8230476860837324
+    },
+    {
+      "seed": 14223819,
+      "baseline": {
+        "write": {
+          "T_ms": 3728.53750500002,
+          "memory.peak": 37486592,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "query": {
+          "T_ms": 646.7635219999579,
+          "memory.peak": 47955968,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "cold_query_ms": 25.063601999988805,
+        "data_bytes": 32129530,
+        "exact_queries": 200,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "candidate": {
+        "write": {
+          "T_ms": 2064.288886999975,
+          "memory.peak": 37949440,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "query": {
+          "T_ms": 136.60843000002387,
+          "memory.peak": 71725056,
+          "memory.max": "2147483648",
+          "memory.swap.max": "0",
+          "io.stat": null,
+          "proc_io": null
+        },
+        "cold_query_ms": 60.28473399999257,
+        "data_bytes": 32220804,
+        "exact_queries": 200,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "write_speedup": 1.8062091640762026,
+      "query_speedup": 4.734433460657185
+    }
+  ],
+  "candidate_source_sha256": "8ebd6b6b0209bf18db8f51111377f942f3f73a100befe558c83178ef0cd4f28d",
+  "binaries": {
+    "baseline": {
+      "path": "/mnt/d/ob\u5927\u8d5b/seekdb/local-results/perf5000/baseline/build/minivectordb",
+      "sha256": "c4fc41b671db62c52d769cdaa7b96ffa5d29d66b2fe19f0ac4ed4be73cbf91ff"
+    },
+    "candidate": {
+      "path": "/mnt/d/ob\u5927\u8d5b/seekdb/local-results/perf5000/candidate/build/minivectordb",
+      "sha256": "ad1af62f36d1b00eb21505ce0d69a382d51568c277419c022b1610e89a53ff3f"
+    }
+  },
+  "measurement": "One fresh service cgroup per version/seed; query resources include setup and warmup. Python/oracle outside cgroup. io.stat is null if IO controller is not delegated; /proc/PID/io retained separately, not relabeled as cgroup IO. Neither is organizer certified. Order reverses in middle round.",
+  "median_paired_write_speedup": 1.8062091640762026,
+  "median_paired_query_speedup": 4.693046916355314
+}

@@ -27,6 +27,34 @@ uint64_t checksum(std::string_view bytes) {
 }
 constexpr std::string_view data_magic = "MVDBDATA00000001";
 constexpr std::string_view catalog_magic = "MVDBCAT000000001";
+constexpr std::string_view commit_magic = "MVDBCOMMIT000001";
+constexpr std::string_view legacy_guard = "MVDBLOG000000002: this directory requires commit-log storage.\n";
+constexpr size_t commit_footer_size = 40 + commit_magic.size();
+
+bool read_at(int fd, void *destination, size_t size, uint64_t offset) {
+  auto *out = static_cast<char *>(destination);
+  while (size != 0) {
+    const auto n = ::pread(fd, out, size, static_cast<off_t>(offset));
+    if (n < 0) { if (errno == EINTR) continue; io_error("pread commit"); }
+    if (n == 0) return false;
+    const auto amount = static_cast<size_t>(n);
+    out += amount; size -= amount; offset += amount;
+  }
+  return true;
+}
+uint64_t checksum_region(int fd, uint64_t begin, uint64_t end) {
+  std::array<char, 65536> buffer{};
+  uint64_t value = 14695981039346656037ULL;
+  while (begin < end) {
+    const size_t size = static_cast<size_t>(std::min<uint64_t>(buffer.size(), end - begin));
+    require(read_at(fd, buffer.data(), size, begin), "corrupt_data", "truncated commit payload");
+    for (size_t i = 0; i < size; ++i) {
+      value ^= static_cast<unsigned char>(buffer[i]); value *= 1099511628211ULL;
+    }
+    begin += size;
+  }
+  return value;
+}
 }
 
 void fault(std::string_view name) {
@@ -122,19 +150,71 @@ std::string_view Storage::bytes(uint64_t offset, size_t length) {
   return {mapping_ + offset, length};
 }
 
+// Commit records share the data file. A checksum-protected catalog and footer
+// are appended after all data/pages, then one fsync orders and persists both.
+// Recovery scans backward in bounded chunks: a torn/absent last footer cannot
+// hide an older complete commit. No data file entry is recreated during commit.
+std::string Storage::latest_catalog() {
+  struct stat st {};
+  if (::fstat(data_fd_, &st) != 0) io_error("fstat commit data");
+  require(st.st_size >= 0, "corrupt_data", "negative data size");
+  uint64_t high = static_cast<uint64_t>(st.st_size);
+  constexpr uint64_t chunk_size = 1024U * 1024U;
+  while (high > 16) {
+    const uint64_t low = high > chunk_size + 16 ? high - chunk_size : 16;
+    std::string chunk(static_cast<size_t>(high - low), '\0');
+    require(read_at(data_fd_, chunk.data(), chunk.size(), low), "corrupt_data", "truncated commit scan");
+    size_t search = chunk.size();
+    while (true) {
+      const size_t found = chunk.rfind(commit_magic, search);
+      if (found == std::string::npos) break;
+      const uint64_t marker = low + found;
+      if (marker >= 16 + 40) {
+        std::array<char, 40> footer{};
+        require(read_at(data_fd_, footer.data(), footer.size(), marker - 40),
+                "corrupt_data", "truncated commit footer");
+        std::string_view fields(footer.data(), footer.size());
+        const uint64_t offset = read_u64(fields), size = read_u64(fields), expected = read_u64(fields);
+        const uint64_t previous = read_u64(fields), data_checksum = read_u64(fields);
+        if (offset >= 16 && size >= 36 && size <= 4U * 1024U * 1024U &&
+            offset <= marker - 40 && size == marker - 40 - offset &&
+            previous >= 16 && previous <= offset) {
+          std::string contents(static_cast<size_t>(size), '\0');
+          require(read_at(data_fd_, contents.data(), contents.size(), offset),
+                  "corrupt_data", "truncated commit catalog");
+          if (checksum(contents) == expected && contents.starts_with(catalog_magic)) {
+            std::string_view header(contents); header.remove_prefix(catalog_magic.size());
+            if (read_u64(header) == marker + commit_magic.size() &&
+                checksum_region(data_fd_, previous, offset) == data_checksum) return contents;
+          }
+        }
+      }
+      if (found == 0) break;
+      search = found - 1;
+    }
+    if (low == 16) break;
+    high = low + commit_magic.size() - 1;  // include signatures crossing a chunk edge
+  }
+  return {};
+}
+
 Catalog Storage::load() {
   fault("recovery_start");
   Catalog catalog;
-  const int fd = ::openat(dir_fd_, "catalog", O_RDONLY | O_CLOEXEC);
-  if (fd < 0) {
+  std::string journal = latest_catalog();
+  const bool journal_format = !journal.empty();
+  const int fd = journal.empty() ? ::openat(dir_fd_, "catalog", O_RDONLY | O_CLOEXEC) : -1;
+  if (fd < 0 && journal.empty()) {
     if (errno != ENOENT) io_error("open catalog");
     end_ = data_magic.size();
     write_all(data_fd_, std::span(data_magic.data(), data_magic.size()), 0);
     if (::ftruncate(data_fd_, static_cast<off_t>(end_)) != 0) io_error("initialize data");
     publish(catalog);
+    // The persistent data inode must exist durably before the first ready.
+    sync_file(dir_fd_);
   } else {
-    std::string contents;
-    try {
+    std::string contents = std::move(journal);
+    if (fd >= 0) try {
       struct stat st {};
       if (::fstat(fd, &st) != 0) io_error("fstat catalog");
       require(st.st_size >= 32 && st.st_size <= 4 * 1024 * 1024,
@@ -183,11 +263,37 @@ Catalog Storage::load() {
   fault("recovery_before_truncate");
   rewind(end_);
   writeback_end_ = end_;
+  published_end_ = end_;
   fault("recovery_after_truncate");
   if (::unlinkat(dir_fd_, "catalog.next", 0) != 0 && errno != ENOENT) io_error("remove unpublished catalog");
+  if (journal_format) guard_legacy_writer();
   // All anonymous query/merge spools are unlinked on creation. No replay is needed.
   fault("recovery_ready");
   return catalog;
+}
+
+void Storage::guard_legacy_writer() {
+  if (legacy_guarded_) return;
+  // Old binaries otherwise interpret an absent/stale external catalog as an
+  // empty/older database and truncate the new log. Leave a durable format guard
+  // in that exact path, but only AFTER a valid journal commit is durable.
+  const int existing = ::openat(dir_fd_, "catalog", O_RDONLY | O_CLOEXEC);
+  if (existing >= 0) {
+    std::array<char, 16> prefix{};
+    const bool guarded = read_at(existing, prefix.data(), prefix.size(), 0) &&
+                         std::string_view(prefix.data(), prefix.size()) == legacy_guard.substr(0, 16);
+    close_fd(existing);
+    if (guarded) { legacy_guarded_ = true; return; }
+  } else if (errno != ENOENT) io_error("read format guard");
+  const int fd = ::openat(dir_fd_, "catalog", O_CREAT | O_TRUNC | O_WRONLY | O_CLOEXEC, 0600);
+  if (fd < 0) io_error("create format guard");
+  try {
+    write_all(fd, std::span(legacy_guard.data(), legacy_guard.size()), 0);
+    sync_file(fd);
+  } catch (...) { close_fd(fd); throw; }
+  close_fd(fd);
+  sync_file(dir_fd_);
+  legacy_guarded_ = true;
 }
 
 void Storage::publish(const Catalog &catalog) {
@@ -195,9 +301,6 @@ void Storage::publish(const Catalog &catalog) {
   flush();
   if (::ftruncate(data_fd_, static_cast<off_t>(end_)) != 0) io_error("size data");
   fault("after_data_flush");
-  sync_file(data_fd_);
-  writeback_end_ = end_;
-  fault("after_data_sync");
   std::string body;
   append_u32(body, static_cast<uint32_t>(catalog.size()));
   for (const auto &[name, t] : catalog) {
@@ -210,22 +313,35 @@ void Storage::publish(const Catalog &catalog) {
     }
   }
   require(body.size() <= 4U * 1024U * 1024U - 32U, "resource_limit", "local catalog exceeds 4 MiB");
-  std::string header(catalog_magic); append_u64(header, end_); append_u64(header, checksum(body)); header += body;
-  const int fd = ::openat(dir_fd_, "catalog.next", O_CREAT | O_TRUNC | O_WRONLY | O_CLOEXEC, 0600);
-  if (fd < 0) io_error("create next catalog");
+  const uint64_t start = end_;
+  const uint64_t committed_end = start + 32 + body.size() + commit_footer_size;
+  std::string header(catalog_magic); append_u64(header, committed_end);
+  append_u64(header, checksum(body)); header += body;
+  std::string footer;
+  append_u64(footer, start); append_u64(footer, header.size());
+  append_u64(footer, checksum(header)); append_u64(footer, published_end_);
+  // Validate all newly reachable bytes as well as metadata. If an interrupted
+  // sync writes the footer before some data pages, recovery rejects that record.
+  append_u64(footer, checksum_region(data_fd_, published_end_, start)); footer += commit_magic;
+  // Once a complete footer can reach disk, an I/O error has an uncertain
+  // outcome. Terminate instead of reporting failure and continuing old roots.
   try {
-    write_all(fd, std::span(header.data(), header.size()), 0);
+    write_all(data_fd_, std::span(header.data(), header.size()), start);
+    fault("after_commit_catalog");
+    write_all(data_fd_, std::span(footer.data(), footer.size()), start + header.size());
+    end_ = committed_end;
+    fault("after_commit_footer");
     fault("after_catalog_write");
-    sync_file(fd);
+    sync_file(data_fd_);
+    writeback_end_ = end_;
+    published_end_ = end_;
+    guard_legacy_writer();
+    fault("after_data_sync");
     fault("after_catalog_sync");
-    close_fd(fd);
-  } catch (...) { close_fd(fd); throw; }
-  // A failure after this point is outcome-uncertain and must terminate the server.
-  // Never report a failed statement and then continue from older in-memory roots.
-  if (::renameat(dir_fd_, "catalog.next", dir_fd_, "catalog") != 0) io_error("publish catalog");
+  } catch (...) { ::_exit(74); }
+  // Compatibility fault aliases for the former catalog-rename publication.
+  // The actual commit point is the completed data-file fsync above.
   fault("after_catalog_rename");
-  try { sync_file(dir_fd_); }
-  catch (...) { ::_exit(74); }
   fault("after_directory_sync");
 }
 
@@ -242,7 +358,7 @@ void Storage::rewind(uint64_t end) {
 void Storage::bound_dirty_pages() {
   // A transaction may be larger than the container memory limit. Drain dirty
   // file pages while its roots remain unpublished; durability of bytes is not
-  // visibility of a transaction. The catalog is still the only commit point.
+  // visibility of a transaction. The durable commit footer publishes its roots.
   if (end_ - writeback_end_ >= 8U * 1024U * 1024U) {
     sync_file(data_fd_);
     writeback_end_ = end_;

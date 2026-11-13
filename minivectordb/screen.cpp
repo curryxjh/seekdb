@@ -103,14 +103,72 @@ void distances_avx2(const int8_t *codes, const int32_t *norms, size_t dimension,
     out[n] = norms[rows[n]] + q.norm -
              2 * dot_avx2(codes + rows[n] * dimension, q.codes.data(), dimension);
 }
+
+// VNNI consumes unsigned*signed bytes. Shifting each stored code by 128 adds
+// the same 128*sum(query) to every dot product; subtract it exactly below.
+// The existing int32 bounds still hold, including intermediate accumulation.
+__attribute__((target("avx512f,avx512bw,avx512vnni")))
+void distances_vnni(const int8_t *codes, const int32_t *norms, size_t dimension,
+                    std::span<const uint32_t> rows, const QuantizedScreen::Query &q, int32_t *out) {
+  int32_t query_sum = 0;
+  for (int8_t value : q.codes) query_sum += value;
+  const int32_t correction = 256 * query_sum;
+  const auto bias = _mm512_set1_epi8(static_cast<char>(-128));
+  size_t n = 0;
+  for (; n + 4 <= rows.size(); n += 4) {
+    const auto *r0 = codes + rows[n] * dimension;
+    const auto *r1 = codes + rows[n + 1] * dimension;
+    const auto *r2 = codes + rows[n + 2] * dimension;
+    const auto *r3 = codes + rows[n + 3] * dimension;
+    auto s0 = _mm512_setzero_si512(), s1 = s0, s2 = s0, s3 = s0;
+    size_t d = 0;
+    for (; d + 64 <= dimension; d += 64) {
+      const auto b = _mm512_loadu_si512(q.codes.data() + d);
+      s0 = _mm512_dpbusd_epi32(s0, _mm512_xor_si512(_mm512_loadu_si512(r0 + d), bias), b);
+      s1 = _mm512_dpbusd_epi32(s1, _mm512_xor_si512(_mm512_loadu_si512(r1 + d), bias), b);
+      s2 = _mm512_dpbusd_epi32(s2, _mm512_xor_si512(_mm512_loadu_si512(r2 + d), bias), b);
+      s3 = _mm512_dpbusd_epi32(s3, _mm512_xor_si512(_mm512_loadu_si512(r3 + d), bias), b);
+    }
+    if (d < dimension) {
+      const auto mask = static_cast<__mmask64>((uint64_t{1} << (dimension - d)) - 1);
+      const auto b = _mm512_maskz_loadu_epi8(mask, q.codes.data() + d);
+      s0 = _mm512_dpbusd_epi32(s0, _mm512_xor_si512(_mm512_maskz_loadu_epi8(mask, r0 + d), bias), b);
+      s1 = _mm512_dpbusd_epi32(s1, _mm512_xor_si512(_mm512_maskz_loadu_epi8(mask, r1 + d), bias), b);
+      s2 = _mm512_dpbusd_epi32(s2, _mm512_xor_si512(_mm512_maskz_loadu_epi8(mask, r2 + d), bias), b);
+      s3 = _mm512_dpbusd_epi32(s3, _mm512_xor_si512(_mm512_maskz_loadu_epi8(mask, r3 + d), bias), b);
+    }
+    int32_t dots[4]{_mm512_reduce_add_epi32(s0), _mm512_reduce_add_epi32(s1),
+                     _mm512_reduce_add_epi32(s2), _mm512_reduce_add_epi32(s3)};
+    for (size_t i = 0; i < 4; ++i)
+      out[n + i] = norms[rows[n + i]] + q.norm + correction - 2 * dots[i];
+  }
+  for (; n < rows.size(); ++n) {
+    const auto *data = codes + rows[n] * dimension;
+    auto sums = _mm512_setzero_si512();
+    size_t d = 0;
+    for (; d + 64 <= dimension; d += 64) {
+      const auto a = _mm512_xor_si512(_mm512_loadu_si512(data + d), bias);
+      const auto b = _mm512_loadu_si512(q.codes.data() + d);
+      sums = _mm512_dpbusd_epi32(sums, a, b);
+    }
+    if (d < dimension) {
+      const auto mask = static_cast<__mmask64>((uint64_t{1} << (dimension - d)) - 1);
+      const auto a = _mm512_xor_si512(_mm512_maskz_loadu_epi8(mask, data + d), bias);
+      const auto b = _mm512_maskz_loadu_epi8(mask, q.codes.data() + d);
+      sums = _mm512_dpbusd_epi32(sums, a, b);
+    }
+    const int32_t dot = _mm512_reduce_add_epi32(sums);
+    out[n] = norms[rows[n]] + q.norm + correction - 2 * dot;
+  }
+}
 #endif
 }  // namespace
 
-void QuantizedScreen::build(std::span<const float> vectors, size_t dimension) {
+void QuantizedScreen::build(std::span<const float> vectors, size_t dimension, size_t budget) {
   codes_.clear(); norms_.clear(); errors_.clear(); dimension_ = 0; maximum_error_ = 0;
   if (dimension < 32 || dimension > 4096 || vectors.empty()) return;
   const size_t count = vectors.size() / dimension;
-  if (vectors.size() + count * (sizeof(int32_t) + sizeof(double)) > 3U * 1024U * 1024U) return;
+  if (vectors.size() + count * (sizeof(int32_t) + sizeof(double)) > budget) return;
   dimension_ = dimension;
   double maximum = 0;
   for (float value : vectors) maximum = std::max(maximum, std::abs(static_cast<double>(value)));
@@ -138,6 +196,11 @@ int32_t QuantizedScreen::code_distance(size_t row, const Query &q) const {
 std::vector<int32_t> QuantizedScreen::code_distances(std::span<const uint32_t> rows, const Query &q) const {
   std::vector<int32_t> result(rows.size());
 #if defined(__x86_64__)
+  if (__builtin_cpu_supports("avx512f") && __builtin_cpu_supports("avx512bw") &&
+      __builtin_cpu_supports("avx512vnni")) {
+    distances_vnni(codes_.data(), norms_.data(), dimension_, rows, q, result.data());
+    return result;
+  }
   if (__builtin_cpu_supports("avx2")) {
     distances_avx2(codes_.data(), norms_.data(), dimension_, rows, q, result.data());
     return result;

@@ -18,7 +18,8 @@ class QuantizedScreen {
     double error = 0;
   };
   struct Interval { double lower, upper; };
-  void build(std::span<const float> vectors, size_t dimension);
+  void build(std::span<const float> vectors, size_t dimension,
+             size_t budget = 3U * 1024U * 1024U);
   bool empty() const { return norms_.empty(); }
   Query query(std::span<const float> vector) const;
   int32_t code_distance(size_t row, const Query &query) const;

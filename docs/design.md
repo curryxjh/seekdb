@@ -14,7 +14,7 @@ network services, hidden sample-answer dispatches or full-database heap maps.
 ## Persistent state and visibility
 
 `/data/LOCK` uses nonblocking exclusive `flock`. `/data/data` contains a 16-byte
-magic, length-prefixed row/posting blobs and 4096-byte B+ tree pages. Integers and
+magic, length-prefixed row/posting blobs, 4096-byte B+ tree pages and commit records. Integers and
 float bits are encoded little-endian explicitly. A tree leaf maps signed int64
 primary keys to row offsets; zero references are deletion tombstones. Inner
 entries store each child's minimum key. Splits propagate updated minimum keys.
@@ -51,32 +51,42 @@ a partially committed multi-table transaction.
 
 ## Durable commit and repeatable recovery
 
-Publication order:
+The current writer uses append-only commit records in the data file. COW page
+immutability and per-statement savepoints are unchanged. Publication order:
 
-1. Flush all dirty new pages and set the data file length.
-2. `fsync(data)`.
-3. Write `catalog.next`, containing schema, all roots and committed EOF; verify
-   local size bounds and include a checksum.
-4. `fsync(catalog.next)`.
-5. Atomically rename `catalog.next` to `catalog` — the unique visibility point.
-6. `fsync(/data)` — publication is durable before success is acknowledged.
+1. Flush dirty new pages and set the data file length.
+2. Hash the bytes appended since the previous published EOF in bounded 64 KiB
+   chunks. Append the complete catalog (schema, roots and new committed EOF).
+3. Append a 56-byte footer containing catalog offset/length/checksum, previous
+   published EOF, payload checksum and the 16-byte commit marker.
+4. `fsync(data)` persists data, catalog and footer together before acknowledgement.
 
-Errors before rename allow restoration of the statement savepoint. Errors after
-rename terminate the process: the server must not report a failed statement then
-continue from an older snapshot. Failure to deliver an already committed success
-response is also fatal, leaving the outcome to recovery.
+A checksum over both the catalog and newly appended payload prevents accepting a
+footer whose preceding writes are incomplete. Earlier committed pages are never
+modified. Once footer writing begins, any I/O failure terminates the process;
+it cannot report failure and continue from stale roots. Missing responses remain
+outcome-uncertain. Early writeback still never publishes a transaction.
 
-Recovery verifies catalog checksum/schema bounds, the data header and committed
-tail. It truncates the unpublished tail and removes `catalog.next`, then reports
-ready. Repeating any recovery step after SIGKILL yields the same published roots.
-No index rebuild is necessary: row and physical vector roots were committed in
-the same catalog. The covered failure model is process termination, as specified;
-the suite does not simulate filesystem corruption or physical power loss.
+Recovery searches backward in overlapping 1 MiB chunks, validates candidate
+footers, catalog/payload checksums, schema bounds and the original data header,
+then truncates the uncommitted tail to the selected EOF. Memory used to search
+or hash is bounded independently of tail size. No index rebuild is required.
+The process-kill suites, torn-footer and damaged-payload tests validate this
+implementation; they do not simulate physical power loss on real hardware.
 
-Fault injection is compiled only into a dedicated test binary:
-`MVDB_FAULT=<point>` and `MVDB_FAULT_HIT=<occurrence>` cause SIGKILL at named append,
-sync, rename, response and recovery boundaries. Production builds ignore these
-variables.
+A baseline directory with the legacy external catalog is readable and migrates
+on its first write. After a durable journal commit, a format guard replaces the
+old external catalog once and is synced along with its directory entry. This
+makes old writers refuse the upgraded directory instead of truncating it to an
+old snapshot. Subsequent commits need only the single data-file sync. New-directory
+initialization persists directory entries before ready. Downgrading requires a
+backup made before migration; there is no reverse-format converter.
+
+Fault injection is compiled only in test builds. New points
+`after_commit_catalog` and `after_commit_footer` supplement append, writeback,
+response and recovery points. Former `after_catalog_*` and
+`after_directory_sync` names remain compatibility aliases around journal
+publication; they no longer imply a rename on every commit.
 
 ## Types, execution and exact search
 
@@ -139,7 +149,29 @@ spool experiment was withdrawn after its local weighted proxy regressed. The
 2026-11-12 iteration below re-evaluates a smaller buffer with the new query path;
 the older result remains historical evidence.
 
-## 2026-11-12 bounded query acceleration
+## Current bounded query acceleration
+
+The raw vector/offset prefix uses at most one eighth of the detected memory
+limit, capped at 128 MiB. The screening-data cap is half that prefix budget.
+The reader considers cgroup-v2 `memory.max` both at the visible root and along
+the current process's cgroup ancestors, plus the conventional v1 memory-limit
+file. If no finite limit is visible, the raw prefix defaults to 128 MiB.
+Four predicate masks and temporary candidate arrays remain proportional to
+this bounded prefix. Larger tables stream their tail exactly.
+
+Mutations, failed statements, table switches and rollback release vector, row,
+mask and screening allocations before offsets can be reused. This prevents a
+large previous SELECT from retaining its cache during a large subsequent write.
+
+On CPUs supporting AVX512F/BW/VNNI, four independent integer dot products share
+query loads. Adding 128 to signed row bytes is corrected by `256*sum(query)`
+in the squared-distance formula; no lossy arithmetic is introduced. Masked tail
+loads cover arbitrary dimensions without reading past their spans. All
+intermediates fit int32 at the existing maximum screened dimension of 4096.
+AVX2, ARM and scalar paths remain available on other machines. Conservative
+quantization bounds and original float32 refinement still determine exact TopK.
+
+## Historical 2026-11-12 bounded query acceleration
 
 Exact L2 uses four independent double accumulators; x86_64 dispatches to an AVX2
 implementation only if CPUID and OS support permit it. There is no fast-math or

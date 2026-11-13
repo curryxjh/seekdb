@@ -1,0 +1,34 @@
+{
+  "scope": "Final-source local evidence; not an official score or Docker image attestation",
+  "date": "2026-11-13",
+  "branch": "minivectordb-perf5000",
+  "baseline_commit": "cefca4665498c5c20e1f85ca4201190e3434499c",
+  "source_sha256": "8ebd6b6b0209bf18db8f51111377f942f3f73a100befe558c83178ef0cd4f28d",
+  "source_digest_rule": "Sorted immediate minivectordb file basename UTF-8 followed by LF blob bytes",
+  "baseline_source_sha256": "3cd4d076b45ce782f426e2e4318f5b8dfb1750fbf7cc3fc60ad7fc8a82d8e04d",
+  "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "build_command": "sh build.sh",
+  "binary_sha256": "ad1af62f36d1b00eb21505ce0d69a382d51568c277419c022b1610e89a53ff3f",
+  "platform_result": "not submitted; baseline approximately 2500 is user-reported; target 5000 unverified",
+  "artifact_sha256": {
+    "perf5000-native-cgroup-10k.json": "3eec09e42922953f2af601c2d8de895e96e0d9105dc5de83901ff4f5f2d9127a",
+    "perf5000-native-cgroup-50k.json": "9780efb954265ee1e3bdeacfda059d6c2070f2ad3e786877f330942dbee24a39",
+    "perf5000-native-resource-96m.json": "28cf189713f14f11cd545ae2c3aad98654dc3f01dcb89526a027d1a2ff58ac9b",
+    "perf5000-validation.json": "f862660f447725471339d6a09ed28f60bf4991254d8f4b1b6338711a816dbf5f",
+    "perf5000-public.json": "b6b997961c707d86e4d5d113fbdc74b68155a8a7309328a985925071fb74d2bd",
+    "perf5000-run_validation.py": "6aa242185c923dafd2ed24dd97f74be7139ba35f1c8f98d043d0d52fd5946b14"
+  },
+  "extra_cache_check": {
+    "origin": "selected actual tool output; supplementary cgroup wrapper check",
+    "command": "python3 tests/query_cache.py --binary build/limited-cache",
+    "memory_max": 33554432,
+    "swap_max": 0,
+    "checks_passed": 41,
+    "harness_correction": "Initial Windows CRLF wrapper shebang prevented DB execution; LF wrapper rerun passed"
+  },
+  "limitations": [
+    "No IO controller delegation: io.stat and proc_io null; no certified B or official E",
+    "No image build/runtime validation this iteration; Docker startup unavailable; socket cleanup automatically blocked by policy",
+    "No physical power-loss simulation, per-change ablation or guarantee of platform score"
+  ]
+}

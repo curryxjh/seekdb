@@ -5,6 +5,7 @@
 #include <charconv>
 #include <cmath>
 #include <cstring>
+#include <fstream>
 #include <limits>
 #include <queue>
 #include <set>
@@ -16,6 +17,30 @@
 namespace mvdb {
 namespace {
 void checked(bool ok) { require(ok, "io_error", "temporary result I/O failed"); }
+size_t scan_budget() {
+  // Use a fraction of the actual container budget, not a fixed tiny prefix.
+  // Keep 7/8 available for the parser, page cache, dirty pages and working sets.
+  uint64_t memory = 1024U * 1024U * 1024U;
+  const auto consider = [&](const std::string &path) {
+    std::ifstream file(path);
+    uint64_t limit = 0;
+    if (file >> limit && limit > 0) memory = std::min(memory, limit);
+  };
+  consider("/sys/fs/cgroup/memory.max");
+  consider("/sys/fs/cgroup/memory/memory.limit_in_bytes");
+  std::ifstream groups("/proc/self/cgroup");
+  std::string line;
+  while (std::getline(groups, line)) {
+    if (!line.starts_with("0::/") || line.find("..") != std::string::npos) continue;
+    std::string directory = "/sys/fs/cgroup" + line.substr(3);
+    while (directory.size() > std::string_view("/sys/fs/cgroup").size()) {
+      consider(directory + "/memory.max");
+      directory.resize(directory.find_last_of('/'));
+    }
+  }
+  return static_cast<size_t>(std::clamp<uint64_t>(memory / 8, 1024U * 1024U,
+                                               128U * 1024U * 1024U));
+}
 std::string decimal(double value) {
   char text[64];
   auto result = std::to_chars(text, text + sizeof(text), value, std::chars_format::general,
@@ -359,6 +384,7 @@ std::string value_json(const Value &value) {
 
 Database::Database(const std::string &directory) : storage_(directory) {
   catalog_ = storage_.load(); committed_ = catalog_; committed_end_ = storage_.end();
+  scan_budget_ = scan_budget();
 }
 Table &Database::table(const std::string &name) {
   auto it = catalog_.find(name);
@@ -424,9 +450,17 @@ void Database::commit() {
   try { committed_ = catalog_; committed_end_ = storage_.end(); transaction_ = false; }
   catch (...) { ::_exit(74); }
 }
+void Database::invalidate_scan() {
+  // A large SELECT must not leave retained capacity behind when a later write
+  // needs memory for parsing, statement savepoints or dirty data pages.
+  std::vector<ScanRow>().swap(scan_rows_);
+  std::vector<float>().swap(scan_vectors_);
+  std::vector<ScanFilter>().swap(scan_filters_);
+  scan_screen_ = {}; scan_root_ = 0; scan_complete_ = false;
+}
 void Database::shutdown() {
   if (transaction_) {
-    scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_screen_ = {}; scan_root_ = 0;
+    invalidate_scan();
     catalog_ = committed_; storage_.rewind(committed_end_); transaction_ = false;
   }
 }
@@ -447,7 +481,7 @@ Spool Database::execute(const Statement &s) {
   const Catalog savepoint = catalog_;
   // Root offsets may be reused after rollback/statement failure. Invalidate
   // before any mutation, even one that ultimately fails.
-  scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_screen_ = {}; scan_root_ = 0;
+  invalidate_scan();
   const uint64_t boundary = storage_.end();
   uint64_t affected = 0;
   try {
@@ -676,12 +710,10 @@ Spool Database::select(const Statement &s, const Table &t) {
   }
   if (!direct && heap && order.distance) {
     const size_t dimension = order.query.size();
-    const size_t row_limit = (8U * 1024U * 1024U) /
+    const size_t row_limit = scan_budget_ /
                              (sizeof(ScanRow) + dimension * sizeof(float));
     if (scan_root_ == 0 || scan_root_ != t.root) {
-      scan_rows_.clear(); scan_vectors_.clear(); scan_filters_.clear(); scan_screen_ = {}; scan_root_ = 0; scan_complete_ = false;
-      // Release capacity left by a different vector dimension before resizing.
-      std::vector<ScanRow>().swap(scan_rows_); std::vector<float>().swap(scan_vectors_);
+      invalidate_scan();
       if (row_limit != 0) {
         scan_rows_.reserve(row_limit); scan_vectors_.reserve(row_limit * dimension);
         scan_complete_ = true;
@@ -696,7 +728,7 @@ Spool Database::select(const Statement &s, const Table &t) {
           scan_rows_.push_back({id, offset});
           return true;
         });
-        scan_screen_.build(scan_vectors_, dimension);
+        scan_screen_.build(scan_vectors_, dimension, scan_budget_ / 2);
         scan_root_ = t.root;
       }
     }

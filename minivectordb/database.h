@@ -45,7 +45,7 @@ class Database {
   uint64_t committed_end_ = 16;
   bool transaction_ = false;
   struct ScanRow { int64_t id; uint64_t offset; };
-  // One table's prefix, at most 8 MiB; larger tables still stream their tail.
+  // One table's bounded prefix; larger tables still stream their tail.
   std::vector<ScanRow> scan_rows_;
   std::vector<float> scan_vectors_;
   QuantizedScreen scan_screen_;
@@ -55,6 +55,8 @@ class Database {
   size_t scan_filter_next_ = 0;
   uint64_t scan_root_ = 0;
   bool scan_complete_ = false;
+  size_t scan_budget_ = 8U * 1024U * 1024U;
+  void invalidate_scan();
   Table &table(const std::string &name);
   uint32_t column(const Table &t, const std::string &name) const;
   Value convert(const Column &c, const Literal &value) const;

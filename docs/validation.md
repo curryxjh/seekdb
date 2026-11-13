@@ -1,5 +1,9 @@
 # 2026-11-13 当前交付
 
+当前 `minivectordb-perf5000` 基于 `cefca4665498c5c20e1f85ca4201190e3434499c`；
+新提交机制、缓存限额和本轮验证见 [perf5000.md](perf5000.md)。
+本页下方保留的是原分支的历史验收，不作为新源码的验证结论。
+
 当前开发分支为 `codex/minivectordb-round2-optimize`，基于 origin 的
 `12b8554683f8f3208e46d74ccf048d76a592c102`。当前验证和结果以
 [本轮优化记录](round2-optimization.md)、`results/round2-validation-native.json`、

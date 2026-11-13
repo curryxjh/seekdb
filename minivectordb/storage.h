@@ -77,6 +77,8 @@ class Storage {
   int data_fd_ = -1;
   uint64_t end_ = 16;
   uint64_t writeback_end_ = 16;
+  uint64_t published_end_ = 16;
+  bool legacy_guarded_ = false;
   const char *mapping_ = nullptr;
   size_t mapping_size_ = 0;
   std::unordered_map<uint64_t, Cached> cache_;
@@ -88,6 +90,8 @@ class Storage {
   void flush_node(uint64_t offset, Cached &cached);
   void flush();
   void bound_dirty_pages();
+  std::string latest_catalog();
+  void guard_legacy_writer();
   uint64_t save_node(uint64_t offset, Node value, uint64_t boundary);
   Split insert(uint64_t root, int64_t key, uint64_t value, uint64_t boundary);
 };
