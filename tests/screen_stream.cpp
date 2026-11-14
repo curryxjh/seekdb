@@ -78,6 +78,48 @@ int main() {
     }, 1);
     assert(streaming.empty()); ++checks;
   }
-  std::cout << "PASS streaming quantization, exact-seed cutoffs and scalar/AVX2/VNNI kernels: "
+  // Evenly spaced scale samples intentionally miss both extremes. Actual
+  // reconstruction errors must still contain every original float32 distance.
+  {
+    constexpr size_t count = 2053, dim = 33;
+    std::vector<float> vectors(count * dim, 0.25f), query(dim, -0.5f);
+    std::vector<bool> sampled(count);
+    for (size_t i = 0; i < 1024; ++i) sampled[i * (count - 1) / 1023] = true;
+    size_t positives = 0;
+    for (size_t row = 0; row < count; ++row) if (!sampled[row]) {
+      vectors[row * dim] = positives++ % 2 ? 1e30f : -1e30f;
+    }
+    size_t reads = 0;
+    mvdb::QuantizedScreen screen;
+    screen.build(count, dim, [&](size_t row) -> std::span<const float> {
+      ++reads;
+      return std::span(vectors).subspan(row * dim, dim);
+    }, 1024 * 1024);
+    assert(reads == count + 1024);
+    const auto q = screen.query(query);
+    std::vector<uint32_t> rows(count);
+    std::iota(rows.begin(), rows.end(), 0);
+    std::shuffle(rows.begin(), rows.end(), random);
+    const auto bulk = screen.code_distances(rows, q);
+    for (size_t i = 0; i < count; ++i) {
+      const size_t row = rows[i];
+      long double square = 0;
+      for (size_t d = 0; d < dim; ++d) {
+        const long double delta = static_cast<long double>(vectors[row * dim + d]) - query[d];
+        square += delta * delta;
+      }
+      const auto exact = std::sqrt(square);
+      const auto bound = screen.bounds(row, q);
+      assert(bound.lower <= exact && exact <= bound.upper);
+      assert(bulk[i] == screen.code_distance(row, q));
+      for (double worst : {0.0, static_cast<double>(exact) * 0.9,
+                           static_cast<double>(exact), static_cast<double>(exact) * 1.1}) {
+        if (exact <= worst) assert(bulk[i] <= screen.refined_cutoff(q, worst, false));
+        if (exact >= worst) assert(bulk[i] >= screen.refined_cutoff(q, worst, true));
+        ++checks;
+      }
+    }
+  }
+  std::cout << "PASS streaming quantization, sampled/clipped scales, exact-seed cutoffs and scalar/AVX2/VNNI kernels: "
             << checks << " checks; seed=20261114\n";
 }

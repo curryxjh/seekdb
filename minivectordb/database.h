@@ -45,8 +45,11 @@ class Database {
   uint64_t committed_end_ = 16;
   bool transaction_ = false;
   struct ScanRow { int64_t id; uint64_t offset; };
-  // One table's bounded prefix; larger tables still stream their tail.
+  // One table's bounded address prefix; only a sub-prefix needs int8 codes.
+  // Larger tables still stream their tail. Never retain mmap pointers.
   std::vector<ScanRow> scan_rows_;
+  // Absolute vector byte offsets, derived from fully validated row records.
+  std::vector<uint64_t> scan_vector_offsets_;
   // Only dimensions without quantized screening retain a bounded raw prefix.
   std::vector<float> scan_fallback_vectors_;
   QuantizedScreen scan_screen_;

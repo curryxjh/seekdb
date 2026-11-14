@@ -21,7 +21,7 @@ def run(binary):
     with tempfile.TemporaryDirectory(prefix="mvdb-screen-") as directory:
         c = Client([binary], directory, timeout=120)
         try:
-            for dim in [16, 17, 32, 127, 128, 257, 1024]:
+            for dim in [8, 9, 15, 16, 17, 32, 127, 128, 257, 1024]:
                 table = f"t{dim}"
                 c.ok(f"CREATE TABLE {table}(id BIGINT PRIMARY KEY,g BIGINT,v VECTOR({dim}));")
                 records = {}

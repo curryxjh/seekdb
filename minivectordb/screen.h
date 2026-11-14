@@ -25,6 +25,7 @@ class QuantizedScreen {
              const std::function<std::span<const float>(size_t)> &read,
              size_t budget);
   bool empty() const { return norms_.empty(); }
+  size_t size() const { return norms_.size(); }
   Query query(std::span<const float> vector) const;
   int32_t code_distance(size_t row, const Query &query) const;
   std::vector<int32_t> code_distances(std::span<const uint32_t> rows, const Query &query) const;

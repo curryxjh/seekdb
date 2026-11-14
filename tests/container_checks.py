@@ -22,12 +22,13 @@ def metrics(name):
             "swap_max": cat("memory.swap.max"), "io_stat": cat("io.stat")}
 
 
-def run(image, large_rows):
+def run(image, large_rows, memory_mib=96):
+    assert memory_mib >= 16 and large_rows > 0 and large_rows % 4 == 0
     prefix = "mvdb-check-" + uuid.uuid4().hex[:10]
     volume, name = prefix + "-data", prefix
     docker("volume", "create", volume)
     command = ["docker", "run", "--rm", "--platform", "linux/amd64", "--network", "none",
-               "--name", name, "--cpus", "2", "--memory", "96m", "--memory-swap", "96m",
+               "--name", name, "--cpus", "2", "--memory", f"{memory_mib}m", "--memory-swap", f"{memory_mib}m",
                "-i", "-v", volume + ":/data", image]
     client = None
     start = time.perf_counter()
@@ -36,7 +37,7 @@ def run(image, large_rows):
         assert docker("exec", name, "uname", "-m") == "x86_64"
         client.ok("CREATE TABLE t(id BIGINT PRIMARY KEY,g BIGINT,s VARCHAR(3072),v VECTOR(128));")
         client.ok("BEGIN;")
-        # 3,616+ logical bytes per row; the committed file must exceed 96 MiB.
+        # The committed file must exceed the selected LOCAL memory budget.
         text = "界" * 1000
         vector = sql_string("[" + ",".join(["0"]*128) + "]")
         batch = 500
@@ -46,7 +47,7 @@ def run(image, large_rows):
             client.ok("INSERT INTO t VALUES " + ",".join(rows) + ";")
         client.ok("COMMIT;")
         data_bytes = int(docker("exec", name, "stat", "-c", "%s", "/data/data"))
-        assert data_bytes > 96*1024*1024, (data_bytes, large_rows)
+        assert data_bytes > memory_mib*1024*1024, (data_bytes, large_rows, memory_mib)
         client.ok("CREATE VECTOR INDEX tv ON t(v);")
         query = f"SELECT id FROM t WHERE g=2 ORDER BY L2_DISTANCE(v,{vector}) LIMIT 10;"
         assert client.ok(query)["rows"] == [[i] for i in range(2, 42, 4)]
@@ -64,6 +65,7 @@ def run(image, large_rows):
         client.ok("BEGIN;")
         client.ok("DELETE FROM t;")
         peak_before = metrics(name)
+        assert peak_before['memory_max'] == str(memory_mib*1024*1024)
         docker("kill", "--signal", "KILL", name)
         client.process.wait(timeout=30)
         client.kill()
@@ -77,7 +79,7 @@ def run(image, large_rows):
         client.close()
         client = None
         report = {"status": "PASS", "platform": "linux/amd64", "network": "none",
-                  "local_memory_limit": 96*1024*1024, "swap": 0, "rows": large_rows,
+                  "local_memory_limit": memory_mib*1024*1024, "swap": 0, "rows": large_rows,
                   "data_bytes_before_index": data_bytes,
                   "phases": ["large_transaction_commit", "index_build", "filtered_topk",
                              "external_sort", "large_update_delete_rollback", "delete_commit",
@@ -98,9 +100,10 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--image", default="minivectordb:local")
     p.add_argument("--rows", type=int, default=40000)
+    p.add_argument("--memory-mib", type=int, default=96)
     p.add_argument("--output")
     args = p.parse_args()
-    report = run(args.image, args.rows)
+    report = run(args.image, args.rows, args.memory_mib)
     if args.output:
         with open(args.output, "w") as f:
             json.dump(report, f, indent=2)

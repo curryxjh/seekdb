@@ -1,0 +1,53 @@
+{
+  "scope": "LOCAL production Docker image checks; no platform evaluation",
+  "source_sha256": "f9aa363cc36120f7a6ba7104994910f5a022ee3abac4d0e121eb87bb50035943",
+  "driver_platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "commands": [
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--entrypoint",
+        "sha256sum",
+        "minivectordb:cache-coverage-final",
+        "/usr/local/bin/minivectordb"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.754,
+      "stdout": "109b348f5e73b5415b9b7a35d88f0b1712517630b07eee5297a9ccb323814227  /usr/local/bin/minivectordb\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "protocol_check/run.py",
+        "--image",
+        "minivectordb:cache-coverage-final",
+        "--output",
+        "../final-docker-public"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 58.424,
+      "stdout": "sql_crud: PASS \nsql_comparisons: PASS \nsql_ordering: PASS \nsql_empty: PASS \nsql_primary_key: PASS \nsql_unicode: PASS \nsql_bigint: PASS \nsql_unsupported: PASS \nstorage_restart: PASS \nvector_euclidean: PASS \ntransaction_commit: PASS \ntransaction_rollback: PASS \nstorage_mutations: PASS \nstorage_multiple_tables: PASS \nvector_ties_and_filter: PASS \nvector_float32: PASS \nvector_index_maintenance: PASS \ntransaction_failed_insert: PASS \ntransaction_autocommit_atomic: PASS \ntransaction_shutdown_rollback: PASS \nReport: ../final-docker-public/result.json\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/protocol.py",
+        "--image",
+        "minivectordb:cache-coverage-final"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 2.972,
+      "stdout": "PASS official transport: ID types/precision, UTF-8/escapes, fragmented input, strict JSON, one response, SQL errors, modes, atomic rejection, shutdown rollback and restart\n",
+      "stderr": ""
+    }
+  ],
+  "passed": false,
+  "complete": false,
+  "interruption": "Docker Desktop startup/runtime socket failure interrupted container_suite; only first three commands completed."
+}

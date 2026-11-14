@@ -1,0 +1,232 @@
+diff --git a/minivectordb/database.cpp b/minivectordb/database.cpp
+index c335367..6ea77d7 100644
+--- a/minivectordb/database.cpp
++++ b/minivectordb/database.cpp
+@@ -7,6 +7,7 @@
+ #include <cstring>
+ #include <fstream>
+ #include <limits>
++#include <numeric>
+ #include <queue>
+ #include <set>
+ #include <unistd.h>
+@@ -167,6 +168,12 @@ float screening_avx2(std::string_view bytes, const std::vector<float> &query) {
+     a = _mm256_add_ps(a, _mm256_mul_ps(x, x));
+     b = _mm256_add_ps(b, _mm256_mul_ps(y, y));
+   }
++  if (i + 8 <= query.size()) {
++    const auto x = _mm256_sub_ps(_mm256_loadu_ps(reinterpret_cast<const float *>(bytes.data() + i * 4)),
++                                _mm256_loadu_ps(query.data() + i));
++    a = _mm256_add_ps(a, _mm256_mul_ps(x, x));
++    i += 8;
++  }
+   float lanes[8]; _mm256_storeu_ps(lanes, _mm256_add_ps(a, b));
+   float sum = ((lanes[0] + lanes[1]) + (lanes[2] + lanes[3])) +
+               ((lanes[4] + lanes[5]) + (lanes[6] + lanes[7]));
+@@ -453,6 +460,7 @@ void Database::invalidate_scan() {
+   // A large SELECT must not leave retained capacity behind when a later write
+   // needs memory for parsing, statement savepoints or dirty data pages.
+   std::vector<ScanRow>().swap(scan_rows_);
++  std::vector<uint64_t>().swap(scan_vector_offsets_);
+   std::vector<float>().swap(scan_fallback_vectors_);
+   std::vector<ScanFilter>().swap(scan_filters_);
+   scan_screen_ = {}; scan_root_ = 0; scan_complete_ = false;
+@@ -678,7 +686,7 @@ Spool Database::select(const Statement &s, const Table &t) {
+         accept_square = std::nextafter(lower * lower, -std::numeric_limits<double>::infinity());
+         worst_distance = worst;
+       }
+-      if (screen_error < 0.125 && order.query.size() >= 16) {
++      if (screen_error < 0.125 && order.query.size() >= 8) {
+         const double approximate = screen(input, order.query);
+         if (std::isfinite(approximate) &&
+             ((!s.descending && approximate * (1.0 - screen_error) - screen_slack > reject_square) ||
+@@ -710,20 +718,26 @@ Spool Database::select(const Statement &s, const Table &t) {
+   if (!direct && heap && order.distance) {
+     const size_t dimension = order.query.size();
+     const bool quantized = dimension >= 32 && dimension <= 4096;
+-    const size_t row_limit = scan_budget_ /
+-        (sizeof(ScanRow) + (quantized ? dimension + sizeof(int32_t) + sizeof(double) + 1
+-                                     : dimension * sizeof(float)));
++    // Reserve fixed space for predicate strings/containers; a byte per row
++    // covers four packed masks and rounding to whole uint64_t words.
++    const size_t cache_budget = scan_budget_ - (quantized ? 64U * 1024U : 0U);
++    const size_t row_limit = quantized ? cache_budget / 2 / (sizeof(ScanRow) + sizeof(uint64_t) + 1)
++        : scan_budget_ / (sizeof(ScanRow) + dimension * sizeof(float));
+     if (scan_root_ == 0 || scan_root_ != t.root) {
+       invalidate_scan();
+       if (row_limit != 0) {
+         scan_rows_.reserve(row_limit);
++        if (quantized) scan_vector_offsets_.reserve(row_limit);
+         if (!quantized) scan_fallback_vectors_.reserve(row_limit * dimension);
+         scan_complete_ = true;
+         storage_.scan(t.root, [&](int64_t id, uint64_t offset) {
+           if (scan_rows_.size() == row_limit) { scan_complete_ = false; return false; }
+-          if (!quantized) {
+-            row.reset(storage_.blob(offset));
+-            const auto input = row.vector(order.column);
++          const auto record = storage_.blob(offset);
++          row.reset(record);
++          const auto input = row.vector(order.column);
++          if (quantized) {
++            scan_vector_offsets_.push_back(offset + 4 + static_cast<uint64_t>(input.data() - record.data()));
++          } else {
+             const size_t begin = scan_fallback_vectors_.size();
+             scan_fallback_vectors_.resize(begin + dimension);
+             for (size_t d = 0; d < dimension; ++d)
+@@ -733,13 +747,20 @@ Spool Database::select(const Statement &s, const Table &t) {
+           return true;
+         });
+         if (quantized) {
++          // Keep retained allocations within the same total cache budget even
++          // when the table is smaller than the metadata capacity.
++          std::vector<ScanRow>(scan_rows_).swap(scan_rows_);
++          std::vector<uint64_t>(scan_vector_offsets_).swap(scan_vector_offsets_);
++          const size_t code_budget = cache_budget - scan_rows_.size() *
++              (sizeof(ScanRow) + sizeof(uint64_t) + 1);
++          const size_t code_count = std::min(scan_rows_.size(), code_budget /
++              (dimension + sizeof(int32_t) + sizeof(double)));
+           std::vector<float> scratch(dimension);
+-          scan_screen_.build(scan_rows_.size(), dimension, [&](size_t i) -> std::span<const float> {
+-            row.reset(storage_.blob(scan_rows_[i].offset));
+-            const auto input = row.vector(order.column);
++          scan_screen_.build(code_count, dimension, [&](size_t i) -> std::span<const float> {
++            const auto input = storage_.view(scan_vector_offsets_[i], dimension * sizeof(float));
+             for (size_t d = 0; d < dimension; ++d) scratch[d] = load_float(input.data() + d * 4);
+             return scratch;
+-          }, scan_budget_);
++          }, code_budget);
+         }
+         scan_root_ = t.root;
+       }
+@@ -793,8 +814,8 @@ Spool Database::select(const Statement &s, const Table &t) {
+     };
+     const auto refine = [&](size_t i) {
+       const auto &cached = scan_rows_[i];
+-      row.reset(storage_.blob(cached.offset));
+-      accept_vector(cached.id, cached.offset, row.vector(order.column));
++      accept_vector(cached.id, cached.offset,
++                    storage_.view(scan_vector_offsets_[i], dimension * sizeof(float)));
+     };
+     if (!quantized) {
+       for_each_cached([&](size_t i) {
+@@ -805,9 +826,17 @@ Spool Database::select(const Statement &s, const Table &t) {
+     } else if (!scan_screen_.empty() && s.limit <= 64 && scan_rows_.size() >= 256) {
+       // Refine K quantized seeds, then use their exact heap cutoff and one
+       // reconstruction-error bound. Every other eligible row is still tested.
+-      std::vector<uint32_t> rows; rows.reserve(scan_rows_.size());
+-      for_each_cached([&](size_t i) { rows.push_back(static_cast<uint32_t>(i)); });
+-      const auto distances = scan_screen_.code_distances(rows, screening_query);
++      std::vector<uint32_t> rows;
++      if (where.empty()) {
++        rows.resize(scan_rows_.size());
++        std::iota(rows.begin(), rows.end(), uint32_t{0});
++      } else {
++        rows.reserve(scan_rows_.size());
++        for_each_cached([&](size_t i) { rows.push_back(static_cast<uint32_t>(i)); });
++      }
++      const auto coded_end = std::lower_bound(rows.begin(), rows.end(), scan_screen_.size());
++      const size_t coded_count = static_cast<size_t>(coded_end - rows.begin());
++      const auto distances = scan_screen_.code_distances(std::span<const uint32_t>(rows.data(), coded_count), screening_query);
+       using Seed = std::pair<int32_t, size_t>;
+       std::priority_queue<Seed> seeds;
+       for (size_t i = 0; i < distances.size(); ++i) {
+@@ -819,13 +848,14 @@ Spool Database::select(const Statement &s, const Table &t) {
+         const Seed last_seed = seeds.top();
+         while (!seeds.empty()) { refine(rows[seeds.top().second]); seeds.pop(); }
+         const double cutoff = scan_screen_.refined_cutoff(screening_query, std::get<double>(top.top().key), s.descending);
+-        for (size_t i = 0; i < rows.size(); ++i) {
++        for (size_t i = 0; i < coded_count; ++i) {
+           const Seed rank{s.descending ? -distances[i] : distances[i], i};
+           if (rank > last_seed && (s.descending ? distances[i] >= cutoff : distances[i] <= cutoff)) refine(rows[i]);
+         }
+       }
++      for (auto i = coded_end; i != rows.end(); ++i) refine(*i);
+     } else for_each_cached([&](size_t i) {
+-      if (!scan_screen_.empty() && top.size() == s.limit &&
++      if (i < scan_screen_.size() && top.size() == s.limit &&
+           scan_screen_.rejects(i, screening_query, std::get<double>(top.top().key), s.descending)) return;
+       refine(i);
+     });
+diff --git a/minivectordb/database.h b/minivectordb/database.h
+index b66b84a..e25319e 100644
+--- a/minivectordb/database.h
++++ b/minivectordb/database.h
+@@ -45,8 +45,11 @@ class Database {
+   uint64_t committed_end_ = 16;
+   bool transaction_ = false;
+   struct ScanRow { int64_t id; uint64_t offset; };
+-  // One table's bounded prefix; larger tables still stream their tail.
++  // One table's bounded address prefix; only a sub-prefix needs int8 codes.
++  // Larger tables still stream their tail. Never retain mmap pointers.
+   std::vector<ScanRow> scan_rows_;
++  // Absolute vector byte offsets, derived from fully validated row records.
++  std::vector<uint64_t> scan_vector_offsets_;
+   // Only dimensions without quantized screening retain a bounded raw prefix.
+   std::vector<float> scan_fallback_vectors_;
+   QuantizedScreen scan_screen_;
+diff --git a/minivectordb/screen.cpp b/minivectordb/screen.cpp
+index 47db54f..8463beb 100644
+--- a/minivectordb/screen.cpp
++++ b/minivectordb/screen.cpp
+@@ -229,6 +229,19 @@ void distances_vnni(const int8_t *codes, const int32_t *norms, size_t dimension,
+   for (int8_t value : q.codes) query_sum += value;
+   const int32_t correction = 256 * query_sum;
+   const auto bias = _mm512_set1_epi8(static_cast<char>(-128));
++  if (dimension == 128) {
++    const auto q0 = _mm512_loadu_si512(q.codes.data());
++    const auto q1 = _mm512_loadu_si512(q.codes.data() + 64);
++    for (size_t i = 0; i < rows.size(); ++i) {
++      const auto *data = codes + static_cast<size_t>(rows[i]) * 128;
++      auto sum = _mm512_dpbusd_epi32(_mm512_setzero_si512(),
++          _mm512_xor_si512(_mm512_loadu_si512(data), bias), q0);
++      sum = _mm512_dpbusd_epi32(sum,
++          _mm512_xor_si512(_mm512_loadu_si512(data + 64), bias), q1);
++      out[i] = norms[rows[i]] + q.norm + correction - 2 * _mm512_reduce_add_epi32(sum);
++    }
++    return;
++  }
+   size_t n = 0;
+   for (; n + 4 <= rows.size(); n += 4) {
+     const auto *r0 = codes + rows[n] * dimension;
+@@ -295,8 +308,15 @@ void QuantizedScreen::build(size_t count, size_t dimension,
+   dimension_ = dimension;
+   static const auto maximum_absolute = maximum_kernel();
+   double maximum = 0;
+-  for (size_t row = 0; row < count; ++row)
++  // Scale selection affects selectivity, never correctness: quantize records
++  // the actual reconstruction error, including every clipped component.
++  // A bounded, evenly spaced sample avoids a second full vector scan.
++  const size_t sample_count = std::min(count, size_t{1024});
++  for (size_t i = 0; i < sample_count; ++i) {
++    const size_t row = sample_count == 1 ? 0 : i * (count - 1) / (sample_count - 1);
+     maximum = std::max(maximum, maximum_absolute(read(row)));
++  }
++  if (sample_count < count) maximum *= 1.25;
+   scale_ = maximum == 0 ? 1.0 : maximum / 127.0;
+   codes_.resize(count * dimension); norms_.reserve(count); errors_.reserve(count);
+   for (size_t row = 0; row < count; ++row) {
+diff --git a/minivectordb/screen.h b/minivectordb/screen.h
+index 58e4038..950fbcd 100644
+--- a/minivectordb/screen.h
++++ b/minivectordb/screen.h
+@@ -25,6 +25,7 @@ class QuantizedScreen {
+              const std::function<std::span<const float>(size_t)> &read,
+              size_t budget);
+   bool empty() const { return norms_.empty(); }
++  size_t size() const { return norms_.size(); }
+   Query query(std::span<const float> vector) const;
+   int32_t code_distance(size_t row, const Query &query) const;
+   std::vector<int32_t> code_distances(std::span<const uint32_t> rows, const Query &query) const;
+diff --git a/minivectordb/storage.h b/minivectordb/storage.h
+index 7bc70de..0345750 100644
+--- a/minivectordb/storage.h
++++ b/minivectordb/storage.h
+@@ -56,6 +56,8 @@ class Storage {
+   void rewind(uint64_t end);
+   uint64_t blob(std::string_view bytes);
+   std::string_view blob(uint64_t offset);
++  // Borrow a previously validated vector range; writes invalidate scan offsets.
++  std::string_view view(uint64_t offset, size_t length) { return bytes(offset, length); }
+   uint64_t find(uint64_t root, int64_t key);
+   uint64_t put(uint64_t root, int64_t key, uint64_t value, uint64_t boundary);
+   void scan(uint64_t root, const std::function<bool(int64_t, uint64_t)> &visit);

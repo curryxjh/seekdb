@@ -1,0 +1,24 @@
+[
+  {
+    "url": "https://duckdb.org/2024/11/14/optimizers.html",
+    "resolved_url": "https://duckdb.org/2024/11/14/optimizers",
+    "title": "Optimizers: The Low-Key MVP – DuckDB",
+    "passages": [
+      "reduces the amount of intermediate data being processed"
+    ],
+    "accessed": "2026-11-14",
+    "status": "fetched",
+    "agent_summary": "过滤下推减少后续处理的中间记录，TopN减少排序工作；这里只参考避免无效处理的原则。"
+  },
+  {
+    "url": "https://clickhouse.com/blog/clickhouse-gets-lazier-and-faster-introducing-lazy-materialization",
+    "resolved_url": "https://clickhouse.com/blog/clickhouse-gets-lazier-and-faster-introducing-lazy-materialization",
+    "title": "ClickHouse gets lazier (and faster): Introducing lazy materialization | ClickHouse",
+    "passages": [
+      "delays reading column data until it’s actually needed"
+    ],
+    "accessed": "2026-11-14",
+    "status": "fetched",
+    "agent_summary": "列数据延迟到需要时再读。此题行式布局只缓存偏移，不能直接推导列式引擎的I/O收益。"
+  }
+]

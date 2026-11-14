@@ -1,0 +1,38 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon    2.2MB
+
+Step 1/8 : FROM gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c AS build
+14.2.0-bookworm: Pulling from library/gcc
+Digest: sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c
+Status: Downloaded newer image for gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c
+ ---> b99b86a28812
+Step 2/8 : WORKDIR /src
+ ---> Running in 1af6bc2dd791
+ ---> Removed intermediate container 1af6bc2dd791
+ ---> 30d4cafa4276
+Step 3/8 : COPY minivectordb/ minivectordb/
+ ---> c633a6a2ac51
+Step 4/8 : RUN g++ -std=c++20 -O3 -Wall -Wextra -Wpedantic -Wconversion -Wshadow     -static-libstdc++ -static-libgcc minivectordb/*.cpp -o /minivectordb
+ ---> Running in 5f16f7a6c7b2
+ ---> Removed intermediate container 5f16f7a6c7b2
+ ---> ec8c8e03b755
+Step 5/8 : FROM debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+bookworm-slim: Pulling from library/debian
+Digest: sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+Status: Downloaded newer image for debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+ ---> 734a72b3d614
+Step 6/8 : COPY --from=build /minivectordb /usr/local/bin/minivectordb
+ ---> 79465ce1fe16
+Step 7/8 : WORKDIR /data
+ ---> Running in 2898f9300a2c
+ ---> Removed intermediate container 2898f9300a2c
+ ---> 484776cd1646
+Step 8/8 : ENTRYPOINT ["/usr/local/bin/minivectordb"]
+ ---> Running in b2228ac0f0b6
+ ---> Removed intermediate container b2228ac0f0b6
+ ---> d5b7efc83ff1
+Successfully built d5b7efc83ff1
+Successfully tagged minivectordb:cache-coverage-final

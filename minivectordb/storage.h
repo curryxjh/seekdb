@@ -56,6 +56,8 @@ class Storage {
   void rewind(uint64_t end);
   uint64_t blob(std::string_view bytes);
   std::string_view blob(uint64_t offset);
+  // Borrow a previously validated vector range; writes invalidate scan offsets.
+  std::string_view view(uint64_t offset, size_t length) { return bytes(offset, length); }
   uint64_t find(uint64_t root, int64_t key);
   uint64_t put(uint64_t root, int64_t key, uint64_t value, uint64_t boundary);
   void scan(uint64_t root, const std::function<bool(int64_t, uint64_t)> &visit);

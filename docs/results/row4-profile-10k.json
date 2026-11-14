@@ -1,0 +1,155 @@
+{
+  "scope": "LOCAL profile diagnostics; not a throughput/score measurement",
+  "source_sha256": "592ecb1a61f9a528496f63dc3f7cf85993b0780a4c6696cee39de38fe9152c02",
+  "binary_sha256": "79e2578cfc9ccbbdfafc96783698a516fd712c7a6165846c8ed539f8d99f5afd",
+  "note": "Source digest here identifies packed experimental tree; profiled binary is separately identified and is the previous fully tested coverage candidate.",
+  "binary": "/mnt/d/ob\u5927\u8d5b/seekdb/local-results/coverage/final/build/minivectordb",
+  "raw_stdout": "# To display the perf.data header info, please use --header/--header-only options.\n#\n#\n# Total Lost Samples: 0\n#\n# Samples: 4K of event 'cycles:P'\n# Event count (approx.): 4000142530\n#\n# Overhead  Symbol                                         IPC   [IPC Coverage]\n# ........  .............................................  ....................\n#\n     7.47%  [.] 0x0000000000043850                         -      -            \n     4.65%  [.] 0x000000000004385d                         -      -            \n     4.07%  [.] 0x000000000002d506                         -      -            \n     3.51%  [.] 0x0000000000043895                         -      -            \n     3.04%  [.] 0x0000000000043881                         -      -            \n     2.68%  [.] 0x00000000000387d0                         -      -            \n     2.45%  [.] 0x000000000002deae                         -      -            \n     2.04%  [.] 0x000000000004389e                         -      -            \n     1.75%  [.] 0x0000000000043878                         -      -            \n     1.65%  [.] 0x000000000003dbfe                         -      -            \n     1.59%  [.] 0x000000000003e5c8                         -      -            \n     1.45%  [.] 0x000000000003e5a0                         -      -            \n     1.38%  [.] 0x0000000000043874                         -      -            \n     1.28%  [.] 0x000000000004386e                         -      -            \n     1.18%  [.] 0x000000000003dc09                         -      -            \n     1.09%  [.] 0x000000000003dc05                         -      -            \n     1.08%  [.] 0x000000000003dc1b                         -      -            \n     1.05%  [.] 0x000000000004387d                         -      -            \n     1.04%  [.] 0x000000000003e5ba                         -      -            \n     1.02%  [.] 0x000000000003dbe9                         -      -            \n     1.01%  [.] 0x000000000002de98                         -      -            \n     1.01%  [.] 0x000000000019973a                         -      -            \n     0.99%  [.] 0x000000000002331c                         -      -            \n     0.83%  [.] 0x000000000004386a                         -      -            \n\n\n#\n# (Cannot load tips.txt file, please install perf!)\n#\n",
+  "raw_stderr": "",
+  "mapped_samples": [
+    {
+      "sample_percent": 7.47,
+      "instruction_address": "0000000000043850",
+      "symbol": "mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)",
+      "offset": 1616
+    },
+    {
+      "sample_percent": 4.65,
+      "instruction_address": "000000000004385d",
+      "symbol": "mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)",
+      "offset": 1629
+    },
+    {
+      "sample_percent": 4.07,
+      "instruction_address": "000000000002d506",
+      "symbol": "mvdb::(anonymous namespace)::screening_avx2(std::basic_string_view<char, std::char_traits<char> >, std::vector<float, std::allocator<float> > const&)",
+      "offset": 54
+    },
+    {
+      "sample_percent": 3.51,
+      "instruction_address": "0000000000043895",
+      "symbol": "mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)",
+      "offset": 1685
+    },
+    {
+      "sample_percent": 3.04,
+      "instruction_address": "0000000000043881",
+      "symbol": "mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)",
+      "offset": 1665
+    },
+    {
+      "sample_percent": 2.68,
+      "instruction_address": "00000000000387d0",
+      "symbol": "mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)::{lambda(unsigned long)#3}::operator()(unsigned long) const",
+      "offset": 48
+    },
+    {
+      "sample_percent": 2.45,
+      "instruction_address": "000000000002deae",
+      "symbol": "mvdb::(anonymous namespace)::refined_distance(std::basic_string_view<char, std::char_traits<char> >, std::vector<float, std::allocator<float> > const&) [clone .isra.0]",
+      "offset": 78
+    },
+    {
+      "sample_percent": 2.04,
+      "instruction_address": "000000000004389e",
+      "symbol": "mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)",
+      "offset": 1694
+    },
+    {
+      "sample_percent": 1.75,
+      "instruction_address": "0000000000043878",
+      "symbol": "mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)",
+      "offset": 1656
+    },
+    {
+      "sample_percent": 1.65,
+      "instruction_address": "000000000003dbfe",
+      "symbol": "mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)",
+      "offset": 10078
+    },
+    {
+      "sample_percent": 1.59,
+      "instruction_address": "000000000003e5c8",
+      "symbol": "mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)",
+      "offset": 12584
+    },
+    {
+      "sample_percent": 1.45,
+      "instruction_address": "000000000003e5a0",
+      "symbol": "mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)",
+      "offset": 12544
+    },
+    {
+      "sample_percent": 1.38,
+      "instruction_address": "0000000000043874",
+      "symbol": "mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)",
+      "offset": 1652
+    },
+    {
+      "sample_percent": 1.28,
+      "instruction_address": "000000000004386e",
+      "symbol": "mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)",
+      "offset": 1646
+    },
+    {
+      "sample_percent": 1.18,
+      "instruction_address": "000000000003dc09",
+      "symbol": "mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)",
+      "offset": 10089
+    },
+    {
+      "sample_percent": 1.09,
+      "instruction_address": "000000000003dc05",
+      "symbol": "mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)",
+      "offset": 10085
+    },
+    {
+      "sample_percent": 1.08,
+      "instruction_address": "000000000003dc1b",
+      "symbol": "mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)",
+      "offset": 10107
+    },
+    {
+      "sample_percent": 1.05,
+      "instruction_address": "000000000004387d",
+      "symbol": "mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)",
+      "offset": 1661
+    },
+    {
+      "sample_percent": 1.04,
+      "instruction_address": "000000000003e5ba",
+      "symbol": "mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)",
+      "offset": 12570
+    },
+    {
+      "sample_percent": 1.02,
+      "instruction_address": "000000000003dbe9",
+      "symbol": "mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)",
+      "offset": 10057
+    },
+    {
+      "sample_percent": 1.01,
+      "instruction_address": "000000000002de98",
+      "symbol": "mvdb::(anonymous namespace)::refined_distance(std::basic_string_view<char, std::char_traits<char> >, std::vector<float, std::allocator<float> > const&) [clone .isra.0]",
+      "offset": 56
+    },
+    {
+      "sample_percent": 1.01,
+      "instruction_address": "000000000019973a",
+      "symbol": "_fini",
+      "offset": 1392018
+    },
+    {
+      "sample_percent": 0.99,
+      "instruction_address": "000000000002331c",
+      "symbol": "mvdb::Storage::blob(unsigned long)",
+      "offset": 60
+    },
+    {
+      "sample_percent": 0.83,
+      "instruction_address": "000000000004386a",
+      "symbol": "mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)",
+      "offset": 1642
+    }
+  ]
+}

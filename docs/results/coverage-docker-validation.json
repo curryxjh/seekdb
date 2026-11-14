@@ -1,0 +1,259 @@
+{
+  "scope": "LOCAL production Docker image checks; no platform evaluation",
+  "source_sha256": "f9aa363cc36120f7a6ba7104994910f5a022ee3abac4d0e121eb87bb50035943",
+  "driver_platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "commands": [
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--entrypoint",
+        "sha256sum",
+        "minivectordb:cache-coverage-final",
+        "/usr/local/bin/minivectordb"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.754,
+      "stdout": "109b348f5e73b5415b9b7a35d88f0b1712517630b07eee5297a9ccb323814227  /usr/local/bin/minivectordb\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "protocol_check/run.py",
+        "--image",
+        "minivectordb:cache-coverage-final",
+        "--output",
+        "../final-docker-public"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 58.424,
+      "stdout": "sql_crud: PASS \nsql_comparisons: PASS \nsql_ordering: PASS \nsql_empty: PASS \nsql_primary_key: PASS \nsql_unicode: PASS \nsql_bigint: PASS \nsql_unsupported: PASS \nstorage_restart: PASS \nvector_euclidean: PASS \ntransaction_commit: PASS \ntransaction_rollback: PASS \nstorage_mutations: PASS \nstorage_multiple_tables: PASS \nvector_ties_and_filter: PASS \nvector_float32: PASS \nvector_index_maintenance: PASS \ntransaction_failed_insert: PASS \ntransaction_autocommit_atomic: PASS \ntransaction_shutdown_rollback: PASS \nReport: ../final-docker-public/result.json\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/protocol.py",
+        "--image",
+        "minivectordb:cache-coverage-final"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 2.972,
+      "stdout": "PASS official transport: ID types/precision, UTF-8/escapes, fragmented input, strict JSON, one response, SQL errors, modes, atomic rejection, shutdown rollback and restart\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/container_suite.py",
+        "--image",
+        "minivectordb:cache-coverage-final",
+        "--output",
+        "../final-docker-suites"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 129.886,
+      "stdout": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; official JSONL\nPASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\nPASS tree splits order=ascending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=descending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=shuffled, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS all split trees after a second restart\nPASS query cache: 41 checks; prefix/tail, dimensions, rollback, failed statement, restart, spill\nPASS address cache: 33 exact checks; 170000x32, ASC/DESC, K=1/64/65/999, empty/uncoded/tail, UTF-8 offsets, failure/rollback/restart\nFILTER counterexample: global Top10 ids=0..9 (all g=0); WHERE g=1 -> ids=[[9900], [9901], [9902], [9903], [9904], [9905], [9906], [9907], [9908], [9909]]\nFILTER transfer LIMIT 200: returned_count=100, first=9900, last=9999\nQUANTIZATION counterexample: approximate Top1 would choose id=1 (code tie); exact returned id=2, distance=1.0099999904632568\nPASS screening: 1680 exact ID/order/distance checks; seed=927431, ties, near-ties, overflow, subnormals, sparse filters, DESC, scan/index\nPASS vector numbers: 323 checks; double-to-float rounding, signs, subnormals/underflow, overflow, strict syntax, query literals and restart\nPASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\nPASS large uncommitted insert: >24 MiB written; SIGKILL -> only seed visible\nPASS large commit: 6000 durable rows and original marker after restart\nPASS failed >8 MiB statement: no partial rows, prior statement commits\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/container_checks.py",
+        "--image",
+        "minivectordb:cache-coverage-final",
+        "--rows",
+        "40000",
+        "--output",
+        "../final-docker-resource-96m.json"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 13.2,
+      "stdout": "{\n  \"status\": \"PASS\",\n  \"platform\": \"linux/amd64\",\n  \"network\": \"none\",\n  \"local_memory_limit\": 100663296,\n  \"swap\": 0,\n  \"rows\": 40000,\n  \"data_bytes_before_index\": 142734808,\n  \"phases\": [\n    \"large_transaction_commit\",\n    \"index_build\",\n    \"filtered_topk\",\n    \"external_sort\",\n    \"large_update_delete_rollback\",\n    \"delete_commit\",\n    \"uncommitted_delete_sigkill\",\n    \"restart\"\n  ],\n  \"before_kill\": {\n    \"memory_peak\": 100663296,\n    \"memory_max\": \"100663296\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"8:48 rbytes=2617364480 wbytes=924684288 rios=4290 wios=1444 dbytes=0 dios=0\"\n  },\n  \"after_restart\": {\n    \"memory_peak\": 82644992,\n    \"memory_max\": \"100663296\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"8:48 rbytes=72208384 wbytes=233472 rios=133 wios=1 dbytes=0 dios=0\"\n  },\n  \"seconds\": 12.594834210999977,\n  \"io_caveat\": \"Raw cgroup io.stat; dedicated device/writeback attribution not certified.\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/container_checks.py",
+        "--image",
+        "minivectordb:cache-coverage-final",
+        "--rows",
+        "20000",
+        "--memory-mib",
+        "32",
+        "--output",
+        "../final-docker-resource-32m.json"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 11.106,
+      "stdout": "{\n  \"status\": \"PASS\",\n  \"platform\": \"linux/amd64\",\n  \"network\": \"none\",\n  \"local_memory_limit\": 33554432,\n  \"swap\": 0,\n  \"rows\": 20000,\n  \"data_bytes_before_index\": 71367640,\n  \"phases\": [\n    \"large_transaction_commit\",\n    \"index_build\",\n    \"filtered_topk\",\n    \"external_sort\",\n    \"large_update_delete_rollback\",\n    \"delete_commit\",\n    \"uncommitted_delete_sigkill\",\n    \"restart\"\n  ],\n  \"before_kill\": {\n    \"memory_peak\": 33554432,\n    \"memory_max\": \"33554432\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"8:48 rbytes=2107314176 wbytes=401944576 rios=2656 wios=869 dbytes=0 dios=0\"\n  },\n  \"after_restart\": {\n    \"memory_peak\": 33554432,\n    \"memory_max\": \"33554432\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"8:48 rbytes=472633344 wbytes=114688 rios=1181 wios=1 dbytes=0 dios=0\"\n  },\n  \"seconds\": 10.556006324999998,\n  \"io_caveat\": \"Raw cgroup io.stat; dedicated device/writeback attribution not certified.\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "-d",
+        "--platform",
+        "linux/amd64",
+        "--network",
+        "none",
+        "--name",
+        "mvdb-cold-kernels-f1d5fdcda8fa",
+        "--entrypoint",
+        "sleep",
+        "gcc:14.2.0-bookworm",
+        "600"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.351,
+      "stdout": "bcb2173f1012febe894d74f15dc0104bdb75f7d90cab5323553f20a5687daa5f\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-kernels-f1d5fdcda8fa",
+        "g++",
+        "--version"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.249,
+      "stdout": "g++ (GCC) 14.2.0\nCopyright (C) 2024 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-kernels-f1d5fdcda8fa",
+        "mkdir",
+        "/src"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.231,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "-w",
+        "/src",
+        "mvdb-cold-kernels-f1d5fdcda8fa",
+        "g++",
+        "-std=c++20",
+        "-O3",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "tests/screen_quantize.cpp",
+        "-o",
+        "/tmp/screen_quantize"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 2.69,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-kernels-f1d5fdcda8fa",
+        "/tmp/screen_quantize"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.305,
+      "stdout": "PASS quantization: scalar=2307 AVX2=2307; seed=20261114, half ties/neighbours, clipping, finite float bits, subnormals, extremes, tails\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "-w",
+        "/src",
+        "mvdb-cold-kernels-f1d5fdcda8fa",
+        "g++",
+        "-std=c++20",
+        "-O3",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "tests/screen_bounds.cpp",
+        "minivectordb/screen.cpp",
+        "-o",
+        "/tmp/screen_bounds"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 3.282,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-kernels-f1d5fdcda8fa",
+        "/tmp/screen_bounds"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.728,
+      "stdout": "CPU x86_64 avx2=1 fma=1\nPASS quantized intervals: 27305 cases; seed=20261112, mixed scales, clipped queries, tails, ties, ASC/DESC\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "-w",
+        "/src",
+        "mvdb-cold-kernels-f1d5fdcda8fa",
+        "g++",
+        "-std=c++20",
+        "-O3",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "tests/screen_stream.cpp",
+        "-o",
+        "/tmp/screen_stream"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 2.674,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-kernels-f1d5fdcda8fa",
+        "/tmp/screen_stream"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.253,
+      "stdout": "PASS streaming quantization, sampled/clipped scales, exact-seed cutoffs and scalar/AVX2/VNNI kernels: 14056 checks; seed=20261114\n",
+      "stderr": ""
+    }
+  ],
+  "complete": true,
+  "expected_commands": 15,
+  "resumed_prefix_commands": 3,
+  "passed": true
+}

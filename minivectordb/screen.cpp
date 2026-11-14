@@ -229,6 +229,52 @@ void distances_vnni(const int8_t *codes, const int32_t *norms, size_t dimension,
   for (int8_t value : q.codes) query_sum += value;
   const int32_t correction = 256 * query_sum;
   const auto bias = _mm512_set1_epi8(static_cast<char>(-128));
+  if (dimension == 128) {
+    const auto q0 = _mm512_loadu_si512(q.codes.data());
+    const auto q1 = _mm512_loadu_si512(q.codes.data() + 64);
+    const int32_t adjust = q.norm + correction;
+    const auto adjust4 = _mm_set1_epi32(adjust);
+    size_t i = 0;
+    for (; i + 4 <= rows.size(); i += 4) {
+      const auto *r0 = codes + static_cast<size_t>(rows[i + 0]) * 128;
+      auto s0 = _mm512_dpbusd_epi32(_mm512_setzero_si512(),
+          _mm512_xor_si512(_mm512_loadu_si512(r0), bias), q0);
+      const auto *r1 = codes + static_cast<size_t>(rows[i + 1]) * 128;
+      auto s1 = _mm512_dpbusd_epi32(_mm512_setzero_si512(),
+          _mm512_xor_si512(_mm512_loadu_si512(r1), bias), q0);
+      const auto *r2 = codes + static_cast<size_t>(rows[i + 2]) * 128;
+      auto s2 = _mm512_dpbusd_epi32(_mm512_setzero_si512(),
+          _mm512_xor_si512(_mm512_loadu_si512(r2), bias), q0);
+      const auto *r3 = codes + static_cast<size_t>(rows[i + 3]) * 128;
+      auto s3 = _mm512_dpbusd_epi32(_mm512_setzero_si512(),
+          _mm512_xor_si512(_mm512_loadu_si512(r3), bias), q0);
+      s0 = _mm512_dpbusd_epi32(s0, _mm512_xor_si512(_mm512_loadu_si512(r0 + 64), bias), q1);
+      s1 = _mm512_dpbusd_epi32(s1, _mm512_xor_si512(_mm512_loadu_si512(r1 + 64), bias), q1);
+      s2 = _mm512_dpbusd_epi32(s2, _mm512_xor_si512(_mm512_loadu_si512(r2 + 64), bias), q1);
+      s3 = _mm512_dpbusd_epi32(s3, _mm512_xor_si512(_mm512_loadu_si512(r3 + 64), bias), q1);
+      const auto m0 = _mm256_add_epi32(_mm512_castsi512_si256(s0), _mm512_extracti64x4_epi64(s0, 1));
+      const auto n0 = _mm_add_epi32(_mm256_castsi256_si128(m0), _mm256_extracti128_si256(m0, 1));
+      const auto m1 = _mm256_add_epi32(_mm512_castsi512_si256(s1), _mm512_extracti64x4_epi64(s1, 1));
+      const auto n1 = _mm_add_epi32(_mm256_castsi256_si128(m1), _mm256_extracti128_si256(m1, 1));
+      const auto m2 = _mm256_add_epi32(_mm512_castsi512_si256(s2), _mm512_extracti64x4_epi64(s2, 1));
+      const auto n2 = _mm_add_epi32(_mm256_castsi256_si128(m2), _mm256_extracti128_si256(m2, 1));
+      const auto m3 = _mm256_add_epi32(_mm512_castsi512_si256(s3), _mm512_extracti64x4_epi64(s3, 1));
+      const auto n3 = _mm_add_epi32(_mm256_castsi256_si128(m3), _mm256_extracti128_si256(m3, 1));
+      const auto dots4 = _mm_hadd_epi32(_mm_hadd_epi32(n0, n1), _mm_hadd_epi32(n2, n3));
+      const auto norms4 = _mm_setr_epi32(norms[rows[i]], norms[rows[i + 1]], norms[rows[i + 2]], norms[rows[i + 3]]);
+      const auto result4 = _mm_sub_epi32(_mm_add_epi32(norms4, adjust4), _mm_slli_epi32(dots4, 1));
+      _mm_storeu_si128(reinterpret_cast<__m128i *>(out + i), result4);
+    }
+    for (; i < rows.size(); ++i) {
+      const auto *data = codes + static_cast<size_t>(rows[i]) * 128;
+      auto sum = _mm512_dpbusd_epi32(_mm512_setzero_si512(),
+          _mm512_xor_si512(_mm512_loadu_si512(data), bias), q0);
+      sum = _mm512_dpbusd_epi32(sum,
+          _mm512_xor_si512(_mm512_loadu_si512(data + 64), bias), q1);
+      out[i] = norms[rows[i]] + adjust - 2 * _mm512_reduce_add_epi32(sum);
+    }
+    return;
+  }
   size_t n = 0;
   for (; n + 4 <= rows.size(); n += 4) {
     const auto *r0 = codes + rows[n] * dimension;
@@ -295,8 +341,15 @@ void QuantizedScreen::build(size_t count, size_t dimension,
   dimension_ = dimension;
   static const auto maximum_absolute = maximum_kernel();
   double maximum = 0;
-  for (size_t row = 0; row < count; ++row)
+  // Scale selection affects selectivity, never correctness: quantize records
+  // the actual reconstruction error, including every clipped component.
+  // A bounded, evenly spaced sample avoids a second full vector scan.
+  const size_t sample_count = std::min(count, size_t{1024});
+  for (size_t i = 0; i < sample_count; ++i) {
+    const size_t row = sample_count == 1 ? 0 : i * (count - 1) / (sample_count - 1);
     maximum = std::max(maximum, maximum_absolute(read(row)));
+  }
+  if (sample_count < count) maximum *= 1.25;
   scale_ = maximum == 0 ? 1.0 : maximum / 127.0;
   codes_.resize(count * dimension); norms_.reserve(count); errors_.reserve(count);
   for (size_t row = 0; row < count; ++row) {
