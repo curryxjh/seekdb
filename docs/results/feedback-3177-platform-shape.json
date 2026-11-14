@@ -1,0 +1,212 @@
+{
+  "scope": "LOCAL Docker cgroup measurement shaped like official query benchmark; never platform E",
+  "driver_source_sha256": "f9aa363cc36120f7a6ba7104994910f5a022ee3abac4d0e121eb87bb50035943",
+  "rows": 10000,
+  "dimension": 128,
+  "warmup_queries": 10,
+  "measured_queries": 1000,
+  "distinct_queries": true,
+  "cpus": 2,
+  "memory_limit": 134217728,
+  "swap": 0,
+  "identity": {
+    "parent": {
+      "image_id": "sha256:3d0c619905ccb0904b0392ba8d35b2aadcfbd30ece0f6570098d9c2ee8ce29a2"
+    },
+    "coverage": {
+      "image_id": "sha256:d5b7efc83ff1b8b8c6afa4d6416693624595d4621287e162918b00ebb9e65ece"
+    },
+    "row4": {
+      "image_id": "sha256:69af715d942f2bb8ccdd127efe1318b63bf8d56ab7320441ba03942f50d2397d"
+    },
+    "avx512": {
+      "image_id": "sha256:94ef89e2816ee3f1aaa9bdf710f6bfd56cbcb2984b84e32f3725ee62db2a339d"
+    }
+  },
+  "rounds": [
+    {
+      "seed": 20261114,
+      "order": [
+        "parent",
+        "coverage",
+        "row4",
+        "avx512"
+      ],
+      "versions": {
+        "parent": {
+          "query_ms": 681.195915,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 15994880,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=2404352 wbytes=6848512 rios=4 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:3d0c619905ccb0904b0392ba8d35b2aadcfbd30ece0f6570098d9c2ee8ce29a2"
+        },
+        "coverage": {
+          "query_ms": 687.430617,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 16183296,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=2408448 wbytes=6848512 rios=3 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:d5b7efc83ff1b8b8c6afa4d6416693624595d4621287e162918b00ebb9e65ece"
+        },
+        "row4": {
+          "query_ms": 670.351637,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 13357056,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:69af715d942f2bb8ccdd127efe1318b63bf8d56ab7320441ba03942f50d2397d"
+        },
+        "avx512": {
+          "query_ms": 701.448982,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 13778944,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:94ef89e2816ee3f1aaa9bdf710f6bfd56cbcb2984b84e32f3725ee62db2a339d"
+        }
+      }
+    },
+    {
+      "seed": 8675309,
+      "order": [
+        "coverage",
+        "row4",
+        "avx512",
+        "parent"
+      ],
+      "versions": {
+        "coverage": {
+          "query_ms": 768.921976,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 13795328,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:d5b7efc83ff1b8b8c6afa4d6416693624595d4621287e162918b00ebb9e65ece"
+        },
+        "row4": {
+          "query_ms": 719.013771,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 14012416,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:69af715d942f2bb8ccdd127efe1318b63bf8d56ab7320441ba03942f50d2397d"
+        },
+        "avx512": {
+          "query_ms": 653.702099,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 14049280,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:94ef89e2816ee3f1aaa9bdf710f6bfd56cbcb2984b84e32f3725ee62db2a339d"
+        },
+        "parent": {
+          "query_ms": 661.852073,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 14151680,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:3d0c619905ccb0904b0392ba8d35b2aadcfbd30ece0f6570098d9c2ee8ce29a2"
+        }
+      }
+    },
+    {
+      "seed": 14223819,
+      "order": [
+        "row4",
+        "avx512",
+        "parent",
+        "coverage"
+      ],
+      "versions": {
+        "row4": {
+          "query_ms": 728.060463,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 13795328,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:69af715d942f2bb8ccdd127efe1318b63bf8d56ab7320441ba03942f50d2397d"
+        },
+        "avx512": {
+          "query_ms": 788.428084,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 13795328,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:94ef89e2816ee3f1aaa9bdf710f6bfd56cbcb2984b84e32f3725ee62db2a339d"
+        },
+        "parent": {
+          "query_ms": 742.365883,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 13750272,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:3d0c619905ccb0904b0392ba8d35b2aadcfbd30ece0f6570098d9c2ee8ce29a2"
+        },
+        "coverage": {
+          "query_ms": 855.020773,
+          "query_count": 1000,
+          "resources": {
+            "memory_peak": 15097856,
+            "memory_max": "134217728",
+            "swap_max": "0",
+            "io_stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+          },
+          "identity": "sha256:d5b7efc83ff1b8b8c6afa4d6416693624595d4621287e162918b00ebb9e65ece"
+        }
+      }
+    }
+  ],
+  "version_source_sha256": {
+    "parent": "116808f592e7af4764ce345112ae420f0ea6416edadbf6e0856c11ee0dafd0be",
+    "coverage": "f9aa363cc36120f7a6ba7104994910f5a022ee3abac4d0e121eb87bb50035943",
+    "row4": "756e7d728d697a877e9716dc96a700eaccad501518dce5efd2ab9d656388010e",
+    "avx512_trial": "90f3ecf95184b47f4b96596f827d5cdce6397c95fac707da52d6e3cdca50832c"
+  },
+  "median_paired_speedup": {
+    "parent": 1.0,
+    "coverage": 0.8682430958902563,
+    "row4": 1.0161769993559366,
+    "avx512": 0.9711268138956398
+  },
+  "validity": "Local measurement only. Ten unique warmups are excluded; 1000 distinct queries are timed; independent correctness checking is outside timing. Docker Desktop had Kubernetes and user containers active. Host contention makes the observed per-seed variance material; this does not reproduce the organizer score.",
+  "rejected_candidate": {
+    "name": "AVX-512 float screening kernel",
+    "source_sha256": "90f3ecf95184b47f4b96596f827d5cdce6397c95fac707da52d6e3cdca50832c",
+    "image_id": "sha256:94ef89e2816ee3f1aaa9bdf710f6bfd56cbcb2984b84e32f3725ee62db2a339d",
+    "reason": "Correctness checks passed; measured three-round median vs row4 not stable/improving. Rejected and not part of delivered source."
+  }
+}

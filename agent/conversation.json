@@ -12,7 +12,7 @@
     "material_selection": "All43 parent messages, original4 units and historical cited experiments0-3 remain verbatim. Coverage-stage experiments4-6 are historical source f9aa363; unreferenced engineering block7 is summarized without changing measurements. Final-source performance8 and validation9 embed actual results. Failed prototypes10 and new actual delegation message are distinguished from student understanding. No self-awarded score.",
     "authorship": "Actual student messages are preserved; guided replies are not called independent inventions. Hypotheses, implementations, benchmark designs, test execution and summaries in this iteration are Agent work. The student delegated best-practice selection and supplied no new technical explanation; none is fabricated. No hidden chain of thought is submitted.",
     "timing": "The record is selected, not a complete timestamped transcript. Initial native experiments sometimes preceded asynchronous replies. Deterministic Linux drain-fault validation followed the durability reply. Repeated/transfer checks are actual; no prospective timing is invented.",
-    "score_status": "User now reports performance E=3573.508102 and Prompt=4.5 after delivery of the parent. No platform report, tested SHA or material digest was provided. Association with the parent follows conversation order, not independent platform verification. This new code/material has no platform result; target5000 is unverified.",
+    "score_status": "Latest user-provided results: performance E=3177.969535 and Agent Prompt=5.5; previous user-provided E=3573.508102 and Prompt=4.5. No tested SHA, platform report, material digest, T/B/M decomposition or evaluation-environment details supplied. Association follows conversation order and is not independently verified. Local diagnostics are not platform E. No score conversion or prediction.",
     "inherited_evidence": {
       "commit": "cefca4665498c5c20e1f85ca4201190e3434499c",
       "source_sha256": "3cd4d076b45ce782f426e2e4318f5b8dfb1750fbf7cc3fc60ad7fc8a82d8e04d",
@@ -227,11 +227,14 @@
         "/messages/36/content",
         "/messages/38/content",
         "/messages/40/content",
-        "/messages/43/content"
+        "/messages/43/content",
+        "/messages/49/content"
       ],
       "result_refs": [
         "/experiments/8/output",
-        "/experiments/9/output"
+        "/experiments/9/output",
+        "/experiments/11/output",
+        "/experiments/12/output"
       ],
       "student_evidence": [
         {
@@ -245,15 +248,23 @@
         {
           "pointer": "/messages/43/content",
           "text": "性能评测完成；原始指标 E = 3573.508102"
+        },
+        {
+          "pointer": "/messages/49/content",
+          "text": "性能评测完成；原始指标 E = 3177.969535"
         }
       ],
       "result_evidence": [
         {
           "pointer": "/experiments/9/output",
           "text": "PASS address cache: 33 exact checks;"
+        },
+        {
+          "pointer": "/experiments/11/output",
+          "text": "1000 distinct queries timed"
         }
       ],
-      "scope": "The student supplies real regression feedback and identifies a specific first-query/scale boundary; Agent performs hypotheses, implementation and tests. All performance feedback is one chain, not separate units per score. No student causal explanation, independent experiment design or cache tradeoff analysis is claimed. Reviewer decides whether this limited participation is sufficient; no score is assigned here."
+      "scope": "The student supplies real regression feedback and identifies a specific first-query/scale boundary; Agent performs hypotheses, implementation and tests. All performance feedback remains one chain, not separate units per score. The student supplied no T/B/M diagnosis, commit SHA or technical cause. Local diagnostics do not establish causation. No student causal explanation, independent experiment design or cache tradeoff analysis is claimed. Reviewer decides whether this limited participation is sufficient; no score is assigned here."
     }
   ],
   "messages": [
@@ -544,6 +555,16 @@
       "role": "agent",
       "content": "Actual Agent retrospective: rejected both packed layouts after exact three-seed tests. Kept row-major codes and fused four128D VNNI reductions without extra cache. Final production Docker1000-distinct-query speedup vs delivered70b is 1.045874x; vs intermediate coverage 1.031605x. Large cold/restart/mutation results and all regressions are embedded, not described as universally fixed. Full native33/Docker15 checks passed. Target5000 and any Prompt score remain unverified.",
       "origin": "Agent summary written after actual tests; not invented student reflection"
+    },
+    {
+      "role": "student",
+      "content": "| 性能原始分 | — | 3177.969535 |   |\n| ----- | - | ----------- | - |\n```\n性能评测完成；原始指标 E = 3177.969535\n```\n\n| Agent Prompt 原始分 | — | 5.5 |   |\n| ---------------- | - | --- | - |\n```\nAgent Prompt评测完成；原始分 = 5.500000\n```",
+      "origin": "Actual user-provided platform report excerpt, preserved verbatim; tested commit SHA and material digest not supplied."
+    },
+    {
+      "role": "agent",
+      "content": "Agent retrospective after the latest platform feedback: the newly reported E decreased to 3177.969535 while Prompt reached 5.5; no evaluation SHA or T/B/M breakdown was supplied. A local benchmark-shaped retest had substantial shared-host variance, so it did not explain the platform result. An AVX-512 screening prototype passed exact checks but lost its Docker comparison and was rejected. No local value is converted to platform E, and no student technical explanation is inferred from the score report.",
+      "origin": "Agent summary written after actual user feedback and local experiment; not an earlier chat or student reflection."
     }
   ],
   "experiments": [
@@ -633,6 +654,18 @@
       "final_source": false,
       "origin": "Actual Agent experiments; independent candidates, rejected before final integration",
       "output": "Moving query byte packing outside the inner loop did not make the tiled layout faster; four independent tile accumulators also lost. Both retained as failures. CPU sampling identified the VNNI row-reduction path in the separately hashed intermediate baseline.\n{\"failed\":[{\"scope\":\"LOCAL interleaved exact timing; not platform E\",\"backend\":\"native\",\"source_sha256\":\"592ecb1a61f9a528496f63dc3f7cf85993b0780a4c6696cee39de38fe9152c02\",\"rows\":10000,\"dimension\":128,\"unique_queries_per_seed\":100,\"repeats\":10,\"policy\":\"Populate all DBs before timing; rotate per-query version order; check every result outside timer. Cold is process cache cold, no page-cache eviction.\",\"identity\":{\"baseline\":{\"binary_sha256\":\"79e2578cfc9ccbbdfafc96783698a516fd712c7a6165846c8ed539f8d99f5afd\"},\"packed\":{\"binary_sha256\":\"5fce5be9d5b9ba0ccbfb75c9040565487b077fca961eba44b0f2fded0a2f8599\"}},\"rounds\":[{\"seed\":20261114,\"cold_ms\":{\"baseline\":4.308028,\"packed\":6.411304},\"insert_ms\":{\"baseline\":414.872911,\"packed\":405.69608},\"resources\":{},\"total_ms\":{\"baseline\":187.335187,\"packed\":194.95391},\"speedup_vs_baseline\":{\"baseline\":1.0,\"packed\":0.9609203888242097}},{\"seed\":8675309,\"cold_ms\":{\"packed\":6.354013,\"baseline\":4.672747},\"insert_ms\":{\"baseline\":416.802746,\"packed\":413.160002},\"resources\":{},\"total_ms\":{\"baseline\":193.340324,\"packed\":197.228278},\"speedup_vs_baseline\":{\"baseline\":1.0,\"packed\":0.9802870357160448}},{\"seed\":14223819,\"cold_ms\":{\"baseline\":4.468255,\"packed\":6.050733},\"insert_ms\":{\"baseline\":419.288418,\"packed\":395.394244},\"resources\":{},\"total_ms\":{\"baseline\":191.599215,\"packed\":200.158558},\"speedup_vs_baseline\":{\"baseline\":1.0,\"packed\":0.9572371869305732}}],\"median_paired_speedup\":{\"baseline\":1.0,\"packed\":0.9609203888242097}},{\"scope\":\"LOCAL interleaved exact timing; not platform E\",\"backend\":\"native\",\"source_sha256\":\"9eeae21c77abc46826408eacc8ae42735aa3cae334ec3e9069361c846dc8aebe\",\"rows\":10000,\"dimension\":128,\"unique_queries_per_seed\":100,\"repeats\":10,\"policy\":\"Populate all DBs before timing; rotate per-query version order; check every result outside timer. Cold is process cache cold, no page-cache eviction.\",\"identity\":{\"baseline\":{\"binary_sha256\":\"79e2578cfc9ccbbdfafc96783698a516fd712c7a6165846c8ed539f8d99f5afd\"},\"unrolled\":{\"binary_sha256\":\"6ef551738c3a2342ebcc1cda1cfd193b1bd9568d6668021d613882449dac1f44\"}},\"rounds\":[{\"seed\":20261114,\"cold_ms\":{\"baseline\":4.773613,\"unrolled\":6.247977},\"insert_ms\":{\"baseline\":460.887918,\"unrolled\":435.9191},\"resources\":{},\"total_ms\":{\"baseline\":218.844994,\"unrolled\":221.779909},\"speedup_vs_baseline\":{\"baseline\":1.0,\"unrolled\":0.9867665425004751}},{\"seed\":8675309,\"cold_ms\":{\"unrolled\":6.127939,\"baseline\":4.548459},\"insert_ms\":{\"baseline\":445.577855,\"unrolled\":407.992345},\"resources\":{},\"total_ms\":{\"baseline\":203.813463,\"unrolled\":205.807493},\"speedup_vs_baseline\":{\"baseline\":1.0,\"unrolled\":0.9903111885241225}},{\"seed\":14223819,\"cold_ms\":{\"baseline\":4.547297,\"unrolled\":6.066997},\"insert_ms\":{\"baseline\":409.469208,\"unrolled\":413.773009},\"resources\":{},\"total_ms\":{\"baseline\":259.753912,\"unrolled\":266.319264},\"speedup_vs_baseline\":{\"baseline\":1.0,\"unrolled\":0.9753478141183209}}],\"median_paired_speedup\":{\"baseline\":1.0,\"unrolled\":0.9867665425004751}}],\"profiled_binary_sha256\":\"79e2578cfc9ccbbdfafc96783698a516fd712c7a6165846c8ed539f8d99f5afd\",\"profiled_source_sha256\":\"f9aa363cc36120f7a6ba7104994910f5a022ee3abac4d0e121eb87bb50035943\",\"hot_samples\":[{\"sample_percent\":7.47,\"instruction_address\":\"0000000000043850\",\"symbol\":\"mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)\",\"offset\":1616},{\"sample_percent\":4.65,\"instruction_address\":\"000000000004385d\",\"symbol\":\"mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)\",\"offset\":1629},{\"sample_percent\":4.07,\"instruction_address\":\"000000000002d506\",\"symbol\":\"mvdb::(anonymous namespace)::screening_avx2(std::basic_string_view<char, std::char_traits<char> >, std::vector<float, std::allocator<float> > const&)\",\"offset\":54},{\"sample_percent\":3.51,\"instruction_address\":\"0000000000043895\",\"symbol\":\"mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)\",\"offset\":1685},{\"sample_percent\":3.04,\"instruction_address\":\"0000000000043881\",\"symbol\":\"mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)\",\"offset\":1665},{\"sample_percent\":2.68,\"instruction_address\":\"00000000000387d0\",\"symbol\":\"mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)::{lambda(unsigned long)#3}::operator()(unsigned long) const\",\"offset\":48},{\"sample_percent\":2.45,\"instruction_address\":\"000000000002deae\",\"symbol\":\"mvdb::(anonymous namespace)::refined_distance(std::basic_string_view<char, std::char_traits<char> >, std::vector<float, std::allocator<float> > const&) [clone .isra.0]\",\"offset\":78},{\"sample_percent\":2.04,\"instruction_address\":\"000000000004389e\",\"symbol\":\"mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)\",\"offset\":1694},{\"sample_percent\":1.75,\"instruction_address\":\"0000000000043878\",\"symbol\":\"mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)\",\"offset\":1656},{\"sample_percent\":1.65,\"instruction_address\":\"000000000003dbfe\",\"symbol\":\"mvdb::Database::select(mvdb::Statement const&, mvdb::Table const&)\",\"offset\":10078}]}"
+    },
+    {
+      "id": "platform-3177-feedback-local-diagnostics",
+      "final_source": false,
+      "origin": "Actual user platform feedback and Agent-run local diagnostics; no tested SHA supplied, local measurements explicitly not platform evaluation.",
+      "output": "Actual user feedback: | 性能原始分 | — | 3177.969535 |   |\n| ----- | - | ----------- | - |\n```\n性能评测完成；原始指标 E = 3177.969535\n```\n\n| Agent Prompt 原始分 | — | 5.5 |   |\n| ---------------- | - | --- | - |\n```\nAgent Prompt评测完成；原始分 = 5.500000\n```\nLocal 10-warmup/1000-unique-query and separate T/B/M results: {\"shape\":{\"measurement\":\"LOCAL only; 10 unique warmups not timed then 1000 distinct queries timed; checks outside timer; 3 seeds; independent Docker volumes/cgroups; 2 CPUs,128MiB,swap0,network none. Docker Desktop had Kubernetes and user containers active. Do not infer platform E.\",\"source_sha256\":{\"parent\":\"116808f592e7af4764ce345112ae420f0ea6416edadbf6e0856c11ee0dafd0be\",\"coverage\":\"f9aa363cc36120f7a6ba7104994910f5a022ee3abac4d0e121eb87bb50035943\",\"row4\":\"756e7d728d697a877e9716dc96a700eaccad501518dce5efd2ab9d656388010e\",\"avx512_trial\":\"90f3ecf95184b47f4b96596f827d5cdce6397c95fac707da52d6e3cdca50832c\"},\"image_ids\":{\"parent\":{\"image_id\":\"sha256:3d0c619905ccb0904b0392ba8d35b2aadcfbd30ece0f6570098d9c2ee8ce29a2\"},\"coverage\":{\"image_id\":\"sha256:d5b7efc83ff1b8b8c6afa4d6416693624595d4621287e162918b00ebb9e65ece\"},\"row4\":{\"image_id\":\"sha256:69af715d942f2bb8ccdd127efe1318b63bf8d56ab7320441ba03942f50d2397d\"},\"avx512\":{\"image_id\":\"sha256:94ef89e2816ee3f1aaa9bdf710f6bfd56cbcb2984b84e32f3725ee62db2a339d\"}},\"median_paired_speedup\":{\"parent\":1.0,\"coverage\":0.8682430958902563,\"row4\":1.0161769993559366,\"avx512\":0.9711268138956398},\"rounds\":[{\"seed\":20261114,\"order\":[\"parent\",\"coverage\",\"row4\",\"avx512\"],\"versions\":{\"parent\":{\"query_ms\":681.195915,\"memory_peak\":15994880,\"io_stat\":\"8:48 rbytes=2404352 wbytes=6848512 rios=4 wios=205 dbytes=0 dios=0\"},\"coverage\":{\"query_ms\":687.430617,\"memory_peak\":16183296,\"io_stat\":\"8:48 rbytes=2408448 wbytes=6848512 rios=3 wios=205 dbytes=0 dios=0\"},\"row4\":{\"query_ms\":670.351637,\"memory_peak\":13357056,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"avx512\":{\"query_ms\":701.448982,\"memory_peak\":13778944,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"}}},{\"seed\":8675309,\"order\":[\"coverage\",\"row4\",\"avx512\",\"parent\"],\"versions\":{\"coverage\":{\"query_ms\":768.921976,\"memory_peak\":13795328,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"row4\":{\"query_ms\":719.013771,\"memory_peak\":14012416,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"avx512\":{\"query_ms\":653.702099,\"memory_peak\":14049280,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"parent\":{\"query_ms\":661.852073,\"memory_peak\":14151680,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"}}},{\"seed\":14223819,\"order\":[\"row4\",\"avx512\",\"parent\",\"coverage\"],\"versions\":{\"row4\":{\"query_ms\":728.060463,\"memory_peak\":13795328,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"avx512\":{\"query_ms\":788.428084,\"memory_peak\":13795328,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"parent\":{\"query_ms\":742.365883,\"memory_peak\":13750272,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"coverage\":{\"query_ms\":855.020773,\"memory_peak\":15097856,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"}}}]},\"tbm\":{\"scope\":\"LOCAL T/B/M query and write comparison, not platform E\",\"source_sha256\":{\"parent\":\"116808f592e7af4764ce345112ae420f0ea6416edadbf6e0856c11ee0dafd0be\",\"candidate\":\"756e7d728d697a877e9716dc96a700eaccad501518dce5efd2ab9d656388010e\"},\"image_ids\":{\"parent\":\"sha256:3d0c619905ccb0904b0392ba8d35b2aadcfbd30ece0f6570098d9c2ee8ce29a2\",\"candidate\":\"sha256:69af715d942f2bb8ccdd127efe1318b63bf8d56ab7320441ba03942f50d2397d\"},\"median_paired_speedup\":{\"write\":1.0815357825452252,\"query\":1.0816663161830795},\"rounds\":[{\"seed\":20261114,\"order\":[\"parent\",\"candidate\"],\"versions\":{\"parent\":{\"write\":{\"T_ms\":555.3176840003289,\"memory_peak\":14561280,\"io_stat\":\"8:48 rbytes=2404352 wbytes=6848512 rios=4 wios=205 dbytes=0 dios=0\"},\"query\":{\"T_ms\":791.7372080009955,\"memory_peak\":13758464,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"}},\"candidate\":{\"write\":{\"T_ms\":513.4528999988106,\"memory_peak\":12210176,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"query\":{\"T_ms\":731.9606760011084,\"memory_peak\":13504512,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"}}}},{\"seed\":8675309,\"order\":[\"candidate\",\"parent\"],\"versions\":{\"candidate\":{\"write\":{\"T_ms\":440.85031100075867,\"memory_peak\":12541952,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"query\":{\"T_ms\":643.9484689999517,\"memory_peak\":13516800,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"}},\"parent\":{\"write\":{\"T_ms\":486.1913730001106,\"memory_peak\":12414976,\"io_stat\":\"8:48 rbytes=0 wbytes=6844416 rios=0 wios=204 dbytes=0 dios=0\"},\"query\":{\"T_ms\":636.5820760001952,\"memory_peak\":13885440,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"}}}},{\"seed\":14223819,\"order\":[\"parent\",\"candidate\"],\"versions\":{\"parent\":{\"write\":{\"T_ms\":666.5206899997429,\"memory_peak\":12255232,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"query\":{\"T_ms\":1179.5701470000495,\"memory_peak\":13750272,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"}},\"candidate\":{\"write\":{\"T_ms\":651.1631680004939,\"memory_peak\":12292096,\"io_stat\":\"8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0\"},\"query\":{\"T_ms\":861.6283390001627,\"memory_peak\":13533184,\"io_stat\":\"8:48 rbytes=0 wbytes=6844416 rios=0 wios=204 dbytes=0 dios=0\"}}}}]}}"
+    },
+    {
+      "id": "avx512-screening-rejected",
+      "final_source": false,
+      "origin": "Actual experimental implementation, exact correctness checks, and three-seed Docker query comparison. Rejected; not in submission source.",
+      "output": "AVX-512 float screening passed the 14056-kernel checks and 1680 exact screening checks, but three Docker rounds gave median speedup 0.955x relative to the four-row delivered candidate; no stable benefit, so discarded. Profile top samples on final row4 binary were 4.24% AVX2 float screening, 3.54% VNNI distance, 3.02% cached-candidate callback and 2.60% exact refined distance. Profile binary SHA256 79e2578cfc9ccbbdfafc96783698a516fd712c7a6165846c8ed539f8d99f5afd; source 756e7d728d697a877e9716dc96a700eaccad501518dce5efd2ab9d656388010e. Rejected trial image sha256:94ef89e2816ee3f1aaa9bdf710f6bfd56cbcb2984b84e32f3725ee62db2a339d; trial source 90f3ecf95184b47f4b96596f827d5cdce6397c95fac707da52d6e3cdca50832c."
     }
   ],
   "observations_not_claimed_as_additional_units": [
@@ -669,11 +702,11 @@
     }
   ],
   "remaining_limits": [
-    "Current code and material have not been platform evaluated. User-reported3573.508102/4.5 has no attached official report/SHA/digest. No local-to-platform score conversion; target5000 remains unverified.",
     "Cold means empty process-local cache, not forced host-page-cache eviction. Shared WSL host timing and IO are not the organizer environment. Raw regressions and failed prototypes remain in this file.",
     "Sampled scale can produce large reconstruction errors for unsampled outliers. Exactness is retained by broadening bounds/refining original float32; speed can worsen. No universal cold-latency claim.",
     "Only one table address-prefix/cache is retained; beyond its budget queries still stream. Low-D raw fallback remains separate. Exact and ann both scan/refine exactly; no sublinear index claim.",
-    "Learning evidence remains limited to genuine student participation. Improved Agent engineering or more verbose logs do not prove student understanding, and no new student answer is fabricated."
+    "Learning evidence remains limited to genuine student participation. Improved Agent engineering or more verbose logs do not prove student understanding, and no new student answer is fabricated.",
+    "Latest platform E=3177.969535 and Prompt=5.5 are user-reported without tested SHA/material digest or T/B/M details; attribution to any commit is unverified. Local query/TBM timings were taken while Docker Desktop user and Kubernetes containers were active and have material variance; they cannot explain or predict platform E."
   ],
   "context": {
     "task": "Self-implemented single-process MiniVectorDB: SQL, exact/filtered TopK, float32 vectors, ties by primary key, durable commits, rollback/recovery, disk data larger than memory, Linux amd64 stdio Docker. No external DB/vector engines.",
@@ -686,7 +719,7 @@
   "artifacts": [
     {
       "path": "docs/cache-coverage-optimization.md",
-      "sha256": "c989dee28e34af9beaac2884e53d45d19ad75172990f1a878a3258f7fd5cfe09"
+      "sha256": "230e5a5ef4cfae1a68522bb08eb5c4c8708558332b9891006cb36ec110c259bc"
     },
     {
       "path": "tests/address_cache.py",
@@ -795,6 +828,14 @@
     {
       "path": "docs/results/coverage-source.diff.txt",
       "sha256": "e951f12a9b933a3a5cc6191b463182142f4ca98e2fac901f2dc63a0be262b814"
+    },
+    {
+      "path": "docs/results/feedback-3177-platform-shape.json",
+      "sha256": "876c0981bce06f56ca7d569ff1be1e1737a6eb75b40e91bb01f01db2eac68341"
+    },
+    {
+      "path": "docs/results/feedback-3177-tbm.json",
+      "sha256": "62fb51db3e09ca6390aac364736b2af794eaa53ee6ecbf955baf9b217b25dea0"
     }
   ]
 }
