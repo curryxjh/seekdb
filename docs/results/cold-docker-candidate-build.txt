@@ -1,0 +1,58 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 552B 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c
+#2 ...
+
+#3 [internal] load metadata for docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+#3 DONE 2.2s
+
+#2 [internal] load metadata for docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c
+#2 DONE 2.4s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 77B done
+#4 DONE 0.0s
+
+#5 [stage-1 1/3] FROM docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc
+#5 resolve docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc 0.0s done
+#5 CACHED
+
+#6 [build 1/4] FROM docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c
+#6 resolve docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c 0.0s done
+#6 CACHED
+
+#7 [internal] load build context
+#7 transferring context: 502B done
+#7 DONE 0.0s
+
+#8 [build 2/4] WORKDIR /src
+#8 DONE 0.1s
+
+#9 [build 3/4] COPY minivectordb/ minivectordb/
+#9 DONE 0.1s
+
+#10 [build 4/4] RUN g++ -std=c++20 -O3 -Wall -Wextra -Wpedantic -Wconversion -Wshadow     -static-libstdc++ -static-libgcc minivectordb/*.cpp -o /minivectordb
+#10 DONE 16.2s
+
+#11 [stage-1 2/3] COPY --from=build /minivectordb /usr/local/bin/minivectordb
+#11 DONE 0.0s
+
+#12 [stage-1 3/3] WORKDIR /data
+#12 DONE 0.0s
+
+#13 exporting to image
+#13 exporting layers
+#13 exporting layers 0.2s done
+#13 exporting manifest sha256:11896716d880cc6389ed5f6ec79be58ac09846ebece806d696be619e2aff2182 0.0s done
+#13 exporting config sha256:2e01433cbad913e08eab46ffea22cc9fa5bbbce3c72f812c7753264365272f81 0.0s done
+#13 exporting attestation manifest sha256:f064c2cb834cc0284d2f1342883b0e8fa6edc22ec208a6db08bae93feabd098e 0.0s done
+#13 exporting manifest list sha256:3d0c619905ccb0904b0392ba8d35b2aadcfbd30ece0f6570098d9c2ee8ce29a2 0.0s done
+#13 naming to docker.io/library/minivectordb:cold-start-candidate done
+#13 unpacking to docker.io/library/minivectordb:cold-start-candidate 0.1s done
+#13 DONE 0.3s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/l58704j98vw1xdkt5urapeu7p

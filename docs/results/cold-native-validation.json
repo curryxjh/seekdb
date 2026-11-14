@@ -1,0 +1,473 @@
+{
+  "scope": "LOCAL native Linux checks; no platform evaluation",
+  "source_sha256": "116808f592e7af4764ce345112ae420f0ea6416edadbf6e0856c11ee0dafd0be",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "commands": [
+    {
+      "argv": [
+        "python3",
+        "tests/protocol.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 0.164,
+      "stdout": "PASS official transport: ID types/precision, UTF-8/escapes, fragmented input, strict JSON, one response, SQL errors, modes, atomic rejection, shutdown rollback and restart\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/regression.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 2.192,
+      "stdout": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/query_cache.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 0.527,
+      "stdout": "PASS query cache: 41 checks; prefix/tail, dimensions, rollback, failed statement, restart, spill\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/vector_numbers.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 0.176,
+      "stdout": "PASS vector numbers: 323 checks; double-to-float rounding, signs, subnormals/underflow, overflow, strict syntax, query literals and restart\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/vector_sweep.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 1.595,
+      "stdout": "PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/screening.py",
+        "--binary",
+        "build/minivectordb"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 3.271,
+      "stdout": "FILTER counterexample: global Top10 ids=0..9 (all g=0); WHERE g=1 -> ids=[[9900], [9901], [9902], [9903], [9904], [9905], [9906], [9907], [9908], [9909]]\nFILTER transfer LIMIT 200: returned_count=100, first=9900, last=9999\nQUANTIZATION counterexample: approximate Top1 would choose id=1 (code tie); exact returned id=2, distance=1.0099999904632568\nPASS screening: 1176 exact ID/order/distance checks; seed=927431, ties, near-ties, overflow, subnormals, sparse filters, DESC, scan/index\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "sh",
+        "build.sh"
+      ],
+      "env": {
+        "SANITIZE": "1",
+        "FAULTS": "1",
+        "OUTPUT": "build/minivectordb-sanitize"
+      },
+      "exit_status": 0,
+      "elapsed_s": 36.413,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/protocol.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 0.344,
+      "stdout": "PASS official transport: ID types/precision, UTF-8/escapes, fragmented input, strict JSON, one response, SQL errors, modes, atomic rejection, shutdown rollback and restart\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/public.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 2.49,
+      "stdout": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; official JSONL\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/regression.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 8.829,
+      "stdout": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/query_cache.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 1.607,
+      "stdout": "PASS query cache: 41 checks; prefix/tail, dimensions, rollback, failed statement, restart, spill\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/vector_numbers.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 0.269,
+      "stdout": "PASS vector numbers: 323 checks; double-to-float rounding, signs, subnormals/underflow, overflow, strict syntax, query literals and restart\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/vector_sweep.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 3.791,
+      "stdout": "PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/screening.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 4.833,
+      "stdout": "FILTER counterexample: global Top10 ids=0..9 (all g=0); WHERE g=1 -> ids=[[9900], [9901], [9902], [9903], [9904], [9905], [9906], [9907], [9908], [9909]]\nFILTER transfer LIMIT 200: returned_count=100, first=9900, last=9999\nQUANTIZATION counterexample: approximate Top1 would choose id=1 (code tie); exact returned id=2, distance=1.0099999904632568\nPASS screening: 1176 exact ID/order/distance checks; seed=927431, ties, near-ties, overflow, subnormals, sparse filters, DESC, scan/index\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/crash.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 6.932,
+      "stdout": "PASS crash=before_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_write, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_rename, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_directory_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=before_success_response, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS SIGKILL without COMMIT: entire multi-table transaction absent\nPASS autocommit crash=before_data_flush: atomic batch\nPASS autocommit crash=after_data_flush: atomic batch\nPASS autocommit crash=after_data_sync: atomic batch\nPASS autocommit crash=after_catalog_write: atomic batch\nPASS autocommit crash=after_catalog_sync: atomic batch\nPASS autocommit crash=after_catalog_rename: atomic batch\nPASS autocommit crash=after_directory_sync: atomic batch\nPASS crash suite: 17 kill scenarios, 36 repeated recovery kills, 18 idempotent restarts\nPASS indexed crash=index-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=index-publish: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-before-write: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=posting-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=indexed-publish: rows, postings, filtered and unfiltered TopK consistent\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/commit_log.py",
+        "--binary",
+        "build/minivectordb-sanitize",
+        "--legacy-binary",
+        "../../perf5000/baseline/build/minivectordb"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 9.841,
+      "stdout": "PASS commit log: 124 checks; torn footer, checksum, multi-chunk tails, new commit crash points, repeat recovery, uncommitted rollback and legacy migration\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/large_transaction.py",
+        "--binary",
+        "build/minivectordb-sanitize",
+        "--fault-writeback"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 2.126,
+      "stdout": "PASS deterministic kill at after_early_writeback, before catalog publication\nPASS large uncommitted insert: early sync confirmed; SIGKILL -> only seed visible\nPASS large commit: 6000 durable rows and original marker after restart\nPASS failed >8 MiB statement: no partial rows, prior statement commits\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "-O3",
+        "tests/screen_quantize.cpp",
+        "-o",
+        "build/screen_quantize-release"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 2.412,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "build/screen_quantize-release"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 0.094,
+      "stdout": "PASS quantization: scalar=2307 AVX2=2307; seed=20261114, half ties/neighbours, clipping, finite float bits, subnormals, extremes, tails\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "tests/screen_quantize.cpp",
+        "-o",
+        "build/screen_quantize-sanitize"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 3.858,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "build/screen_quantize-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 0.168,
+      "stdout": "PASS quantization: scalar=2307 AVX2=2307; seed=20261114, half ties/neighbours, clipping, finite float bits, subnormals, extremes, tails\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "-O3",
+        "tests/screen_bounds.cpp",
+        "minivectordb/screen.cpp",
+        "-o",
+        "build/screen_bounds-release"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 3.201,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "build/screen_bounds-release"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 0.58,
+      "stdout": "CPU x86_64 avx2=1 fma=1\nPASS quantized intervals: 27305 cases; seed=20261112, mixed scales, clipped queries, tails, ties, ASC/DESC\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "tests/screen_bounds.cpp",
+        "minivectordb/screen.cpp",
+        "-o",
+        "build/screen_bounds-sanitize"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 5.91,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "build/screen_bounds-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 1.124,
+      "stdout": "CPU x86_64 avx2=1 fma=1\nPASS quantized intervals: 27305 cases; seed=20261112, mixed scales, clipped queries, tails, ties, ASC/DESC\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "-O3",
+        "tests/screen_stream.cpp",
+        "-o",
+        "build/screen_stream-release"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 2.463,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "build/screen_stream-release"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 0.011,
+      "stdout": "PASS streaming quantization, exact-seed cutoffs and scalar/AVX2/VNNI kernels: 5844 checks; seed=20261114\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "tests/screen_stream.cpp",
+        "-o",
+        "build/screen_stream-sanitize"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 4.058,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "build/screen_stream-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 0.048,
+      "stdout": "PASS streaming quantization, exact-seed cutoffs and scalar/AVX2/VNNI kernels: 5844 checks; seed=20261114\n",
+      "stderr": ""
+    }
+  ],
+  "passed": true
+}

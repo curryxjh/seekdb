@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <limits>
 #if defined(__x86_64__)
 #include <immintrin.h>
@@ -13,13 +14,12 @@
 namespace mvdb {
 namespace {
 struct Quantized { double scale, norm, error; };
-template<class Integer>
-Quantized quantize(std::span<const float> values, Integer *codes, double scale) {
+Quantized quantize_scalar(std::span<const float> values, int8_t *codes, double scale) {
   double norm = 0, error = 0;
   constexpr double eps = std::numeric_limits<double>::epsilon();
   for (size_t d = 0; d < values.size(); ++d) {
     const double value = values[d];
-    const auto code = static_cast<Integer>(std::clamp(std::round(value / scale), -127.0, 127.0));
+    const auto code = static_cast<int8_t>(std::clamp(std::round(value / scale), -127.0, 127.0));
     codes[d] = code;
     norm += static_cast<double>(code) * code;
     // Includes the error of reconstructing code*scale in double, rather than
@@ -30,6 +30,88 @@ Quantized quantize(std::span<const float> values, Integer *codes, double scale) 
   error = std::nextafter(std::sqrt(error) * (1.0 + 64.0 * static_cast<double>(values.size()) * eps),
                          std::numeric_limits<double>::infinity());
   return {scale, norm, error};
+}
+double maximum_scalar(std::span<const float> values) {
+  double maximum = 0;
+  for (float value : values) maximum = std::max(maximum, std::abs(static_cast<double>(value)));
+  return maximum;
+}
+#if defined(__x86_64__)
+__attribute__((target("avx2")))
+double maximum_avx2(std::span<const float> values) {
+  const auto magnitude = _mm256_castsi256_ps(_mm256_set1_epi32(0x7fffffff));
+  auto maximum = _mm256_setzero_ps();
+  size_t d = 0;
+  for (; d + 8 <= values.size(); d += 8)
+    maximum = _mm256_max_ps(maximum, _mm256_and_ps(_mm256_loadu_ps(values.data() + d), magnitude));
+  float lanes[8]; _mm256_storeu_ps(lanes, maximum);
+  double result = 0;
+  for (float value : lanes) result = std::max(result, static_cast<double>(value));
+  for (; d < values.size(); ++d) result = std::max(result, std::abs(static_cast<double>(values[d])));
+  return result;
+}
+__attribute__((target("avx2")))
+Quantized quantize_avx2(std::span<const float> values, int8_t *codes, double scale) {
+  constexpr double eps = std::numeric_limits<double>::epsilon();
+  const auto sign = _mm256_set1_pd(-0.0), unit = _mm256_set1_pd(1.0);
+  const auto scale_v = _mm256_set1_pd(scale), limit = _mm256_set1_pd(127.0);
+  const auto half = _mm256_set1_pd(0.5), slack = _mm256_set1_pd(16 * eps);
+  auto norms = _mm256_setzero_pd(), errors = norms;
+  size_t d = 0;
+  for (; d + 4 <= values.size(); d += 4) {
+    const auto value = _mm256_cvtps_pd(_mm_loadu_ps(values.data() + d));
+    const auto absolute = _mm256_andnot_pd(sign, value);
+    const auto ratio = _mm256_min_pd(_mm256_div_pd(absolute, scale_v), limit);
+    const auto integral = _mm256_round_pd(ratio, _MM_FROUND_TO_ZERO | _MM_FROUND_NO_EXC);
+    // Preserve std::round's half-away-from-zero rule. Adding 0.5 before
+    // truncation would incorrectly round the representable value below 0.5.
+    const auto increment = _mm256_and_pd(
+        _mm256_cmp_pd(_mm256_sub_pd(ratio, integral), half, _CMP_GE_OQ), unit);
+    const auto code = _mm256_xor_pd(_mm256_add_pd(integral, increment), _mm256_and_pd(value, sign));
+    const auto integers = _mm256_cvttpd_epi32(code);
+    const auto words = _mm_packs_epi32(integers, _mm_setzero_si128());
+    const int32_t packed = _mm_cvtsi128_si32(_mm_packs_epi16(words, _mm_setzero_si128()));
+    std::memcpy(codes + d, &packed, sizeof(packed));
+    norms = _mm256_add_pd(norms, _mm256_mul_pd(code, code));
+    const auto residual = _mm256_andnot_pd(sign, _mm256_sub_pd(value, _mm256_mul_pd(code, scale_v)));
+    const auto delta = _mm256_add_pd(residual, _mm256_mul_pd(absolute, slack));
+    errors = _mm256_add_pd(errors, _mm256_mul_pd(delta, delta));
+  }
+  double norm_lanes[4], error_lanes[4];
+  _mm256_storeu_pd(norm_lanes, norms); _mm256_storeu_pd(error_lanes, errors);
+  double norm = (norm_lanes[0] + norm_lanes[1]) + (norm_lanes[2] + norm_lanes[3]);
+  double error = (error_lanes[0] + error_lanes[1]) + (error_lanes[2] + error_lanes[3]);
+  for (; d < values.size(); ++d) {
+    const double value = values[d];
+    const auto code = static_cast<int8_t>(std::clamp(std::round(value / scale), -127.0, 127.0));
+    codes[d] = code; norm += static_cast<double>(code) * code;
+    const double delta = std::abs(value - static_cast<double>(code) * scale) + std::abs(value) * 16 * eps;
+    error += delta * delta;
+  }
+  // Positive partial sums have a shorter rounding path than the scalar
+  // sum; the same 64*D*epsilon inflation covers both accumulation orders.
+  error = std::nextafter(std::sqrt(error) * (1.0 + 64.0 * static_cast<double>(values.size()) * eps),
+                         std::numeric_limits<double>::infinity());
+  return {scale, norm, error};
+}
+#endif
+using Quantize = Quantized (*)(std::span<const float>, int8_t *, double);
+Quantize quantize_kernel() {
+#if defined(__x86_64__)
+  if (__builtin_cpu_supports("avx2")) return quantize_avx2;
+#endif
+  return quantize_scalar;
+}
+using Maximum = double (*)(std::span<const float>);
+Maximum maximum_kernel() {
+#if defined(__x86_64__)
+  if (__builtin_cpu_supports("avx2")) return maximum_avx2;
+#endif
+  return maximum_scalar;
+}
+Quantized quantize(std::span<const float> values, int8_t *codes, double scale) {
+  static const auto kernel = quantize_kernel();
+  return kernel(values, codes, scale);
 }
 int32_t dot_scalar(const int8_t *a, const int8_t *b, size_t dimension) {
   int32_t sum = 0;
@@ -211,9 +293,10 @@ void QuantizedScreen::build(size_t count, size_t dimension,
   if (dimension < 32 || dimension > 4096 || count == 0) return;
   if (count > budget / (dimension + sizeof(int32_t) + sizeof(double))) return;
   dimension_ = dimension;
+  static const auto maximum_absolute = maximum_kernel();
   double maximum = 0;
   for (size_t row = 0; row < count; ++row)
-    for (float value : read(row)) maximum = std::max(maximum, std::abs(static_cast<double>(value)));
+    maximum = std::max(maximum, maximum_absolute(read(row)));
   scale_ = maximum == 0 ? 1.0 : maximum / 127.0;
   codes_.resize(count * dimension); norms_.reserve(count); errors_.reserve(count);
   for (size_t row = 0; row < count; ++row) {

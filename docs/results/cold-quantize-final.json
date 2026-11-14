@@ -1,0 +1,152 @@
+{
+  "scope": "LOCAL final test includes explicitly representable double immediately below half",
+  "source_sha256": "116808f592e7af4764ce345112ae420f0ea6416edadbf6e0856c11ee0dafd0be",
+  "test_sha256": "b816f55a901cb679617292cb4eb8f26ff1f961ee0319541d5ea989671b3bf362",
+  "commands": [
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "-O3",
+        "tests/screen_quantize.cpp",
+        "-o",
+        "build/screen-quantize-final-release"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 3.545727786000043,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "build/screen-quantize-final-release"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 0.0898956559999533,
+      "stdout": "PASS quantization: scalar=2307 AVX2=2307; seed=20261114, half ties/neighbours, clipping, finite float bits, subnormals, extremes, tails\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "g++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "tests/screen_quantize.cpp",
+        "-o",
+        "build/screen-quantize-final-sanitize"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 4.3144903819998035,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "build/screen-quantize-final-sanitize"
+      ],
+      "env": {
+        "ASAN_OPTIONS": "detect_leaks=1",
+        "UBSAN_OPTIONS": "halt_on_error=1"
+      },
+      "exit_status": 0,
+      "elapsed_s": 0.17355796999981976,
+      "stdout": "PASS quantization: scalar=2307 AVX2=2307; seed=20261114, half ties/neighbours, clipping, finite float bits, subnormals, extremes, tails\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "-d",
+        "--platform",
+        "linux/amd64",
+        "--network",
+        "none",
+        "--name",
+        "mvdb-cold-final-quant-7a07909db5",
+        "--entrypoint",
+        "sleep",
+        "gcc:14.2.0-bookworm",
+        "300"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 0.5353160820000085,
+      "stdout": "1cef76b7b6dca52cd9ee8b05a3209e19e6ba5a473bbc30cba764c24b2fc0b60e\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-final-quant-7a07909db5",
+        "mkdir",
+        "/src"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 0.312404282999978,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "-w",
+        "/src",
+        "mvdb-cold-final-quant-7a07909db5",
+        "g++",
+        "-std=c++20",
+        "-O3",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "tests/screen_quantize.cpp",
+        "-o",
+        "/tmp/quantize-final"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 6.539031465999869,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-final-quant-7a07909db5",
+        "/tmp/quantize-final"
+      ],
+      "env": {},
+      "exit_status": 0,
+      "elapsed_s": 0.34803981200002454,
+      "stdout": "PASS quantization: scalar=2307 AVX2=2307; seed=20261114, half ties/neighbours, clipping, finite float bits, subnormals, extremes, tails\n",
+      "stderr": ""
+    }
+  ],
+  "passed": true
+}

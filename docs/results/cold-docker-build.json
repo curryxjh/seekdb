@@ -1,0 +1,27 @@
+{
+  "scope": "LOCAL original production Dockerfile build identities; no platform evaluation",
+  "parent_commit": "c9e3a50817305b901b9a222ca0adbfbce03f0469",
+  "engine_version": "29.4.0",
+  "network_preparation": "Initial upstream/mirror pulls timed out. Cached official pinned content via range downloads; index/manifest/config/layer SHA256 verified, then original Dockerfile builds succeeded. Production Dockerfile unchanged. No runtime network dependencies added.",
+  "images": [
+    {
+      "label": "candidate",
+      "image": "minivectordb:cold-start-candidate",
+      "image_id": "sha256:3d0c619905ccb0904b0392ba8d35b2aadcfbd30ece0f6570098d9c2ee8ce29a2",
+      "platform": "linux/amd64",
+      "dockerfile_sha256": "4caf1d9b74ea08d5ab8318f7175206c52b6be8ed7bc2b617e6741a79bb7edc92",
+      "build_exit_status": 0,
+      "source_sha256": "116808f592e7af4764ce345112ae420f0ea6416edadbf6e0856c11ee0dafd0be"
+    },
+    {
+      "label": "baseline",
+      "image": "minivectordb:cold-start-baseline",
+      "image_id": "sha256:75e76b9eda162c55a58b5958e6858c5b2774c509c6fb0a1728f0d219f7829313",
+      "platform": "linux/amd64",
+      "dockerfile_sha256": "4caf1d9b74ea08d5ab8318f7175206c52b6be8ed7bc2b617e6741a79bb7edc92",
+      "build_exit_status": 0,
+      "source_sha256": "03bf74cc8d131735b95fbf63cc2494726bc2d7c703dc18884ed7728741744c04"
+    }
+  ],
+  "candidate_binary_sha256": "34fef50f1066570f12e8e0fe74a114f035e4a54a576d60b43f48c903a4d12212"
+}

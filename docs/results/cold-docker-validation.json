@@ -1,0 +1,238 @@
+{
+  "scope": "LOCAL production Docker image checks; no platform evaluation",
+  "source_sha256": "116808f592e7af4764ce345112ae420f0ea6416edadbf6e0856c11ee0dafd0be",
+  "driver_platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "commands": [
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--entrypoint",
+        "sha256sum",
+        "minivectordb:cold-start-candidate",
+        "/usr/local/bin/minivectordb"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.761,
+      "stdout": "34fef50f1066570f12e8e0fe74a114f035e4a54a576d60b43f48c903a4d12212  /usr/local/bin/minivectordb\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "protocol_check/run.py",
+        "--image",
+        "minivectordb:cold-start-candidate",
+        "--output",
+        "../docker-public"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 43.835,
+      "stdout": "sql_crud: PASS \nsql_comparisons: PASS \nsql_ordering: PASS \nsql_empty: PASS \nsql_primary_key: PASS \nsql_unicode: PASS \nsql_bigint: PASS \nsql_unsupported: PASS \nstorage_restart: PASS \nvector_euclidean: PASS \ntransaction_commit: PASS \ntransaction_rollback: PASS \nstorage_mutations: PASS \nstorage_multiple_tables: PASS \nvector_ties_and_filter: PASS \nvector_float32: PASS \nvector_index_maintenance: PASS \ntransaction_failed_insert: PASS \ntransaction_autocommit_atomic: PASS \ntransaction_shutdown_rollback: PASS \nReport: ../docker-public/result.json\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/protocol.py",
+        "--image",
+        "minivectordb:cold-start-candidate"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 2.695,
+      "stdout": "PASS official transport: ID types/precision, UTF-8/escapes, fragmented input, strict JSON, one response, SQL errors, modes, atomic rejection, shutdown rollback and restart\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/container_suite.py",
+        "--image",
+        "minivectordb:cold-start-candidate",
+        "--output",
+        "../docker-suites"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 153.923,
+      "stdout": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; official JSONL\nPASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\nPASS tree splits order=ascending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=descending, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS tree splits order=shuffled, rows=66002, seed=30274159, point lookup, rollback, failed statement, SIGKILL and restart\nPASS all split trees after a second restart\nPASS query cache: 41 checks; prefix/tail, dimensions, rollback, failed statement, restart, spill\nFILTER counterexample: global Top10 ids=0..9 (all g=0); WHERE g=1 -> ids=[[9900], [9901], [9902], [9903], [9904], [9905], [9906], [9907], [9908], [9909]]\nFILTER transfer LIMIT 200: returned_count=100, first=9900, last=9999\nQUANTIZATION counterexample: approximate Top1 would choose id=1 (code tie); exact returned id=2, distance=1.0099999904632568\nPASS screening: 1176 exact ID/order/distance checks; seed=927431, ties, near-ties, overflow, subnormals, sparse filters, DESC, scan/index\nPASS vector numbers: 323 checks; double-to-float rounding, signs, subnormals/underflow, overflow, strict syntax, query literals and restart\nPASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\nPASS large uncommitted insert: >24 MiB written; SIGKILL -> only seed visible\nPASS large commit: 6000 durable rows and original marker after restart\nPASS failed >8 MiB statement: no partial rows, prior statement commits\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "tests/container_checks.py",
+        "--image",
+        "minivectordb:cold-start-candidate",
+        "--rows",
+        "40000",
+        "--output",
+        "../docker-resource-96m.json"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 20.579,
+      "stdout": "{\n  \"status\": \"PASS\",\n  \"platform\": \"linux/amd64\",\n  \"network\": \"none\",\n  \"local_memory_limit\": 100663296,\n  \"swap\": 0,\n  \"rows\": 40000,\n  \"data_bytes_before_index\": 142734808,\n  \"phases\": [\n    \"large_transaction_commit\",\n    \"index_build\",\n    \"filtered_topk\",\n    \"external_sort\",\n    \"large_update_delete_rollback\",\n    \"delete_commit\",\n    \"uncommitted_delete_sigkill\",\n    \"restart\"\n  ],\n  \"before_kill\": {\n    \"memory_peak\": 100663296,\n    \"memory_max\": \"100663296\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"8:32 \\n8:48 rbytes=2695655424 wbytes=924405760 rios=2768 wios=1383 dbytes=0 dios=0\"\n  },\n  \"after_restart\": {\n    \"memory_peak\": 80187392,\n    \"memory_max\": \"100663296\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"8:48 rbytes=70230016 wbytes=233472 rios=75 wios=1 dbytes=0 dios=0\"\n  },\n  \"seconds\": 20.040981327999816,\n  \"io_caveat\": \"Raw cgroup io.stat; dedicated device/writeback attribution not certified.\"\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "run",
+        "--rm",
+        "-d",
+        "--platform",
+        "linux/amd64",
+        "--network",
+        "none",
+        "--name",
+        "mvdb-cold-kernels-40a0fdb78df0",
+        "--entrypoint",
+        "sleep",
+        "gcc:14.2.0-bookworm",
+        "600"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.488,
+      "stdout": "b18eef1e6b8f02298124feb1ee4ca865d70d6d05e86d9a4f875d73b4796f6553\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-kernels-40a0fdb78df0",
+        "g++",
+        "--version"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.338,
+      "stdout": "g++ (GCC) 14.2.0\nCopyright (C) 2024 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-kernels-40a0fdb78df0",
+        "mkdir",
+        "/src"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.305,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "-w",
+        "/src",
+        "mvdb-cold-kernels-40a0fdb78df0",
+        "g++",
+        "-std=c++20",
+        "-O3",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "tests/screen_quantize.cpp",
+        "-o",
+        "/tmp/screen_quantize"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 3.962,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-kernels-40a0fdb78df0",
+        "/tmp/screen_quantize"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.439,
+      "stdout": "PASS quantization: scalar=2307 AVX2=2307; seed=20261114, half ties/neighbours, clipping, finite float bits, subnormals, extremes, tails\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "-w",
+        "/src",
+        "mvdb-cold-kernels-40a0fdb78df0",
+        "g++",
+        "-std=c++20",
+        "-O3",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "tests/screen_bounds.cpp",
+        "minivectordb/screen.cpp",
+        "-o",
+        "/tmp/screen_bounds"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 4.519,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-kernels-40a0fdb78df0",
+        "/tmp/screen_bounds"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 0.987,
+      "stdout": "CPU x86_64 avx2=1 fma=1\nPASS quantized intervals: 27305 cases; seed=20261112, mixed scales, clipped queries, tails, ties, ASC/DESC\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "-w",
+        "/src",
+        "mvdb-cold-kernels-40a0fdb78df0",
+        "g++",
+        "-std=c++20",
+        "-O3",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Wconversion",
+        "-Wshadow",
+        "tests/screen_stream.cpp",
+        "-o",
+        "/tmp/screen_stream"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 6.29,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "mvdb-cold-kernels-40a0fdb78df0",
+        "/tmp/screen_stream"
+      ],
+      "exit_status": 0,
+      "elapsed_s": 1.024,
+      "stdout": "PASS streaming quantization, exact-seed cutoffs and scalar/AVX2/VNNI kernels: 5844 checks; seed=20261114\n",
+      "stderr": ""
+    }
+  ],
+  "passed": true
+}
