@@ -47,7 +47,8 @@ class Database {
   struct ScanRow { int64_t id; uint64_t offset; };
   // One table's bounded prefix; larger tables still stream their tail.
   std::vector<ScanRow> scan_rows_;
-  std::vector<float> scan_vectors_;
+  // Only dimensions without quantized screening retain a bounded raw prefix.
+  std::vector<float> scan_fallback_vectors_;
   QuantizedScreen scan_screen_;
   struct ScanFilter { std::string key; std::vector<uint64_t> bits; };
   // Four packed predicate masks, bounded by the cached prefix, not table size.

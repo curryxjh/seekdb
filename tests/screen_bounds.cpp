@@ -48,9 +48,13 @@ int main() {
           const double tied = static_cast<double>(exact);
           assert(!screen.rejects(row, q, tied, false));
           assert(!screen.rejects(row, q, tied, true));
+          assert(approximate.back() <= screen.refined_cutoff(q, tied, false));
+          assert(approximate.back() >= screen.refined_cutoff(q, tied, true));
           for (double cutoff : {tied * 0.5, tied * 2}) {
             if (screen.rejects(row, q, cutoff, false)) assert(exact > cutoff);
             if (screen.rejects(row, q, cutoff, true)) assert(exact < cutoff);
+            if (approximate.back() > screen.refined_cutoff(q, cutoff, false)) assert(exact > cutoff);
+            if (approximate.back() < screen.refined_cutoff(q, cutoff, true)) assert(exact < cutoff);
           }
           ++checks;
         }

@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <span>
 #include <vector>
 
@@ -20,11 +21,15 @@ class QuantizedScreen {
   struct Interval { double lower, upper; };
   void build(std::span<const float> vectors, size_t dimension,
              size_t budget = 3U * 1024U * 1024U);
+  void build(size_t count, size_t dimension,
+             const std::function<std::span<const float>(size_t)> &read,
+             size_t budget);
   bool empty() const { return norms_.empty(); }
   Query query(std::span<const float> vector) const;
   int32_t code_distance(size_t row, const Query &query) const;
   std::vector<int32_t> code_distances(std::span<const uint32_t> rows, const Query &query) const;
   double code_cutoff(const Query &query, int32_t kth, bool descending) const;
+  double refined_cutoff(const Query &query, double worst, bool descending) const;
   Interval bounds(size_t row, const Query &query) const;
   bool rejects(size_t row, const Query &query, double worst, bool descending) const;
  private:

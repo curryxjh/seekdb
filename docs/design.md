@@ -151,15 +151,28 @@ the older result remains historical evidence.
 
 ## Current bounded query acceleration
 
-The raw vector/offset prefix uses at most one eighth of the detected memory
-limit, capped at 128 MiB. The screening-data cap is half that prefix budget.
+For dimensions 32–4096 there is no retained raw float32 matrix. Row offsets, signed-byte codes, norms,
+reconstruction errors and four filter masks share a prefix budget of one
+sixteenth of the detected memory limit, clamped to 1–8 MiB.
 The reader considers cgroup-v2 `memory.max` both at the visible root and along
 the current process's cgroup ancestors, plus the conventional v1 memory-limit
-file. If no finite limit is visible, the raw prefix defaults to 128 MiB.
+file. If no finite limit is visible, this prefix budget defaults to 8 MiB.
 Four predicate masks and temporary candidate arrays remain proportional to
 this bounded prefix. Larger tables stream their tail exactly.
 
-Mutations, failed statements, table switches and rollback release vector, row,
+Construction scans the bounded prefix to find its scale, then quantizes using
+one row-sized float32 scratch buffer. Original vectors remain in the data file's
+reclaimable mapping; only actual refinements decode those fields again.
+Dimensions outside 32–4096 retain their original raw-prefix path under the
+same budget; this avoids losing the existing acceleration for small dimensions.
+
+For K <= 64, quantized TopK seeds are first refined into an exact heap. Each
+other eligible row is screened using that heap cutoff and a single global
+reconstruction-error bound, rather than two error margins around an approximate
+cutoff. A total order on (signed code distance, candidate position) prevents
+seed rows from being inserted twice. Uncached tails remain exact scans.
+
+Mutations, failed statements, table switches and rollback release row,
 mask and screening allocations before offsets can be reused. This prevents a
 large previous SELECT from retaining its cache during a large subsequent write.
 
@@ -168,7 +181,9 @@ query loads. Adding 128 to signed row bytes is corrected by `256*sum(query)`
 in the squared-distance formula; no lossy arithmetic is introduced. Masked tail
 loads cover arbitrary dimensions without reading past their spans. All
 intermediates fit int32 at the existing maximum screened dimension of 4096.
-AVX2, ARM and scalar paths remain available on other machines. Conservative
+AVX2 also batches four independent rows with shared query loads and safe
+abs/sign+maddubs/madd arithmetic. ARM and scalar paths remain available.
+Conservative
 quantization bounds and original float32 refinement still determine exact TopK.
 
 ## Historical 2026-11-12 bounded query acceleration
@@ -202,7 +217,7 @@ The immutable approximate graph experiment was not integrated: construction and
 filtered traversal costs outweighed its query benefit; its unfavorable records
 and sanitizer caveat are retained separately. ANN mode keeps exact fallback.
 
-## 2026-11-13: exact integer screening and bounded dirty pages
+## Historical 2026-11-13: exact integer screening and bounded dirty pages
 
 The vector prefix remains bounded to 8 MiB, including row offsets. `screen.*` adds
 at most 3 MiB of signed int8 codes, integer norms and reconstruction-error bounds,

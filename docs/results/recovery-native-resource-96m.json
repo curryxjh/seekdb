@@ -1,0 +1,23 @@
+{
+  "passed": true,
+  "scope": "local native cgroup resource check; not a container image test",
+  "memory_limit": 100663296,
+  "swap_max": 0,
+  "rows": 40000,
+  "data_bytes_before_index": 142734808,
+  "before_kill": {
+    "memory.peak": 100663296,
+    "memory.max": "100663296",
+    "memory.swap.max": "0",
+    "io.stat": null,
+    "proc_io": null
+  },
+  "after_restart": {
+    "memory.peak": 79970304,
+    "memory.max": "100663296",
+    "memory.swap.max": "0",
+    "io.stat": null,
+    "proc_io": null
+  },
+  "elapsed_s": 6.853615254999795
+}

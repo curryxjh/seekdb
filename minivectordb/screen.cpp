@@ -97,9 +97,42 @@ void distances_scalar(const int8_t *codes, const int32_t *norms, size_t dimensio
 }
 #if defined(__x86_64__)
 __attribute__((target("avx2")))
+int32_t horizontal_avx2(__m256i sums) {
+  const auto halves = _mm_add_epi32(_mm256_castsi256_si128(sums), _mm256_extracti128_si256(sums, 1));
+  const auto pairs = _mm_add_epi32(halves, _mm_srli_si128(halves, 8));
+  return _mm_cvtsi128_si32(_mm_add_epi32(pairs, _mm_srli_si128(pairs, 4)));
+}
+__attribute__((target("avx2")))
 void distances_avx2(const int8_t *codes, const int32_t *norms, size_t dimension,
                     std::span<const uint32_t> rows, const QuantizedScreen::Query &q, int32_t *out) {
-  for (size_t n = 0; n < rows.size(); ++n)
+  const auto ones = _mm256_set1_epi16(1);
+  size_t n = 0;
+  for (; n + 4 <= rows.size(); n += 4) {
+    const auto *r0 = codes + rows[n] * dimension;
+    const auto *r1 = codes + rows[n + 1] * dimension;
+    const auto *r2 = codes + rows[n + 2] * dimension;
+    const auto *r3 = codes + rows[n + 3] * dimension;
+    auto s0 = _mm256_setzero_si256(), s1 = s0, s2 = s0, s3 = s0;
+    size_t d = 0;
+    for (; d + 32 <= dimension; d += 32) {
+      const auto qv = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(q.codes.data() + d));
+      const auto x0 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(r0 + d));
+      const auto x1 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(r1 + d));
+      const auto x2 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(r2 + d));
+      const auto x3 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(r3 + d));
+      s0 = _mm256_add_epi32(s0, _mm256_madd_epi16(_mm256_maddubs_epi16(_mm256_abs_epi8(x0), _mm256_sign_epi8(qv, x0)), ones));
+      s1 = _mm256_add_epi32(s1, _mm256_madd_epi16(_mm256_maddubs_epi16(_mm256_abs_epi8(x1), _mm256_sign_epi8(qv, x1)), ones));
+      s2 = _mm256_add_epi32(s2, _mm256_madd_epi16(_mm256_maddubs_epi16(_mm256_abs_epi8(x2), _mm256_sign_epi8(qv, x2)), ones));
+      s3 = _mm256_add_epi32(s3, _mm256_madd_epi16(_mm256_maddubs_epi16(_mm256_abs_epi8(x3), _mm256_sign_epi8(qv, x3)), ones));
+    }
+    int32_t dots[4]{horizontal_avx2(s0), horizontal_avx2(s1), horizontal_avx2(s2), horizontal_avx2(s3)};
+    const int8_t *data[4]{r0, r1, r2, r3};
+    for (size_t i = 0; i < 4; ++i) {
+      for (size_t tail = d; tail < dimension; ++tail) dots[i] += static_cast<int32_t>(data[i][tail]) * q.codes[tail];
+      out[n + i] = norms[rows[n + i]] + q.norm - 2 * dots[i];
+    }
+  }
+  for (; n < rows.size(); ++n)
     out[n] = norms[rows[n]] + q.norm -
              2 * dot_avx2(codes + rows[n] * dimension, q.codes.data(), dimension);
 }
@@ -165,17 +198,26 @@ void distances_vnni(const int8_t *codes, const int32_t *norms, size_t dimension,
 }  // namespace
 
 void QuantizedScreen::build(std::span<const float> vectors, size_t dimension, size_t budget) {
+  if (dimension == 0) { *this = {}; return; }
+  build(vectors.size() / dimension, dimension, [&](size_t row) {
+    return vectors.subspan(row * dimension, dimension);
+  }, budget);
+}
+
+void QuantizedScreen::build(size_t count, size_t dimension,
+                            const std::function<std::span<const float>(size_t)> &read,
+                            size_t budget) {
   codes_.clear(); norms_.clear(); errors_.clear(); dimension_ = 0; maximum_error_ = 0;
-  if (dimension < 32 || dimension > 4096 || vectors.empty()) return;
-  const size_t count = vectors.size() / dimension;
-  if (vectors.size() + count * (sizeof(int32_t) + sizeof(double)) > budget) return;
+  if (dimension < 32 || dimension > 4096 || count == 0) return;
+  if (count > budget / (dimension + sizeof(int32_t) + sizeof(double))) return;
   dimension_ = dimension;
   double maximum = 0;
-  for (float value : vectors) maximum = std::max(maximum, std::abs(static_cast<double>(value)));
+  for (size_t row = 0; row < count; ++row)
+    for (float value : read(row)) maximum = std::max(maximum, std::abs(static_cast<double>(value)));
   scale_ = maximum == 0 ? 1.0 : maximum / 127.0;
-  codes_.resize(vectors.size()); norms_.reserve(count); errors_.reserve(count);
+  codes_.resize(count * dimension); norms_.reserve(count); errors_.reserve(count);
   for (size_t row = 0; row < count; ++row) {
-    const auto p = quantize(vectors.subspan(row * dimension, dimension), codes_.data() + row * dimension, scale_);
+    const auto p = quantize(read(row), codes_.data() + row * dimension, scale_);
     norms_.push_back(static_cast<int32_t>(p.norm)); errors_.push_back(p.error);
     maximum_error_ = std::max(maximum_error_, p.error);
   }
@@ -234,6 +276,19 @@ bool QuantizedScreen::rejects(size_t row, const Query &q, double worst, bool des
   }
   const double upper = (worst + error) / scale_;
   return estimate * (1 - 64 * std::numeric_limits<double>::epsilon()) > upper * upper;
+}
+
+double QuantizedScreen::refined_cutoff(const Query &q, double worst, bool descending) const {
+  // The heap contains K actual candidates. Only one reconstruction error is
+  // needed to compare each remaining code distance against that exact cutoff.
+  constexpr double eps = std::numeric_limits<double>::epsilon();
+  const double error = (maximum_error_ + q.error) * (1 + 16 * eps);
+  if (descending) {
+    const double lower = std::max(0.0, std::nextafter(worst, -INFINITY) - error) / scale_;
+    return std::max(0.0, lower * lower / (1 + 64 * eps) - 1);
+  }
+  const double upper = (std::nextafter(worst, INFINITY) + error) / scale_;
+  return upper * upper / (1 - 64 * eps) + 1;
 }
 
 QuantizedScreen::Interval QuantizedScreen::bounds(size_t row, const Query &q) const {

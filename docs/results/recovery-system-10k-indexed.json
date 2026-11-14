@@ -1,0 +1,270 @@
+{
+  "scope": "LOCAL system-service cgroup comparison, not official E/score or container validation",
+  "platform": "Linux-6.18.54.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "source_sha256": "03bf74cc8d131735b95fbf63cc2494726bc2d7c703dc18884ed7728741744c04",
+  "rows": 10000,
+  "dimension": 128,
+  "queries": 1000,
+  "memory_limit": "128M",
+  "swap_max": 0,
+  "cpu_quota": "200%",
+  "indexed": true,
+  "rounds": [
+    {
+      "seed": 20261114,
+      "order": [
+        "original",
+        "previous",
+        "candidate"
+      ],
+      "original": {
+        "write": {
+          "T_ms": 789.7409690001496,
+          "memory.peak": 9297920,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0"
+        },
+        "query": {
+          "T_ms": 251.1018679999779,
+          "memory.peak": 21602304,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=12660736 rios=0 wios=311 dbytes=0 dios=0"
+        },
+        "cold_query_ms": 14.318148000029396,
+        "index_ms": 37.62349499993434,
+        "data_bytes": 11817594,
+        "exact_queries": 1000,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "previous": {
+        "write": {
+          "T_ms": 470.2967840000838,
+          "memory.peak": 9179136,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+        },
+        "query": {
+          "T_ms": 218.6899790001462,
+          "memory.peak": 21499904,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=12259328 rios=0 wios=210 dbytes=0 dios=0"
+        },
+        "cold_query_ms": 14.691786999946999,
+        "index_ms": 39.31362499997704,
+        "data_bytes": 11836252,
+        "exact_queries": 1000,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "candidate": {
+        "write": {
+          "T_ms": 443.56674000005114,
+          "memory.peak": 9441280,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+        },
+        "query": {
+          "T_ms": 186.6722889999437,
+          "memory.peak": 16519168,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=12259328 rios=0 wios=208 dbytes=0 dios=0"
+        },
+        "cold_query_ms": 11.105984999858265,
+        "index_ms": 32.93516799999452,
+        "data_bytes": 11836252,
+        "exact_queries": 1000,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      }
+    },
+    {
+      "seed": 8675309,
+      "order": [
+        "previous",
+        "candidate",
+        "original"
+      ],
+      "previous": {
+        "write": {
+          "T_ms": 447.83373100017343,
+          "memory.peak": 9445376,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+        },
+        "query": {
+          "T_ms": 216.23058799991668,
+          "memory.peak": 21766144,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=12259328 rios=0 wios=209 dbytes=0 dios=0"
+        },
+        "cold_query_ms": 13.927176999914082,
+        "index_ms": 38.18865699986418,
+        "data_bytes": 11836252,
+        "exact_queries": 1000,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "candidate": {
+        "write": {
+          "T_ms": 452.52470099990205,
+          "memory.peak": 9445376,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+        },
+        "query": {
+          "T_ms": 236.38749800011283,
+          "memory.peak": 16523264,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=12259328 rios=0 wios=211 dbytes=0 dios=0"
+        },
+        "cold_query_ms": 11.553935000165438,
+        "index_ms": 37.187058999961664,
+        "data_bytes": 11836252,
+        "exact_queries": 1000,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "original": {
+        "write": {
+          "T_ms": 864.7345760000462,
+          "memory.peak": 9297920,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0"
+        },
+        "query": {
+          "T_ms": 298.47866799991607,
+          "memory.peak": 21610496,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=12660736 rios=0 wios=313 dbytes=0 dios=0"
+        },
+        "cold_query_ms": 13.499646000127541,
+        "index_ms": 39.637519000052635,
+        "data_bytes": 11817594,
+        "exact_queries": 1000,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      }
+    },
+    {
+      "seed": 14223819,
+      "order": [
+        "candidate",
+        "original",
+        "previous"
+      ],
+      "candidate": {
+        "write": {
+          "T_ms": 474.82885899989924,
+          "memory.peak": 9445376,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+        },
+        "query": {
+          "T_ms": 211.0875200000919,
+          "memory.peak": 16785408,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=12259328 rios=0 wios=210 dbytes=0 dios=0"
+        },
+        "cold_query_ms": 11.63211599987335,
+        "index_ms": 37.55487900002663,
+        "data_bytes": 11836252,
+        "exact_queries": 1000,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "original": {
+        "write": {
+          "T_ms": 850.9580269999333,
+          "memory.peak": 9097216,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=7241728 rios=0 wios=306 dbytes=0 dios=0"
+        },
+        "query": {
+          "T_ms": 234.9907139998777,
+          "memory.peak": 21401600,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=12660736 rios=0 wios=312 dbytes=0 dios=0"
+        },
+        "cold_query_ms": 12.981361999891305,
+        "index_ms": 37.25664100011272,
+        "data_bytes": 11817594,
+        "exact_queries": 1000,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      },
+      "previous": {
+        "write": {
+          "T_ms": 451.44796799991127,
+          "memory.peak": 9445376,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0"
+        },
+        "query": {
+          "T_ms": 200.40120600015143,
+          "memory.peak": 21766144,
+          "memory.max": "134217728",
+          "memory.swap.max": "0",
+          "io.stat": "8:48 rbytes=0 wbytes=12259328 rios=0 wios=208 dbytes=0 dios=0"
+        },
+        "cold_query_ms": 13.762336999889158,
+        "index_ms": 35.33730499998455,
+        "data_bytes": 11836252,
+        "exact_queries": 1000,
+        "restart_content_check": true,
+        "recall_filtered": 1,
+        "recall_unfiltered": 1
+      }
+    }
+  ],
+  "measurement": "Fresh service cgroup and Linux /tmp directory per version/seed; oracle outside. Query resource counters include setup, index and warmup; T is warm timed queries. Cold T reported separately. No global cache eviction; shared host/WSL device attribution is not organizer certified. Rotated order across rounds. All commits included in timed write response.",
+  "binaries": {
+    "original": {
+      "path": "/mnt/d/ob\u5927\u8d5b/seekdb/local-results/perf5000/baseline/build/minivectordb",
+      "sha256": "c4fc41b671db62c52d769cdaa7b96ffa5d29d66b2fe19f0ac4ed4be73cbf91ff"
+    },
+    "previous": {
+      "path": "/mnt/d/ob\u5927\u8d5b/seekdb/local-results/perf5000/candidate/build/minivectordb",
+      "sha256": "ad1af62f36d1b00eb21505ce0d69a382d51568c277419c022b1610e89a53ff3f"
+    },
+    "candidate": {
+      "path": "/mnt/d/ob\u5927\u8d5b/seekdb/local-results/perf-recovery/candidate/build/minivectordb",
+      "sha256": "cb896c1a9685ba83f4ee9421cbb2c9a70ddfdfec75df2f43796efc5ff7e50728"
+    }
+  },
+  "median_paired_speedups": {
+    "original": {
+      "write": 1.7921362842019546,
+      "query": 1.2626668945062975
+    },
+    "previous": {
+      "write": 0.9896337813397513,
+      "query": 0.9493749606801206
+    }
+  }
+}

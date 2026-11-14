@@ -1,10 +1,12 @@
 # MiniVectorDB
 
-**当前开发分支 `minivectordb-perf5000`：** 以
-`cefca4665498c5c20e1f85ca4201190e3434499c`（`codex/minivectordb-round2-optimize`）
-为基线，继续优化提交同步、有界缓存和整数 SIMD。用户反馈基线性能约 2500；
-本轮目标是至少 5000，当前没有新的平台成绩。设计、实测、验证及格式迁移说明见
-[本轮性能记录](docs/perf5000.md)。下方其他分支的交付和平台数据属于历史版本。
+**2026-11-14 当前迭代，分支 `minivectordb-perf5000`：** 用户反馈上一提交
+`c1d3ee02d9b5c90f9b74cfa9684a21746fbb508c` 性能 2300、Prompt 原始分 5；
+更早 `cefca4665498c5c20e1f85ca4201190e3434499c` 的性能约 2500。
+本轮移除常驻 float32 向量副本，缩小筛选缓存，并使用精确种子收紧安全筛选界。
+当前源码尚无新平台成绩，5000 仍为未验证目标。见
+[本轮回退修正记录](docs/performance-recovery.md)；
+[上一版性能与格式迁移记录](docs/perf5000.md) 保留为历史。下方交付数据属于历史版本。
 
 **2026-11-13 本轮交付：** 从 `origin/minivectordb-round2` 的
 `12b8554683f8f3208e46d74ccf048d76a592c102` 开始，在

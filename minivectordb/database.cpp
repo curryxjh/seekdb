@@ -18,8 +18,7 @@ namespace mvdb {
 namespace {
 void checked(bool ok) { require(ok, "io_error", "temporary result I/O failed"); }
 size_t scan_budget() {
-  // Use a fraction of the actual container budget, not a fixed tiny prefix.
-  // Keep 7/8 available for the parser, page cache, dirty pages and working sets.
+  // Account for all retained screening data, not a duplicate float32 matrix.
   uint64_t memory = 1024U * 1024U * 1024U;
   const auto consider = [&](const std::string &path) {
     std::ifstream file(path);
@@ -38,8 +37,8 @@ size_t scan_budget() {
       directory.resize(directory.find_last_of('/'));
     }
   }
-  return static_cast<size_t>(std::clamp<uint64_t>(memory / 8, 1024U * 1024U,
-                                               128U * 1024U * 1024U));
+  return static_cast<size_t>(std::clamp<uint64_t>(memory / 16, 1024U * 1024U,
+                                               8U * 1024U * 1024U));
 }
 std::string decimal(double value) {
   char text[64];
@@ -454,7 +453,7 @@ void Database::invalidate_scan() {
   // A large SELECT must not leave retained capacity behind when a later write
   // needs memory for parsing, statement savepoints or dirty data pages.
   std::vector<ScanRow>().swap(scan_rows_);
-  std::vector<float>().swap(scan_vectors_);
+  std::vector<float>().swap(scan_fallback_vectors_);
   std::vector<ScanFilter>().swap(scan_filters_);
   scan_screen_ = {}; scan_root_ = 0; scan_complete_ = false;
 }
@@ -710,25 +709,38 @@ Spool Database::select(const Statement &s, const Table &t) {
   }
   if (!direct && heap && order.distance) {
     const size_t dimension = order.query.size();
+    const bool quantized = dimension >= 32 && dimension <= 4096;
     const size_t row_limit = scan_budget_ /
-                             (sizeof(ScanRow) + dimension * sizeof(float));
+        (sizeof(ScanRow) + (quantized ? dimension + sizeof(int32_t) + sizeof(double) + 1
+                                     : dimension * sizeof(float)));
     if (scan_root_ == 0 || scan_root_ != t.root) {
       invalidate_scan();
       if (row_limit != 0) {
-        scan_rows_.reserve(row_limit); scan_vectors_.reserve(row_limit * dimension);
+        scan_rows_.reserve(row_limit);
+        if (!quantized) scan_fallback_vectors_.reserve(row_limit * dimension);
         scan_complete_ = true;
         storage_.scan(t.root, [&](int64_t id, uint64_t offset) {
           if (scan_rows_.size() == row_limit) { scan_complete_ = false; return false; }
-          row.reset(storage_.blob(offset));
-          const auto input = row.vector(order.column);
-          const size_t start = scan_vectors_.size();
-          scan_vectors_.resize(start + dimension);
-          for (size_t d = 0; d < dimension; ++d)
-            scan_vectors_[start + d] = load_float(input.data() + d * 4);
+          if (!quantized) {
+            row.reset(storage_.blob(offset));
+            const auto input = row.vector(order.column);
+            const size_t begin = scan_fallback_vectors_.size();
+            scan_fallback_vectors_.resize(begin + dimension);
+            for (size_t d = 0; d < dimension; ++d)
+              scan_fallback_vectors_[begin + d] = load_float(input.data() + d * 4);
+          }
           scan_rows_.push_back({id, offset});
           return true;
         });
-        scan_screen_.build(scan_vectors_, dimension, scan_budget_ / 2);
+        if (quantized) {
+          std::vector<float> scratch(dimension);
+          scan_screen_.build(scan_rows_.size(), dimension, [&](size_t i) -> std::span<const float> {
+            row.reset(storage_.blob(scan_rows_[i].offset));
+            const auto input = row.vector(order.column);
+            for (size_t d = 0; d < dimension; ++d) scratch[d] = load_float(input.data() + d * 4);
+            return scratch;
+          }, scan_budget_);
+        }
         scan_root_ = t.root;
       }
     }
@@ -781,27 +793,36 @@ Spool Database::select(const Statement &s, const Table &t) {
     };
     const auto refine = [&](size_t i) {
       const auto &cached = scan_rows_[i];
-      const auto *data = reinterpret_cast<const char *>(scan_vectors_.data() + i * dimension);
-      accept_vector(cached.id, cached.offset, std::string_view(data, dimension * 4));
+      row.reset(storage_.blob(cached.offset));
+      accept_vector(cached.id, cached.offset, row.vector(order.column));
     };
-    if (!scan_screen_.empty() && s.limit <= 64 && scan_rows_.size() >= 256) {
-      // K upper bounds certify a cutoff before any exact refinement. This
-      // avoids repeatedly refining merely improving (but ultimately losing)
-      // candidates encountered early in primary-key scan order.
+    if (!quantized) {
+      for_each_cached([&](size_t i) {
+        const auto &cached = scan_rows_[i];
+        const auto *data = reinterpret_cast<const char *>(scan_fallback_vectors_.data() + i * dimension);
+        accept_vector(cached.id, cached.offset, std::string_view(data, dimension * sizeof(float)));
+      });
+    } else if (!scan_screen_.empty() && s.limit <= 64 && scan_rows_.size() >= 256) {
+      // Refine K quantized seeds, then use their exact heap cutoff and one
+      // reconstruction-error bound. Every other eligible row is still tested.
       std::vector<uint32_t> rows; rows.reserve(scan_rows_.size());
       for_each_cached([&](size_t i) { rows.push_back(static_cast<uint32_t>(i)); });
       const auto distances = scan_screen_.code_distances(rows, screening_query);
-      std::priority_queue<int32_t> cutoffs;
-      for (int32_t distance : distances) {
-        const int32_t upper = s.descending ? -distance : distance;
-        if (cutoffs.size() < s.limit) cutoffs.push(upper);
-        else if (upper < cutoffs.top()) { cutoffs.pop(); cutoffs.push(upper); }
+      using Seed = std::pair<int32_t, size_t>;
+      std::priority_queue<Seed> seeds;
+      for (size_t i = 0; i < distances.size(); ++i) {
+        const Seed seed{s.descending ? -distances[i] : distances[i], i};
+        if (seeds.size() < s.limit) seeds.push(seed);
+        else if (seed < seeds.top()) { seeds.pop(); seeds.push(seed); }
       }
-      if (!cutoffs.empty()) {
-        const int32_t kth = s.descending ? -cutoffs.top() : cutoffs.top();
-        const double cutoff = scan_screen_.code_cutoff(screening_query, kth, s.descending);
-        for (size_t i = 0; i < rows.size(); ++i)
-          if (s.descending ? distances[i] >= cutoff : distances[i] <= cutoff) refine(rows[i]);
+      if (!seeds.empty()) {
+        const Seed last_seed = seeds.top();
+        while (!seeds.empty()) { refine(rows[seeds.top().second]); seeds.pop(); }
+        const double cutoff = scan_screen_.refined_cutoff(screening_query, std::get<double>(top.top().key), s.descending);
+        for (size_t i = 0; i < rows.size(); ++i) {
+          const Seed rank{s.descending ? -distances[i] : distances[i], i};
+          if (rank > last_seed && (s.descending ? distances[i] >= cutoff : distances[i] <= cutoff)) refine(rows[i]);
+        }
       }
     } else for_each_cached([&](size_t i) {
       if (!scan_screen_.empty() && top.size() == s.limit &&
