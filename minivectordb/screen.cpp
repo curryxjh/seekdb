@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <numeric>
 #if defined(__x86_64__)
 #include <immintrin.h>
 #endif
@@ -218,6 +219,40 @@ void distances_avx2(const int8_t *codes, const int32_t *norms, size_t dimension,
     out[n] = norms[rows[n]] + q.norm -
              2 * dot_avx2(codes + rows[n] * dimension, q.codes.data(), dimension);
 }
+__attribute__((target("avx2")))
+void distances_avx2_contiguous(const int8_t *codes, const int32_t *norms, size_t dimension,
+                               size_t count, const QuantizedScreen::Query &q, int32_t *out) {
+  const auto ones = _mm256_set1_epi16(1);
+  size_t n = 0;
+  for (; n + 4 <= count; n += 4) {
+    const auto *r0 = codes + n * dimension;
+    const auto *r1 = r0 + dimension;
+    const auto *r2 = r1 + dimension;
+    const auto *r3 = r2 + dimension;
+    auto s0 = _mm256_setzero_si256(), s1 = s0, s2 = s0, s3 = s0;
+    size_t d = 0;
+    for (; d + 32 <= dimension; d += 32) {
+      const auto qv = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(q.codes.data() + d));
+      const auto x0 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(r0 + d));
+      const auto x1 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(r1 + d));
+      const auto x2 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(r2 + d));
+      const auto x3 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(r3 + d));
+      s0 = _mm256_add_epi32(s0, _mm256_madd_epi16(_mm256_maddubs_epi16(_mm256_abs_epi8(x0), _mm256_sign_epi8(qv, x0)), ones));
+      s1 = _mm256_add_epi32(s1, _mm256_madd_epi16(_mm256_maddubs_epi16(_mm256_abs_epi8(x1), _mm256_sign_epi8(qv, x1)), ones));
+      s2 = _mm256_add_epi32(s2, _mm256_madd_epi16(_mm256_maddubs_epi16(_mm256_abs_epi8(x2), _mm256_sign_epi8(qv, x2)), ones));
+      s3 = _mm256_add_epi32(s3, _mm256_madd_epi16(_mm256_maddubs_epi16(_mm256_abs_epi8(x3), _mm256_sign_epi8(qv, x3)), ones));
+    }
+    int32_t dots[4]{horizontal_avx2(s0), horizontal_avx2(s1), horizontal_avx2(s2), horizontal_avx2(s3)};
+    const int8_t *data[4]{r0, r1, r2, r3};
+    for (size_t i = 0; i < 4; ++i) {
+      for (size_t tail = d; tail < dimension; ++tail) dots[i] += static_cast<int32_t>(data[i][tail]) * q.codes[tail];
+      out[n + i] = norms[n + i] + q.norm - 2 * dots[i];
+    }
+  }
+  for (; n < count; ++n)
+    out[n] = norms[n] + q.norm -
+             2 * dot_avx2(codes + n * dimension, q.codes.data(), dimension);
+}
 
 // VNNI consumes unsigned*signed bytes. Shifting each stored code by 128 adds
 // the same 128*sum(query) to every dot product; subtract it exactly below.
@@ -385,6 +420,25 @@ std::vector<int32_t> QuantizedScreen::code_distances(std::span<const uint32_t> r
   }
 #endif
   distances_scalar(codes_.data(), norms_.data(), dimension_, rows, q, result.data());
+  return result;
+}
+std::vector<int32_t> QuantizedScreen::code_distances(size_t count, const Query &q) const {
+  count = std::min(count, size());
+  std::vector<int32_t> result(count);
+#if defined(__x86_64__)
+  if (__builtin_cpu_supports("avx512f") && __builtin_cpu_supports("avx512bw") &&
+      __builtin_cpu_supports("avx512vnni")) {
+    std::vector<uint32_t> rows(count);
+    std::iota(rows.begin(), rows.end(), uint32_t{0});
+    distances_vnni(codes_.data(), norms_.data(), dimension_, rows, q, result.data());
+    return result;
+  }
+  if (__builtin_cpu_supports("avx2")) {
+    distances_avx2_contiguous(codes_.data(), norms_.data(), dimension_, count, q, result.data());
+    return result;
+  }
+#endif
+  for (size_t row = 0; row < count; ++row) result[row] = code_distance(row, q);
   return result;
 }
 double QuantizedScreen::code_cutoff(const Query &q, int32_t kth, bool descending) const {

@@ -29,6 +29,7 @@ int main() {
         std::vector<uint32_t> selected;
         for (uint32_t row = 0; row < 65; ++row) selected.push_back(row);
         const auto bulk = screen.code_distances(selected, q);
+        const auto contiguous = screen.code_distances(65, q);
         std::vector<std::pair<long double, size_t>> truth;
         std::vector<int32_t> approximate;
         for (size_t row = 0; row < 65; ++row) {
@@ -41,6 +42,7 @@ int main() {
           truth.push_back({exact, row});
           approximate.push_back(screen.code_distance(row, q));
           assert(bulk[row] == approximate.back());
+          assert(contiguous[row] == approximate.back());
           const auto interval = screen.bounds(row, q);
           assert(interval.lower <= exact && exact <= interval.upper);
           // A candidate at the cutoff (including its rounded tie) must never

@@ -22,6 +22,8 @@ from container_checks import docker, metrics
 def source_digest():
     h = hashlib.sha256()
     for path in sorted(Path("minivectordb").glob("*")):
+        if not path.is_file():
+            continue
         h.update(path.name.encode())
         h.update(path.read_bytes())
     return h.hexdigest()

@@ -827,16 +827,19 @@ Spool Database::select(const Statement &s, const Table &t) {
       // Refine K quantized seeds, then use their exact heap cutoff and one
       // reconstruction-error bound. Every other eligible row is still tested.
       std::vector<uint32_t> rows;
+      size_t coded_count = 0;
+      std::vector<int32_t> distances;
       if (where.empty()) {
-        rows.resize(scan_rows_.size());
-        std::iota(rows.begin(), rows.end(), uint32_t{0});
+        coded_count = std::min(scan_screen_.size(), scan_rows_.size());
+        distances = scan_screen_.code_distances(coded_count, screening_query);
       } else {
         rows.reserve(scan_rows_.size());
         for_each_cached([&](size_t i) { rows.push_back(static_cast<uint32_t>(i)); });
+        const auto coded_end = std::lower_bound(rows.begin(), rows.end(), scan_screen_.size());
+        coded_count = static_cast<size_t>(coded_end - rows.begin());
+        distances = scan_screen_.code_distances(std::span<const uint32_t>(rows.data(), coded_count), screening_query);
       }
-      const auto coded_end = std::lower_bound(rows.begin(), rows.end(), scan_screen_.size());
-      const size_t coded_count = static_cast<size_t>(coded_end - rows.begin());
-      const auto distances = scan_screen_.code_distances(std::span<const uint32_t>(rows.data(), coded_count), screening_query);
+      const auto row_at = [&](size_t i) { return where.empty() ? i : static_cast<size_t>(rows[i]); };
       using Seed = std::pair<int32_t, size_t>;
       std::priority_queue<Seed> seeds;
       for (size_t i = 0; i < distances.size(); ++i) {
@@ -846,14 +849,15 @@ Spool Database::select(const Statement &s, const Table &t) {
       }
       if (!seeds.empty()) {
         const Seed last_seed = seeds.top();
-        while (!seeds.empty()) { refine(rows[seeds.top().second]); seeds.pop(); }
+        while (!seeds.empty()) { refine(row_at(seeds.top().second)); seeds.pop(); }
         const double cutoff = scan_screen_.refined_cutoff(screening_query, std::get<double>(top.top().key), s.descending);
         for (size_t i = 0; i < coded_count; ++i) {
           const Seed rank{s.descending ? -distances[i] : distances[i], i};
-          if (rank > last_seed && (s.descending ? distances[i] >= cutoff : distances[i] <= cutoff)) refine(rows[i]);
+          if (rank > last_seed && (s.descending ? distances[i] >= cutoff : distances[i] <= cutoff)) refine(row_at(i));
         }
       }
-      for (auto i = coded_end; i != rows.end(); ++i) refine(*i);
+      const size_t row_count = where.empty() ? scan_rows_.size() : rows.size();
+      for (size_t i = coded_count; i < row_count; ++i) refine(row_at(i));
     } else for_each_cached([&](size_t i) {
       if (i < scan_screen_.size() && top.size() == s.limit &&
           scan_screen_.rejects(i, screening_query, std::get<double>(top.top().key), s.descending)) return;

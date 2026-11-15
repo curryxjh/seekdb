@@ -29,6 +29,7 @@ class QuantizedScreen {
   Query query(std::span<const float> vector) const;
   int32_t code_distance(size_t row, const Query &query) const;
   std::vector<int32_t> code_distances(std::span<const uint32_t> rows, const Query &query) const;
+  std::vector<int32_t> code_distances(size_t count, const Query &query) const;
   double code_cutoff(const Query &query, int32_t kth, bool descending) const;
   double refined_cutoff(const Query &query, double worst, bool descending) const;
   Interval bounds(size_t row, const Query &query) const;
