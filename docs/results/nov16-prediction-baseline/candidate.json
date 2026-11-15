@@ -1,0 +1,87 @@
+{
+  "scope": "LOCAL cgroup comparison, not official E or score",
+  "platform": "Linux x86_64 emulated on Apple arm64 Docker Desktop",
+  "cpus": 2,
+  "memory_limit": 134217728,
+  "swap": 0,
+  "rows": 10000,
+  "dimension": 128,
+  "queries": 1000,
+  "K": 10,
+  "write_batch": 100,
+  "indexed": false,
+  "cache_policy": "fresh cgroups/volumes, no host cache eviction; 10 warmup queries",
+  "B_caveat": "Raw io.stat; dedicated device/writeback attribution unverified",
+  "timing_note": "Adjacent pairs with reversed order in middle round; no simultaneous Agent build/test",
+  "image": "minivectordb:nov16-number",
+  "rounds": [
+    {
+      "seed": 20261112,
+      "write": {
+        "T_ms": 1659.0177089674398,
+        "memory_peak": 25513984,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=2424832 wbytes=6848512 rios=5 wios=205 dbytes=0 dios=0",
+        "restart_content_check": true
+      },
+      "query": {
+        "T_ms": 537.1897909790277,
+        "memory_peak": 24645632,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+        "preparation_ms": 0.000166997779160738,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "seed": 39034843,
+      "write": {
+        "T_ms": 1663.0519589525647,
+        "memory_peak": 23355392,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+        "restart_content_check": true
+      },
+      "query": {
+        "T_ms": 485.0857079727575,
+        "memory_peak": 24260608,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+        "preparation_ms": 0.00016705598682165146,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    },
+    {
+      "seed": 774193,
+      "write": {
+        "T_ms": 1678.359416022431,
+        "memory_peak": 21008384,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+        "restart_content_check": true
+      },
+      "query": {
+        "T_ms": 490.7823749817908,
+        "memory_peak": 24920064,
+        "memory_max": "134217728",
+        "swap_max": "0",
+        "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+        "preparation_ms": 0.000166997779160738,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0,
+        "all_query_assertions": true
+      }
+    }
+  ],
+  "image_id": "sha256:9b7a0097b7e6557aafdcdcbbe9c1d0aa33abfaf8ef53d2f0be1ef89002ecc2f5",
+  "source_sha256": "a2553e08d54269ddea41679914b7d5d03f30369ab07178f87be21f3dd66ad6d3"
+}

@@ -1,0 +1,12 @@
+{
+  "scope": "Measured image identity, not new implementation or official submission",
+  "code_commit": "6b4b0d2b76f13210f75968638916e6672a61635d",
+  "current_source_sha256": "a2553e08d54269ddea41679914b7d5d03f30369ab07178f87be21f3dd66ad6d3",
+  "executables": {
+    "minivectordb:perf5000-candidate-5572448": "e63292af43d14132e999746279597d2ae08f55cc7ce749721b9331900d82b6d8",
+    "minivectordb:nov16-number": "dc7800d5669fae8c50669b104c750b460d811ccbafe0cf10628619e3c06b5608"
+  },
+  "harness_sha256": "60a9006b1ada44c9aefbbe22c68dc0c609d1598b36b33828743a7deb8d1bb91a",
+  "workload_sha256": "ac83609b6abb1821603e2bb0219309f1b8df00e6350b7f4840c22a0ea4679aab",
+  "implementation_changed_this_round": false
+}
