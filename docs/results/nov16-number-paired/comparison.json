@@ -1,0 +1,156 @@
+{
+  "scope": "LOCAL proxy only; no official baseline, E, score or ranking",
+  "B_caveat": "Raw cgroup io.stat across reported devices; dedicated device and writeback attribution are not certified",
+  "formula": "0.6*time + 0.2*IO + 0.2*memory; query weight 2; f(R)=R/(1+R); epsilon=1ms,1MiB,1MiB; per-round then median",
+  "median_local_proxy": "0.503104",
+  "no_change_reference": 0.5,
+  "rounds": [
+    {
+      "seed": 20261112,
+      "write": {
+        "baseline": {
+          "T_ms": 1727.9769589658827,
+          "B_bytes": 6848512,
+          "M_bytes": 24526848
+        },
+        "candidate": {
+          "T_ms": 1677.9350829892792,
+          "B_bytes": 6848512,
+          "M_bytes": 24858624
+        },
+        "ratios": {
+          "T_ms": 1.029805724166241,
+          "B_bytes": 1.0,
+          "M_bytes": 0.987193675889328
+        },
+        "local_proxy": 0.5037607657351055
+      },
+      "query": {
+        "baseline": {
+          "T_ms": 483.0730839748867,
+          "B_bytes": 6848512,
+          "M_bytes": 25063424
+        },
+        "candidate": {
+          "T_ms": 489.65175001649186,
+          "B_bytes": 6848512,
+          "M_bytes": 22671360
+        },
+        "ratios": {
+          "T_ms": 0.9865919849641135,
+          "B_bytes": 1.0,
+          "M_bytes": 1.1008461405629424
+        },
+        "local_proxy": 0.502775486656712
+      },
+      "local_proxy": 0.5031039130161765
+    },
+    {
+      "seed": 39034843,
+      "write": {
+        "baseline": {
+          "T_ms": 1657.8457080177031,
+          "B_bytes": 6848512,
+          "M_bytes": 23363584
+        },
+        "candidate": {
+          "T_ms": 1712.2816249611787,
+          "B_bytes": 6848512,
+          "M_bytes": 22974464
+        },
+        "ratios": {
+          "T_ms": 0.9682271051353224,
+          "B_bytes": 1.0,
+          "M_bytes": 1.0161977834612106
+        },
+        "local_proxy": 0.49596051243076666
+      },
+      "query": {
+        "baseline": {
+          "T_ms": 490.2764579746872,
+          "B_bytes": 6848512,
+          "M_bytes": 25120768
+        },
+        "candidate": {
+          "T_ms": 488.18083299556747,
+          "B_bytes": 6848512,
+          "M_bytes": 24281088
+        },
+        "ratios": {
+          "T_ms": 1.0042839474439071,
+          "B_bytes": 1.0,
+          "M_bytes": 1.0331500646830531
+        },
+        "local_proxy": 0.5022716966515333
+      },
+      "local_proxy": 0.5001679685779444
+    },
+    {
+      "seed": 774193,
+      "write": {
+        "baseline": {
+          "T_ms": 1692.434917029459,
+          "B_bytes": 6848512,
+          "M_bytes": 21409792
+        },
+        "candidate": {
+          "T_ms": 1612.571540987119,
+          "B_bytes": 6848512,
+          "M_bytes": 23351296
+        },
+        "ratios": {
+          "T_ms": 1.0494947847143379,
+          "B_bytes": 1.0,
+          "M_bytes": 0.9204297465167031
+        },
+        "local_proxy": 0.5031015680693309
+      },
+      "query": {
+        "baseline": {
+          "T_ms": 524.4115410023369,
+          "B_bytes": 6848512,
+          "M_bytes": 22597632
+        },
+        "candidate": {
+          "T_ms": 461.1666660057381,
+          "B_bytes": 6848512,
+          "M_bytes": 22003712
+        },
+        "ratios": {
+          "T_ms": 1.1368443023881207,
+          "B_bytes": 1.0,
+          "M_bytes": 1.0257640369580667
+        },
+        "local_proxy": 0.5204839296309034
+      },
+      "local_proxy": 0.5146898091103792
+    }
+  ],
+  "metric_medians_for_description_only": {
+    "write": {
+      "baseline": {
+        "T_ms": 1692.434917029459,
+        "B_bytes": 6848512,
+        "M_bytes": 23363584
+      },
+      "candidate": {
+        "T_ms": 1677.9350829892792,
+        "B_bytes": 6848512,
+        "M_bytes": 23351296
+      }
+    },
+    "query": {
+      "baseline": {
+        "T_ms": 490.2764579746872,
+        "B_bytes": 6848512,
+        "M_bytes": 25063424
+      },
+      "candidate": {
+        "T_ms": 488.18083299556747,
+        "B_bytes": 6848512,
+        "M_bytes": 22671360
+      }
+    }
+  },
+  "median_paired_query_speedup": 1.0042927227729541
+}

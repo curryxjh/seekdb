@@ -1,0 +1,52 @@
+diff --git a/minivectordb/database.cpp b/minivectordb/database.cpp
+index c9f05b5b4..2dec73b46 100644
+--- a/minivectordb/database.cpp
++++ b/minivectordb/database.cpp
+@@ -853,7 +853,9 @@ Spool Database::select(const Statement &s, const Table &t) {
+         const double cutoff = scan_screen_.refined_cutoff(screening_query, std::get<double>(top.top().key), s.descending);
+         for (size_t i = 0; i < coded_count; ++i) {
+           const Seed rank{s.descending ? -distances[i] : distances[i], i};
+-          if (rank > last_seed && (s.descending ? distances[i] >= cutoff : distances[i] <= cutoff)) refine(row_at(i));
++          if (rank > last_seed && (s.descending ? distances[i] >= cutoff : distances[i] <= cutoff) &&
++              !scan_screen_.rejects(row_at(i), screening_query, distances[i],
++                                    std::get<double>(top.top().key), s.descending)) refine(row_at(i));
+         }
+       }
+       const size_t row_count = where.empty() ? scan_rows_.size() : rows.size();
+diff --git a/minivectordb/screen.cpp b/minivectordb/screen.cpp
+index d791810d3..39513518f 100644
+--- a/minivectordb/screen.cpp
++++ b/minivectordb/screen.cpp
+@@ -456,14 +456,16 @@ double QuantizedScreen::code_cutoff(const Query &q, int32_t kth, bool descending
+   return upper * upper * (1 + 128 * std::numeric_limits<double>::epsilon()) + 1;
+ }
+ bool QuantizedScreen::rejects(size_t row, const Query &q, double worst, bool descending) const {
+-  static const auto dot = dot_kernel();
+   // With one scale, norm+norm-2*dot is an exact integer <=4096*254^2.
+-  const double estimate = norms_[row] + q.norm - 2.0 * dot(codes_.data() + row * dimension_, q.codes.data(), dimension_);
++  return rejects(row, q, code_distance(row, q), worst, descending);
++}
++bool QuantizedScreen::rejects(size_t row, const Query &q, int32_t estimate,
++                              double worst, bool descending) const {
+   const double error = (errors_[row] + q.error) * (1 + 16 * std::numeric_limits<double>::epsilon());
+   if (descending) {
+-    const double lower = std::max(0.0, worst - error) / scale_;
++    const double lower = std::max(0.0, std::nextafter(worst, -INFINITY) - error) / scale_;
+     return estimate * (1 + 64 * std::numeric_limits<double>::epsilon()) < lower * lower;
+   }
+-  const double upper = (worst + error) / scale_;
++  const double upper = (std::nextafter(worst, INFINITY) + error) / scale_;
+   return estimate * (1 - 64 * std::numeric_limits<double>::epsilon()) > upper * upper;
+ }
+diff --git a/minivectordb/screen.h b/minivectordb/screen.h
+index 96cd131ca..f3fb0b47b 100644
+--- a/minivectordb/screen.h
++++ b/minivectordb/screen.h
+@@ -34,6 +34,7 @@ class QuantizedScreen {
+   double refined_cutoff(const Query &query, double worst, bool descending) const;
+   Interval bounds(size_t row, const Query &query) const;
+   bool rejects(size_t row, const Query &query, double worst, bool descending) const;
++  bool rejects(size_t row, const Query &query, int32_t estimate, double worst, bool descending) const;
+  private:
+   size_t dimension_ = 0;
+   double scale_ = 1;

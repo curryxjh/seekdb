@@ -1,0 +1,115 @@
+{
+  "created_at": "2026-11-16T01:46:02.143626+08:00",
+  "source_sha256": "a2553e08d54269ddea41679914b7d5d03f30369ab07178f87be21f3dd66ad6d3",
+  "baseline_commit": "5572448a2602683ded0813cfca137cf98af5f418",
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "tests/vector_numbers.py",
+        "--binary",
+        "tests/docker_db.py"
+      ],
+      "exit_status": 0,
+      "output": "PASS vector numbers: 323 checks; double-to-float rounding, signs, subnormals/underflow, overflow, strict syntax, query literals and restart\n"
+    },
+    {
+      "command": [
+        "python3",
+        "tests/regression.py",
+        "--binary",
+        "tests/docker_db.py"
+      ],
+      "exit_status": 0,
+      "output": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n"
+    },
+    {
+      "command": [
+        "docker",
+        "volume",
+        "rm",
+        "mvdb-nov16-20fbb493fa-2f349b8e9e142dfe0c3e",
+        "mvdb-nov16-20fbb493fa-3c187e067ffdc7d2e1de",
+        "mvdb-nov16-20fbb493fa-11bebf53672b86222a57",
+        "mvdb-nov16-20fbb493fa-397fb75ed8e2e8301931",
+        "mvdb-nov16-20fbb493fa-609fea6f1811becb5a35",
+        "mvdb-nov16-20fbb493fa-a81eddb9540b84c8dfbb",
+        "mvdb-nov16-20fbb493fa-a92b3a31a79ce7e8de91"
+      ],
+      "exit_status": 0,
+      "output": "mvdb-nov16-20fbb493fa-2f349b8e9e142dfe0c3e\nmvdb-nov16-20fbb493fa-3c187e067ffdc7d2e1de\nmvdb-nov16-20fbb493fa-11bebf53672b86222a57\nmvdb-nov16-20fbb493fa-397fb75ed8e2e8301931\nmvdb-nov16-20fbb493fa-609fea6f1811becb5a35\nmvdb-nov16-20fbb493fa-a81eddb9540b84c8dfbb\nmvdb-nov16-20fbb493fa-a92b3a31a79ce7e8de91\n"
+    },
+    {
+      "command": [
+        "docker",
+        "build",
+        "--platform",
+        "linux/amd64",
+        "-t",
+        "minivectordb:nov16-number-clean",
+        "/var/folders/tr/jn2d504n6k7gl518_r93rtj80000gn/T/mvdb-nov16-export-bsa886rf"
+      ],
+      "exit_status": 0,
+      "output": "#0 building with \"desktop-linux\" instance using docker driver\n\n#1 [internal] load build definition from Dockerfile\n#1 transferring dockerfile: 552B done\n#1 DONE 0.0s\n\n#2 [internal] load metadata for docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\n#2 DONE 0.0s\n\n#3 [internal] load metadata for docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c\n#3 DONE 0.0s\n\n#4 [internal] load .dockerignore\n#4 transferring context: 2B done\n#4 DONE 0.0s\n\n#5 [stage-1 1/3] FROM docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\n#5 resolve docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc done\n#5 DONE 0.0s\n\n#6 [build 1/4] FROM docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c\n#6 resolve docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c done\n#6 DONE 0.0s\n\n#7 [internal] load build context\n#7 transferring context: 124.72kB done\n#7 DONE 0.0s\n\n#8 [build 3/4] COPY minivectordb/ minivectordb/\n#8 CACHED\n\n#9 [build 2/4] WORKDIR /src\n#9 CACHED\n\n#10 [stage-1 2/3] COPY --from=build /minivectordb /usr/local/bin/minivectordb\n#10 CACHED\n\n#11 [build 4/4] RUN g++ -std=c++20 -O3 -Wall -Wextra -Wpedantic -Wconversion -Wshadow     -static-libstdc++ -static-libgcc minivectordb/*.cpp -o /minivectordb\n#11 CACHED\n\n#12 [stage-1 3/3] WORKDIR /data\n#12 CACHED\n\n#13 exporting to image\n#13 exporting layers done\n#13 exporting manifest sha256:fde74e09d16b7b09e2c1f12b7bc8f0839be2370e655a5bea34e207fd81b167d5 done\n#13 exporting config sha256:58b015f7ff072249f896651247aac0715c8e76648198c17b07253372bc5d40f6 done\n#13 exporting attestation manifest sha256:27f83dc2657426f9ea5662446fa99c22a5f8441793adeb0855c2ad2138e5a74b done\n#13 exporting manifest list sha256:685121a3cd38b123bcc380ef87746d0343610792ed2e0b40f99ceda3b2a0bc3c done\n#13 naming to docker.io/library/minivectordb:nov16-number-clean done\n#13 DONE 0.0s\n\nView build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/w9eujrz73hlgqagw4jah6l19p\n"
+    },
+    {
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--platform",
+        "linux/amd64",
+        "--entrypoint",
+        "sha256sum",
+        "minivectordb:nov16-number",
+        "/usr/local/bin/minivectordb"
+      ],
+      "exit_status": 0,
+      "output": "dc7800d5669fae8c50669b104c750b460d811ccbafe0cf10628619e3c06b5608  /usr/local/bin/minivectordb\n"
+    },
+    {
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        "none",
+        "--platform",
+        "linux/amd64",
+        "--entrypoint",
+        "sha256sum",
+        "minivectordb:nov16-number-clean",
+        "/usr/local/bin/minivectordb"
+      ],
+      "exit_status": 0,
+      "output": "dc7800d5669fae8c50669b104c750b460d811ccbafe0cf10628619e3c06b5608  /usr/local/bin/minivectordb\n"
+    },
+    {
+      "command": [
+        "python3",
+        "protocol_check/run.py",
+        "--image",
+        "minivectordb:nov16-number-clean",
+        "--handshake-only",
+        "--output",
+        "docs/results/nov16-number-clean-handshake"
+      ],
+      "exit_status": 0,
+      "output": "handshake: PASS \nReport: docs/results/nov16-number-clean-handshake/result.json\n"
+    }
+  ],
+  "clean_export_source_sha256": "a2553e08d54269ddea41679914b7d5d03f30369ab07178f87be21f3dd66ad6d3",
+  "images": {
+    "minivectordb:nov16-number": {
+      "image_id": "sha256:9b7a0097b7e6557aafdcdcbbe9c1d0aa33abfaf8ef53d2f0be1ef89002ecc2f5",
+      "executable_sha256": "dc7800d5669fae8c50669b104c750b460d811ccbafe0cf10628619e3c06b5608"
+    },
+    "minivectordb:nov16-number-clean": {
+      "image_id": "sha256:685121a3cd38b123bcc380ef87746d0343610792ed2e0b40f99ceda3b2a0bc3c",
+      "executable_sha256": "dc7800d5669fae8c50669b104c750b460d811ccbafe0cf10628619e3c06b5608"
+    }
+  },
+  "complete": true
+}

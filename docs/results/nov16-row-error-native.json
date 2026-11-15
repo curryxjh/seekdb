@@ -1,0 +1,74 @@
+{
+  "scope": "LOCAL native end-to-end timings; no cgroup resources or official score",
+  "source_sha256": "3073b6190300a36d50f7b4725aaff7b57b9e2b3f1e2eeedcfeff307bc64b6660",
+  "rows": 10000,
+  "dimensions": 128,
+  "queries": 600,
+  "rounds": [
+    {
+      "seed": 20261112,
+      "baseline": {
+        "write_ms": 165.4697500052862,
+        "query_ms": 39.67312502209097,
+        "exact_ID_order_distance_checks": 600,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "candidate": {
+        "write_ms": 181.39741697814316,
+        "query_ms": 37.61416603811085,
+        "exact_ID_order_distance_checks": 600,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "query_speedup": 1.0547389242099365
+    },
+    {
+      "seed": 39034843,
+      "candidate": {
+        "write_ms": 170.44070799602196,
+        "query_ms": 40.37645796779543,
+        "exact_ID_order_distance_checks": 600,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "baseline": {
+        "write_ms": 166.88937501749024,
+        "query_ms": 40.7244170201011,
+        "exact_ID_order_distance_checks": 600,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "query_speedup": 1.0086178696651202
+    },
+    {
+      "seed": 774193,
+      "baseline": {
+        "write_ms": 165.7350420136936,
+        "query_ms": 39.33029097970575,
+        "exact_ID_order_distance_checks": 600,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "candidate": {
+        "write_ms": 170.980499999132,
+        "query_ms": 39.83779199188575,
+        "exact_ID_order_distance_checks": 600,
+        "recall_unfiltered": 1.0,
+        "recall_filtered": 1.0
+      },
+      "query_speedup": 0.9872608147488855
+    }
+  ],
+  "binaries": {
+    "baseline": {
+      "path": "/Users/oxidaner/develop/coding/open-source/seekdb-minivectordb-perf5000/build/minivectordb-5572448",
+      "sha256": "290da6e2d5cf4b76b514f10fdb5c160f81597f3170fc76a23039db6a2cf110b3"
+    },
+    "candidate": {
+      "path": "/Users/oxidaner/develop/coding/open-source/seekdb-minivectordb-perf5000/build/minivectordb",
+      "sha256": "7267a22829f18cb6a4761c203f6d3b9f728e4f4f5cb93176c1a0928d0a202f8e"
+    }
+  },
+  "median_paired_query_speedup": 1.0086178696651202
+}

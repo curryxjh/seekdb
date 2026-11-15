@@ -1,0 +1,101 @@
+diff --git a/minivectordb/storage.cpp b/minivectordb/storage.cpp
+index 565174e4e..844de4eee 100644
+--- a/minivectordb/storage.cpp
++++ b/minivectordb/storage.cpp
+@@ -409,7 +409,7 @@ void Storage::cache_node(uint64_t offset, Node value, bool dirty) {
+   lru_.push_front(offset);
+   cache_.emplace(offset, Cached{std::move(value), dirty, lru_.begin()});
+ }
+-Storage::Node Storage::node(uint64_t offset) {
++const Storage::Node &Storage::node(uint64_t offset) {
+   auto found = cache_.find(offset);
+   if (found != cache_.end()) {
+     lru_.splice(lru_.begin(), lru_, found->second.lru); return found->second.node;
+@@ -425,7 +425,7 @@ Storage::Node Storage::node(uint64_t offset) {
+     require(i == 0 || result.entries.back().key < key, "corrupt_data", "unordered B+ tree keys");
+     result.entries.push_back({key, ref});
+   }
+-  cache_node(offset, result, false); return result;
++  cache_node(offset, std::move(result), false); return cache_.at(offset).node;
+ }
+ uint64_t Storage::save_node(uint64_t offset, Node value, uint64_t boundary) {
+   if (offset < boundary) { offset = end_; end_ += page_size; }
+@@ -433,7 +433,7 @@ uint64_t Storage::save_node(uint64_t offset, Node value, uint64_t boundary) {
+ }
+ uint64_t Storage::find(uint64_t root, int64_t key) {
+   while (root != 0) {
+-    Node n = node(root);
++    const Node &n = node(root);
+     const auto it = std::upper_bound(n.entries.begin(), n.entries.end(), key,
+                                     [](int64_t k, const Entry &e) { return k < e.key; });
+     if (it == n.entries.begin()) return 0;
+@@ -444,7 +444,26 @@ uint64_t Storage::find(uint64_t root, int64_t key) {
+   return 0;
+ }
+ Storage::Split Storage::insert(uint64_t root, int64_t key, uint64_t value, uint64_t boundary) {
+-  Node n = node(root);
++  // Only nodes allocated by this statement are mutable. Earlier roots remain
++  // intact for statement failure and transaction rollback.
++  if (root < boundary) root = save_node(0, node(root), boundary);
++  size_t index = 0;
++  Split child{};
++  {
++    const Node &n = node(root);
++    if (!n.leaf) {
++      const auto it = std::upper_bound(n.entries.begin(), n.entries.end(), key,
++                                      [](int64_t k, const Entry &e) { return k < e.key; });
++      index = it == n.entries.begin() ? 0 : static_cast<size_t>(std::prev(it) - n.entries.begin());
++      // Recursive insertion can evict the parent. Retain only its offset and
++      // child position, and reacquire the parent after the recursive call.
++      child = insert(n.entries[index].ref, key, value, boundary);
++    }
++  }
++  (void)node(root);
++  auto &cached = cache_.at(root);
++  cached.dirty = true;
++  Node &n = cached.node;
+   bool appended = false;
+   if (n.leaf) {
+     auto it = std::lower_bound(n.entries.begin(), n.entries.end(), key,
+@@ -455,10 +474,6 @@ Storage::Split Storage::insert(uint64_t root, int64_t key, uint64_t value, uint6
+       n.entries.insert(it, {key, value});
+     }
+   } else {
+-    auto it = std::upper_bound(n.entries.begin(), n.entries.end(), key,
+-                               [](int64_t k, const Entry &e) { return k < e.key; });
+-    size_t index = it == n.entries.begin() ? 0 : static_cast<size_t>(std::prev(it) - n.entries.begin());
+-    Split child = insert(n.entries[index].ref, key, value, boundary);
+     n.entries[index] = child.left;
+     if (child.has_right) {
+       appended = index + 1 == n.entries.size();
+@@ -468,7 +483,7 @@ Storage::Split Storage::insert(uint64_t root, int64_t key, uint64_t value, uint6
+   Split result{};
+   if (n.entries.size() <= capacity) {
+     const auto first = n.entries.front().key;
+-    result.left = {first, save_node(root, std::move(n), boundary)};
++    result.left = {first, root};
+   } else {
+     Node right; right.leaf = n.leaf;
+     // A new rightmost entry can start a right sibling without leaving a
+@@ -478,7 +493,7 @@ Storage::Split Storage::insert(uint64_t root, int64_t key, uint64_t value, uint6
+     n.entries.resize(mid);
+     const auto first = n.entries.front().key;
+     const auto second = right.entries.front().key;
+-    result.left = {first, save_node(root, std::move(n), boundary)};
++    result.left = {first, root};
+     result.right = {second, save_node(0, std::move(right), boundary)};
+     result.has_right = true;
+   }
+diff --git a/minivectordb/storage.h b/minivectordb/storage.h
+index 0345750bf..3f11993ed 100644
+--- a/minivectordb/storage.h
++++ b/minivectordb/storage.h
+@@ -87,7 +87,7 @@ class Storage {
+   std::list<uint64_t> lru_;
+   std::string_view bytes(uint64_t offset, size_t length);
+   void unmap();
+-  Node node(uint64_t offset);
++  const Node &node(uint64_t offset);
+   void cache_node(uint64_t offset, Node value, bool dirty);
+   void flush_node(uint64_t offset, Cached &cached);
+   void flush();

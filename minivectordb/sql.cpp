@@ -116,22 +116,30 @@ bool number_syntax(std::string_view value) {
 }
 
 template <typename Number>
-Number vector_number(std::string_view token) {
-  require(!token.empty(), "invalid_vector", "vector element must be a finite number");
+Number vector_number(std::string_view text, size_t &pos) {
+  require(pos < text.size(), "invalid_vector", "vector element must be a finite number");
+  const size_t start = pos;
   Number value = 0;
-  if constexpr (requires { std::from_chars(token.data(), token.data() + token.size(), value); }) {
-    auto number = token;
+  if constexpr (requires { std::from_chars(text.data(), text.data() + text.size(), value); }) {
+    auto number = text.substr(pos);
     if (number.front() == '+') {
       number.remove_prefix(1);
       require(!number.empty() && number.front() != '+' && number.front() != '-',
               "invalid_vector", "vector element must be a finite number");
     }
     const auto result = std::from_chars(number.data(), number.data() + number.size(), value);
-    if (result.ec == std::errc{} && result.ptr == number.data() + number.size()) return value;
+    if (result.ec == std::errc{}) {
+      pos = static_cast<size_t>(result.ptr - text.data());
+      require(pos == text.size() || text[pos] == ',' || text[pos] == ']' || space(text[pos]),
+              "invalid_vector", "vector element must be a finite number");
+      return value;
+    }
   }
   // Preserve strtod underflow rounding and support libraries without floating from_chars.
-  // from_chars already validated a fully consumed decimal on the common path.
+  // The common path consumes the number directly, without a delimiter pre-scan.
   // The fallback needs explicit grammar checks because strtod accepts hex.
+  while (pos < text.size() && text[pos] != ',' && text[pos] != ']' && !space(text[pos])) ++pos;
+  const auto token = text.substr(start, pos - start);
   require(number_syntax(token), "invalid_vector", "vector element must be a finite number");
   const std::string copy(token);
   char *end = nullptr;
@@ -389,10 +397,8 @@ std::vector<float> vector_literal(std::string_view text, size_t dimension) {
   skip();
   if (pos < text.size() && text[pos] != ']') {
     while (true) {
-      skip(); const size_t start = pos;
-      while (pos < text.size() && text[pos] != ',' && text[pos] != ']' && !space(text[pos])) ++pos;
-      const auto token = text.substr(start, pos - start);
-      const double n = vector_number<double>(token);
+      skip();
+      const double n = vector_number<double>(text, pos);
       const float f = static_cast<float>(n);
       require(std::isfinite(n) && std::isfinite(f),
               "invalid_vector", "float32 vector element overflow or non-finite value");

@@ -1,0 +1,58 @@
+{
+  "scope": "LOCAL native adjacent write comparison, not platform E",
+  "source_sha256": "d1c3bd51d42a274643c61c4020341fe569202781064d815e372fe68e6620fc62",
+  "baseline_commit": "5572448a2602683ded0813cfca137cf98af5f418",
+  "rounds": [
+    {
+      "baseline": {
+        "write_ms": 170.10708298766986,
+        "400_query_ms": 25.079334038309753
+      },
+      "candidate": {
+        "write_ms": 177.82537499442697,
+        "400_query_ms": 25.52725002169609
+      }
+    },
+    {
+      "candidate": {
+        "write_ms": 161.59037500619888,
+        "400_query_ms": 25.59441700577736
+      },
+      "baseline": {
+        "write_ms": 165.92487500747666,
+        "400_query_ms": 25.54900001268834
+      }
+    },
+    {
+      "baseline": {
+        "write_ms": 164.2857079859823,
+        "400_query_ms": 24.86166701419279
+      },
+      "candidate": {
+        "write_ms": 160.36504198564216,
+        "400_query_ms": 25.85695800371468
+      }
+    },
+    {
+      "candidate": {
+        "write_ms": 160.95512500032783,
+        "400_query_ms": 25.462624966166914
+      },
+      "baseline": {
+        "write_ms": 164.84441701322794,
+        "400_query_ms": 24.854499963112175
+      }
+    },
+    {
+      "baseline": {
+        "write_ms": 172.2007499774918,
+        "400_query_ms": 25.517209025565535
+      },
+      "candidate": {
+        "write_ms": 160.7157500111498,
+        "400_query_ms": 25.08962497813627
+      }
+    }
+  ],
+  "median_write_speedup": 1.0244483832124158
+}
