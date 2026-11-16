@@ -1,0 +1,46 @@
+{
+  "baseline": {
+    "source_sha256": "116808f592e7af4764ce345112ae420f0ea6416edadbf6e0856c11ee0dafd0be"
+  },
+  "candidate": {
+    "source_sha256": "cde35944646a2a8c75a6cc70b51476c1fa9555adc1e7747b6a9366fce174eb65"
+  },
+  "minivectordb:p0-clean70": {
+    "image_id": "sha256:2fd15c978d5b81a743f594bfeb94bac3a9478564714382f1c984df4def3f168b",
+    "binary_sha256": "34fef50f1066570f12e8e0fe74a114f035e4a54a576d60b43f48c903a4d12212"
+  },
+  "minivectordb:perf5000-70b9": {
+    "image_id": "sha256:80dd4cb28c2e1a41b277d90a03433f7f1258e0d4a190a55403cc6c4ae47e73ed",
+    "binary_sha256": "34fef50f1066570f12e8e0fe74a114f035e4a54a576d60b43f48c903a4d12212"
+  },
+  "minivectordb:p0-writebatch": {
+    "image_id": "sha256:e8e0a8b69a1d9cc2805705223b1a5ea8e5fe7445d318cb5db0bf251f452e7f6a",
+    "binary_sha256": "0dea3e60058513e149c38725d24cdb3a87153e0a0e90f61185089820d96fe081"
+  },
+  "minivectordb:perf5000-writebatch": {
+    "image_id": "sha256:fffdef0db034d7dfd65633c7b45e1f26bf794550bb0c519069231a231baac7d1",
+    "binary_sha256": "0dea3e60058513e149c38725d24cdb3a87153e0a0e90f61185089820d96fe081"
+  },
+  "initial_scope_note": "Initial baseline/candidate entries refer to the batch-write prototype, not the retained reference-posting candidate.",
+  "retained_candidate": {
+    "source_sha256": "860418c9be97b7245191e872c1945ab32fd91584954da0899b8b7b2be5860791",
+    "baseline_commit": "70b9fd50907b34c14fb44d9adea4897558f40b8e",
+    "production_diff": "only database.cpp: posting payload/ref scan; original kernel, storage and protocol unchanged"
+  },
+  "minivectordb:p0-reference-postings": {
+    "image_id": "sha256:3270704e854a4f449a6c2f566191210fd9bd9c4dc505681f4f482a63985eeec0",
+    "binary_sha256": "ecf5adecb9db34619913c4e4b5ae63b232fd9329ddc577f5950044c7fec4af77"
+  },
+  "minivectordb:p0-datasync": {
+    "image_id": "sha256:67e204c55afd68c9efb4dfdac9e18e461f514a6359686d120eecc085428be138",
+    "binary_sha256": "92d1dcff982430cfeb09f36db60f555d6f8789e9e221d4917c029d65e3caae38"
+  },
+  "minivectordb:p0-vector-view": {
+    "image_id": "sha256:a081b5e73966c10566da7001493f221d64638d7715aa2283348d62533cb6ef34",
+    "binary_sha256": "308f0723a47b737a3a79fd098f22a7391e361636c7e1b9c33cd9b20f92440e47"
+  },
+  "minivectordb:perf5000-70b9-diag-verified": {
+    "image_id": "sha256:e68f8d32e1914c72ba1652c3793b060fc34db0b77074f78c1043bd8d0c5430c2",
+    "binary_sha256": "a1ae7ed404281b7060f5be92b01a7e9c4dd1fe8d87ebb897c0d62373cae1f5e9"
+  }
+}

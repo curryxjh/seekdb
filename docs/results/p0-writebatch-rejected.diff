@@ -1,0 +1,133 @@
+--- a/minivectordb/database.cpp
++++ b/minivectordb/database.cpp
+@@ -423,13 +423,16 @@
+   require(bytes.empty(), "corrupt_data", "trailing row data"); return row;
+ }
+ uint64_t Database::encode(const Table &t, const Row &row) {
++  return storage_.blob(encode_value(t, row));
++}
++std::string Database::encode_value(const Table &t, const Row &row) {
+   std::string out;
+   for (size_t i = 0; i < row.size(); ++i) {
+     if (t.columns[i].type == Type::Bigint) append_u64(out, std::bit_cast<uint64_t>(std::get<int64_t>(row[i])));
+     else if (t.columns[i].type == Type::Varchar) append_string(out, std::get<std::string>(row[i]));
+     else for (float f : std::get<std::vector<float>>(row[i])) append_u32(out, std::bit_cast<uint32_t>(f));
+   }
+-  return storage_.blob(out);
++  return out;
+ }
+ void Database::put_row(Table &t, const Row &row, uint64_t boundary) {
+   const auto id = std::get<int64_t>(row[t.primary]);
+@@ -528,13 +531,37 @@
+         std::set<uint32_t> seen(mapping.begin(), mapping.end());
+         require(mapping.size() == t.columns.size() && seen.size() == t.columns.size(),
+                 "invalid_columns", "INSERT must supply every column exactly once");
++        std::vector<Row> insert_rows;
++        std::vector<int64_t> insert_ids;
++        std::vector<std::string> encoded_rows;
++        std::set<int64_t> seen_ids;
++        insert_rows.reserve(s.rows.size());
++        insert_ids.reserve(s.rows.size());
++        encoded_rows.reserve(s.rows.size());
+         for (const auto &literals : s.rows) {
+           require(literals.size() == mapping.size(), "invalid_columns", "INSERT value count mismatch");
+           Row row(t.columns.size());
+           for (size_t i = 0; i < literals.size(); ++i) row[mapping[i]] = convert(t.columns[mapping[i]], literals[i]);
+           const auto id = std::get<int64_t>(row[t.primary]);
+           require(storage_.find(t.root, id) == 0, "duplicate_key", "duplicate primary key");
+-          put_row(t, row, boundary); ++affected;
++          require(seen_ids.insert(id).second, "duplicate_key", "duplicate primary key");
++          insert_ids.push_back(id);
++          encoded_rows.push_back(encode_value(t, row));
++          insert_rows.push_back(std::move(row));
++        }
++        const auto offsets = storage_.blobs(encoded_rows);
++        for (size_t i = 0; i < insert_rows.size(); ++i) {
++          t.root = storage_.put(t.root, insert_ids[i], offsets[i], boundary);
++          if (!t.index_name.empty()) {
++            std::string posting;
++            append_u64(posting, offsets[i]);
++            for (float f : std::get<std::vector<float>>(
++                     insert_rows[i][static_cast<size_t>(t.vector)]))
++              append_u32(posting, std::bit_cast<uint32_t>(f));
++            t.vector_root = storage_.put(t.vector_root, insert_ids[i],
++                                         storage_.blob(posting), boundary);
++          }
++          ++affected;
+         }
+       } else {
+         std::vector<BoundPredicate> where;
+--- a/minivectordb/database.h
++++ b/minivectordb/database.h
+@@ -63,6 +63,7 @@
+   Value convert(const Column &c, const Literal &value) const;
+   Row decode(const Table &t, uint64_t offset);
+   uint64_t encode(const Table &t, const Row &row);
++  std::string encode_value(const Table &t, const Row &row);
+   void put_row(Table &t, const Row &row, uint64_t boundary);
+   Spool select(const Statement &s, const Table &t);
+   void commit();
+--- a/minivectordb/storage.cpp
++++ b/minivectordb/storage.cpp
+@@ -377,6 +377,51 @@
+   fault("after_blob_write");
+   return offset;
+ }
++std::vector<uint64_t> Storage::blobs(std::span<const std::string> values) {
++  constexpr size_t batch_limit = 1024U * 1024U;
++  std::vector<uint64_t> offsets;
++  offsets.reserve(values.size());
++  std::string batch;
++  batch.reserve(std::min(batch_limit, values.empty() ? size_t{0} : values.front().size() + 4));
++  for (const auto &value : values) {
++    require(value.size() <= UINT32_MAX, "resource_limit", "row exceeds storage limit");
++    const size_t encoded_size = value.size() + 4;
++    if (encoded_size > batch_limit) {
++      if (!batch.empty()) {
++        const auto start = end_;
++        fault("before_blob_write");
++        write_all(data_fd_, std::span(batch.data(), batch.size()), start);
++        end_ += batch.size();
++        bound_dirty_pages();
++        fault("after_blob_write");
++        batch.clear();
++      }
++      offsets.push_back(blob(value));
++      continue;
++    }
++    if (!batch.empty() && batch.size() + encoded_size > batch_limit) {
++      const auto start = end_;
++      fault("before_blob_write");
++      write_all(data_fd_, std::span(batch.data(), batch.size()), start);
++      end_ += batch.size();
++      bound_dirty_pages();
++      fault("after_blob_write");
++      batch.clear();
++    }
++    offsets.push_back(end_ + batch.size());
++    append_u32(batch, static_cast<uint32_t>(value.size()));
++    batch.append(value);
++  }
++  if (!batch.empty()) {
++    const auto start = end_;
++    fault("before_blob_write");
++    write_all(data_fd_, std::span(batch.data(), batch.size()), start);
++    end_ += batch.size();
++    bound_dirty_pages();
++    fault("after_blob_write");
++  }
++  return offsets;
++}
+ std::string_view Storage::blob(uint64_t offset) {
+   auto head = bytes(offset, 4); const auto size = read_u32(head);
+   return bytes(offset + 4, size);
+--- a/minivectordb/storage.h
++++ b/minivectordb/storage.h
+@@ -55,6 +55,7 @@
+   void publish(const Catalog &catalog);
+   void rewind(uint64_t end);
+   uint64_t blob(std::string_view bytes);
++  std::vector<uint64_t> blobs(std::span<const std::string> values);
+   std::string_view blob(uint64_t offset);
+   uint64_t find(uint64_t root, int64_t key);
+   uint64_t put(uint64_t root, int64_t key, uint64_t value, uint64_t boundary);

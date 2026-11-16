@@ -1,0 +1,48 @@
+--- a/minivectordb/database.cpp
++++ b/minivectordb/database.cpp
+@@ -729,7 +729,12 @@
+             for (size_t d = 0; d < dimension; ++d)
+               scan_fallback_vectors_[begin + d] = load_float(input.data() + d * 4);
+           }
+-          scan_rows_.push_back({id, offset});
++          // Keep a file offset, never an mmap pointer: remapping may move data.
++          const auto bytes = storage_.blob(offset);
++          row.reset(bytes);
++          const auto vector = row.vector(order.column);
++          const auto vector_offset = offset + 4 + static_cast<uint64_t>(vector.data() - bytes.data());
++          scan_rows_.push_back({id, offset, vector_offset});
+           return true;
+         });
+         if (quantized) {
+@@ -793,8 +798,8 @@
+     };
+     const auto refine = [&](size_t i) {
+       const auto &cached = scan_rows_[i];
+-      row.reset(storage_.blob(cached.offset));
+-      accept_vector(cached.id, cached.offset, row.vector(order.column));
++      accept_vector(cached.id, cached.offset,
++                    storage_.view(cached.vector_offset, dimension * sizeof(float)));
+     };
+     if (!quantized) {
+       for_each_cached([&](size_t i) {
+--- a/minivectordb/database.h
++++ b/minivectordb/database.h
+@@ -44,7 +44,7 @@
+   Catalog committed_;
+   uint64_t committed_end_ = 16;
+   bool transaction_ = false;
+-  struct ScanRow { int64_t id; uint64_t offset; };
++  struct ScanRow { int64_t id; uint64_t offset; uint64_t vector_offset; };
+   // One table's bounded prefix; larger tables still stream their tail.
+   std::vector<ScanRow> scan_rows_;
+   // Only dimensions without quantized screening retain a bounded raw prefix.
+--- a/minivectordb/storage.h
++++ b/minivectordb/storage.h
+@@ -56,6 +56,7 @@
+   void rewind(uint64_t end);
+   uint64_t blob(std::string_view bytes);
+   std::string_view blob(uint64_t offset);
++  std::string_view view(uint64_t offset, size_t length) { return bytes(offset, length); }
+   uint64_t find(uint64_t root, int64_t key);
+   uint64_t put(uint64_t root, int64_t key, uint64_t value, uint64_t boundary);
+   void scan(uint64_t root, const std::function<bool(int64_t, uint64_t)> &visit);

@@ -1,0 +1,183 @@
+{
+  "baseline": {
+    "image": "minivectordb:perf5000-70b9",
+    "image_id": "sha256:80dd4cb28c2e1a41b277d90a03433f7f1258e0d4a190a55403cc6c4ae47e73ed",
+    "architecture": "amd64",
+    "binary_sha256": "34fef50f1066570f12e8e0fe74a114f035e4a54a576d60b43f48c903a4d12212",
+    "rounds": [
+      {
+        "seed": 20261116,
+        "write": {
+          "T_ms": 1654.557165922597,
+          "memory_peak": 23113728,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=45056 wbytes=6848512 rios=2 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 524.6898750774562,
+          "memory_peak": 22704128,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.00029103830456733704,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 7,
+        "write": {
+          "T_ms": 1689.2338750185445,
+          "memory_peak": 20688896,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 548.8874170696363,
+          "memory_peak": 22814720,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.00037497375160455704,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 39034843,
+        "write": {
+          "T_ms": 1681.9258329924196,
+          "memory_peak": 22781952,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 532.6993749476969,
+          "memory_peak": 22036480,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 4.190951585769653e-05,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      }
+    ]
+  },
+  "candidate": {
+    "image": "minivectordb:perf5000-70b9",
+    "image_id": "sha256:80dd4cb28c2e1a41b277d90a03433f7f1258e0d4a190a55403cc6c4ae47e73ed",
+    "architecture": "amd64",
+    "binary_sha256": "34fef50f1066570f12e8e0fe74a114f035e4a54a576d60b43f48c903a4d12212",
+    "rounds": [
+      {
+        "seed": 20261116,
+        "write": {
+          "T_ms": 1677.4248749716207,
+          "memory_peak": 23183360,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 503.88887501321733,
+          "memory_peak": 24694784,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.00024994369596242905,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 7,
+        "write": {
+          "T_ms": 1618.2052500080317,
+          "memory_peak": 21090304,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 525.771209038794,
+          "memory_peak": 22589440,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.000125030055642128,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 39034843,
+        "write": {
+          "T_ms": 1661.1315419431776,
+          "memory_peak": 22986752,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 556.2676669796929,
+          "memory_peak": 22208512,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.000125030055642128,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      }
+    ]
+  },
+  "metadata": {
+    "scope": "A/A identical uninstrumented 70b9 binary; noise control",
+    "baseline_commit": "70b9fd50907b34c14fb44d9adea4897558f40b8e",
+    "platform": "Linux amd64 emulated on Apple Silicon; host load/cache not isolated",
+    "cpus": 2,
+    "memory_limit": 134217728,
+    "swap": 0,
+    "rows": 10000,
+    "dimensions": 128,
+    "queries": 1000,
+    "K": 10,
+    "write_batch": 100,
+    "warmup_queries": 10,
+    "filter_query_fraction": 0.5,
+    "filter_selectivity": 0.25,
+    "measurement": "uninstrumented; wall request/response; cumulative cgroup io.stat and memory.peak",
+    "caveats": [
+      "query B/M include loading and warmup, not stage deltas",
+      "dedicated device/writeback attribution unverified",
+      "not official platform score"
+    ],
+    "command": [
+      "tests/diagnostic_paired.py",
+      "--baseline",
+      "minivectordb:perf5000-70b9",
+      "--candidate",
+      "minivectordb:perf5000-70b9",
+      "--scope",
+      "A/A identical uninstrumented 70b9 binary; noise control",
+      "--output",
+      "/tmp/mvdb-p0-aa.json"
+    ]
+  }
+}

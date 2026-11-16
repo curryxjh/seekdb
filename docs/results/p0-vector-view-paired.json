@@ -1,0 +1,183 @@
+{
+  "baseline": {
+    "image": "minivectordb:p0-clean70",
+    "image_id": "sha256:2fd15c978d5b81a743f594bfeb94bac3a9478564714382f1c984df4def3f168b",
+    "architecture": "amd64",
+    "binary_sha256": "34fef50f1066570f12e8e0fe74a114f035e4a54a576d60b43f48c903a4d12212",
+    "rounds": [
+      {
+        "seed": 20261116,
+        "write": {
+          "T_ms": 1653.041291050613,
+          "memory_peak": 23298048,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 577.2018330171704,
+          "memory_peak": 22417408,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.00037497375160455704,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 7,
+        "write": {
+          "T_ms": 1681.1992499278858,
+          "memory_peak": 20332544,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 535.7885409612209,
+          "memory_peak": 22245376,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.00012491364032030106,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 39034843,
+        "write": {
+          "T_ms": 1618.667708011344,
+          "memory_peak": 23420928,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 561.8378330254927,
+          "memory_peak": 22487040,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.000125030055642128,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      }
+    ]
+  },
+  "candidate": {
+    "image": "minivectordb:p0-vector-view",
+    "image_id": "sha256:a081b5e73966c10566da7001493f221d64638d7715aa2283348d62533cb6ef34",
+    "architecture": "amd64",
+    "binary_sha256": "308f0723a47b737a3a79fd098f22a7391e361636c7e1b9c33cd9b20f92440e47",
+    "rounds": [
+      {
+        "seed": 20261116,
+        "write": {
+          "T_ms": 1678.5073329228908,
+          "memory_peak": 23429120,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 595.9527920931578,
+          "memory_peak": 24563712,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.0005409820005297661,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 7,
+        "write": {
+          "T_ms": 1637.501750024967,
+          "memory_peak": 23171072,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 555.8623330434784,
+          "memory_peak": 21786624,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.0001658918336033821,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 39034843,
+        "write": {
+          "T_ms": 1654.3117499677464,
+          "memory_peak": 23019520,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 549.7631670441478,
+          "memory_peak": 24555520,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.00020791776478290558,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      }
+    ]
+  },
+  "metadata": {
+    "scope": "single-factor cached vector byte offsets; original float32 exact refinement unchanged",
+    "baseline_commit": "70b9fd50907b34c14fb44d9adea4897558f40b8e",
+    "platform": "Linux amd64 emulated on Apple Silicon; host load/cache not isolated",
+    "cpus": 2,
+    "memory_limit": 134217728,
+    "swap": 0,
+    "rows": 10000,
+    "dimensions": 128,
+    "queries": 1000,
+    "K": 10,
+    "write_batch": 100,
+    "warmup_queries": 10,
+    "filter_query_fraction": 0.5,
+    "filter_selectivity": 0.25,
+    "measurement": "uninstrumented; wall request/response; cumulative cgroup io.stat and memory.peak",
+    "caveats": [
+      "query B/M include loading and warmup, not stage deltas",
+      "dedicated device/writeback attribution unverified",
+      "not official platform score"
+    ],
+    "command": [
+      "tests/diagnostic_paired.py",
+      "--baseline",
+      "minivectordb:p0-clean70",
+      "--candidate",
+      "minivectordb:p0-vector-view",
+      "--scope",
+      "single-factor cached vector byte offsets; original float32 exact refinement unchanged",
+      "--output",
+      "/tmp/mvdb-p0-vector-view-paired.json"
+    ]
+  }
+}

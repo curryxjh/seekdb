@@ -1,0 +1,185 @@
+{
+  "baseline": {
+    "image": "minivectordb:p0-clean70",
+    "image_id": "sha256:2fd15c978d5b81a743f594bfeb94bac3a9478564714382f1c984df4def3f168b",
+    "architecture": "amd64",
+    "binary_sha256": "34fef50f1066570f12e8e0fe74a114f035e4a54a576d60b43f48c903a4d12212",
+    "rounds": [
+      {
+        "seed": 20261116,
+        "write": {
+          "T_ms": 1657.4033339275047,
+          "memory_peak": 24031232,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=974848 wbytes=6848512 rios=8 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 560.0877909455448,
+          "memory_peak": 28680192,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=12259328 rios=0 wios=216 dbytes=0 dios=0",
+          "preparation_ms": 30.126542085781693,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 7,
+        "write": {
+          "T_ms": 1671.5622919145972,
+          "memory_peak": 21176320,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 568.1489169364795,
+          "memory_peak": 30097408,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=12259328 rios=0 wios=216 dbytes=0 dios=0",
+          "preparation_ms": 32.54583303350955,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 39034843,
+        "write": {
+          "T_ms": 1645.4342079814523,
+          "memory_peak": 22999040,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 610.3570830309764,
+          "memory_peak": 30470144,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=12259328 rios=0 wios=216 dbytes=0 dios=0",
+          "preparation_ms": 31.37920901644975,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      }
+    ]
+  },
+  "candidate": {
+    "image": "minivectordb:p0-reference-postings",
+    "image_id": "sha256:3270704e854a4f449a6c2f566191210fd9bd9c4dc505681f4f482a63985eeec0",
+    "architecture": "amd64",
+    "binary_sha256": "ecf5adecb9db34619913c4e4b5ae63b232fd9329ddc577f5950044c7fec4af77",
+    "rounds": [
+      {
+        "seed": 20261116,
+        "write": {
+          "T_ms": 1720.2765840338543,
+          "memory_peak": 23502848,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 552.631750004366,
+          "memory_peak": 25116672,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=7139328 rios=0 wios=207 dbytes=0 dios=0",
+          "preparation_ms": 11.0786659643054,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 7,
+        "write": {
+          "T_ms": 1668.595082941465,
+          "memory_peak": 23228416,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 549.8322088969871,
+          "memory_peak": 25612288,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=7139328 rios=0 wios=207 dbytes=0 dios=0",
+          "preparation_ms": 10.33929199911654,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 39034843,
+        "write": {
+          "T_ms": 1670.9810419706628,
+          "memory_peak": 20512768,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 582.5980419758707,
+          "memory_peak": 24727552,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=7139328 rios=0 wios=207 dbytes=0 dios=0",
+          "preparation_ms": 10.439458070322871,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      }
+    ]
+  },
+  "metadata": {
+    "scope": "single-factor reference-only vector postings; indexed query preparation and cumulative IO retained",
+    "baseline_commit": "70b9fd50907b34c14fb44d9adea4897558f40b8e",
+    "platform": "Linux amd64 emulated on Apple Silicon; host load/cache not isolated",
+    "cpus": 2,
+    "memory_limit": 134217728,
+    "swap": 0,
+    "rows": 10000,
+    "dimensions": 128,
+    "queries": 1000,
+    "K": 10,
+    "write_batch": 100,
+    "indexed": true,
+    "warmup_queries": 10,
+    "filter_query_fraction": 0.5,
+    "filter_selectivity": 0.25,
+    "measurement": "uninstrumented; wall request/response; cumulative cgroup io.stat and memory.peak",
+    "caveats": [
+      "query B/M include loading and warmup, not stage deltas",
+      "dedicated device/writeback attribution unverified",
+      "not official platform score"
+    ],
+    "command": [
+      "tests/diagnostic_paired.py",
+      "--baseline",
+      "minivectordb:p0-clean70",
+      "--candidate",
+      "minivectordb:p0-reference-postings",
+      "--indexed",
+      "--scope",
+      "single-factor reference-only vector postings; indexed query preparation and cumulative IO retained",
+      "--output",
+      "/tmp/mvdb-p0-reference-postings-paired.json"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+--- a/minivectordb/storage.cpp
++++ b/minivectordb/storage.cpp
+@@ -20,6 +20,10 @@
+   throw Error("io_error", std::string(operation) + ": " + std::strerror(errno));
+ }
+ void close_fd(int fd) { if (fd >= 0) ::close(fd); }
++// Data and file-size durability; directory entries keep their fsync path.
++void sync_data(int fd) {
++  while (::fdatasync(fd) != 0) { if (errno != EINTR) io_error("fdatasync"); }
++}
+ uint64_t checksum(std::string_view bytes) {
+   uint64_t value = 14695981039346656037ULL;
+   for (char ch : bytes) { value ^= static_cast<unsigned char>(ch); value *= 1099511628211ULL; }
+@@ -332,7 +336,7 @@
+     end_ = committed_end;
+     fault("after_commit_footer");
+     fault("after_catalog_write");
+-    sync_file(data_fd_);
++    sync_data(data_fd_);
+     writeback_end_ = end_;
+     published_end_ = end_;
+     guard_legacy_writer();
+@@ -360,7 +364,7 @@
+   // file pages while its roots remain unpublished; durability of bytes is not
+   // visibility of a transaction. The durable commit footer publishes its roots.
+   if (end_ - writeback_end_ >= 8U * 1024U * 1024U) {
+-    sync_file(data_fd_);
++    sync_data(data_fd_);
+     writeback_end_ = end_;
+     fault("after_early_writeback");
+   }

@@ -1,0 +1,58 @@
+{
+  "source_sha256": "860418c9be97b7245191e872c1945ab32fd91584954da0899b8b7b2be5860791",
+  "baseline_commit": "70b9fd50907b34c14fb44d9adea4897558f40b8e",
+  "official_platform_resubmitted": false,
+  "commands": [
+    {
+      "command": [
+        "docker",
+        "build",
+        "--platform",
+        "linux/amd64",
+        "-t",
+        "minivectordb:p0-storage-clean",
+        "."
+      ],
+      "cwd": "/var/folders/tr/jn2d504n6k7gl518_r93rtj80000gn/T/mvdb-p0-clean-dh4maomk",
+      "exit_code": 0,
+      "seconds": 3.377302124979906,
+      "stdout": "",
+      "stderr": "#0 building with \"desktop-linux\" instance using docker driver\n\n#1 [internal] load build definition from Dockerfile\n#1 transferring dockerfile: 552B done\n#1 DONE 0.0s\n\n#2 [internal] load metadata for docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c\n#2 DONE 0.0s\n\n#3 [internal] load metadata for docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\n#3 ...\n\n#4 [auth] library/debian:pull token for registry-1.docker.io\n#4 DONE 0.0s\n\n#3 [internal] load metadata for docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\n#3 DONE 2.8s\n\n#5 [internal] load .dockerignore\n#5 transferring context: 2B done\n#5 DONE 0.0s\n\n#6 [stage-1 1/3] FROM docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc\n#6 resolve docker.io/library/debian:bookworm-slim@sha256:734a72b3d6142a71993b4bc580ca01d8ca687f77a2c422d96a961d3376b179bc 0.0s done\n#6 DONE 0.0s\n\n#7 [build 1/4] FROM docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c\n#7 resolve docker.io/library/gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c 0.0s done\n#7 DONE 0.0s\n\n#8 [internal] load build context\n#8 transferring context: 115.63kB done\n#8 DONE 0.0s\n\n#9 [build 4/4] RUN g++ -std=c++20 -O3 -Wall -Wextra -Wpedantic -Wconversion -Wshadow     -static-libstdc++ -static-libgcc minivectordb/*.cpp -o /minivectordb\n#9 CACHED\n\n#10 [build 3/4] COPY minivectordb/ minivectordb/\n#10 CACHED\n\n#11 [build 2/4] WORKDIR /src\n#11 CACHED\n\n#12 [stage-1 2/3] COPY --from=build /minivectordb /usr/local/bin/minivectordb\n#12 CACHED\n\n#13 [stage-1 3/3] WORKDIR /data\n#13 CACHED\n\n#14 exporting to image\n#14 exporting layers done\n#14 exporting manifest sha256:ea8969647dbfd920d75b58c38ac48defe3878017b8dac38e6e2823bf63716f46 done\n#14 exporting config sha256:68a5f281094683d78ae4a501006a79c5ae0be61b073c92b02460ccc84e8d9f7d done\n#14 exporting attestation manifest sha256:2ae0b3dc1e291441124b919590c716eea942decc1962ad0835b62f800c867f43 done\n#14 exporting manifest list sha256:b90d8bc9aba60f67e8ebe5e2a3a0f7de9a7e1f7ae9cc5f47239cb35d4fc78fa3 done\n#14 naming to docker.io/library/minivectordb:p0-storage-clean done\n#14 DONE 0.0s\n\nView build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/j7znp0brrmzbsn3qslpntktse\n"
+    },
+    {
+      "command": [
+        "python3",
+        "protocol_check/run.py",
+        "--image",
+        "minivectordb:p0-storage-clean",
+        "--output",
+        "/Users/oxidaner/develop/coding/open-source/seekdb-minivectordb-p0-storage/build/p0-clean-public"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 5.268999500083737,
+      "stdout": "sql_crud: PASS \nsql_comparisons: PASS \nsql_ordering: PASS \nsql_empty: PASS \nsql_primary_key: PASS \nsql_unicode: PASS \nsql_bigint: PASS \nsql_unsupported: PASS \nstorage_restart: PASS \nvector_euclidean: PASS \ntransaction_commit: PASS \ntransaction_rollback: PASS \nstorage_mutations: PASS \nstorage_multiple_tables: PASS \nvector_ties_and_filter: PASS \nvector_float32: PASS \nvector_index_maintenance: PASS \ntransaction_failed_insert: PASS \ntransaction_autocommit_atomic: PASS \ntransaction_shutdown_rollback: PASS \nReport: /Users/oxidaner/develop/coding/open-source/seekdb-minivectordb-p0-storage/build/p0-clean-public/result.json\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/protocol.py",
+        "--image",
+        "minivectordb:p0-storage-clean"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 0.4301274160388857,
+      "stdout": "PASS official transport: ID types/precision, UTF-8/escapes, fragmented input, strict JSON, one response, SQL errors, modes, atomic rejection, shutdown rollback and restart\n",
+      "stderr": ""
+    }
+  ],
+  "staged_tree_before_delivery_report": "0fb9a3157b2901417661c5a971279bf672bebadf",
+  "clean_export_source_sha256": "860418c9be97b7245191e872c1945ab32fd91584954da0899b8b7b2be5860791",
+  "production_executable_sha256": "ecf5adecb9db34619913c4e4b5ae63b232fd9329ddc577f5950044c7fec4af77",
+  "clean_executable_sha256": "ecf5adecb9db34619913c4e4b5ae63b232fd9329ddc577f5950044c7fec4af77",
+  "clean_image_id": "sha256:b90d8bc9aba60f67e8ebe5e2a3a0f7de9a7e1f7ae9cc5f47239cb35d4fc78fa3",
+  "official_files_unchanged": true,
+  "status": "PASS"
+}

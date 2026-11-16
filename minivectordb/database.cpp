@@ -437,9 +437,7 @@ void Database::put_row(Table &t, const Row &row, uint64_t boundary) {
   t.root = storage_.put(t.root, id, offset, boundary);
   if (!t.index_name.empty()) {
     std::string posting; append_u64(posting, offset);
-    for (float f : std::get<std::vector<float>>(row[static_cast<size_t>(t.vector)])) {
-      append_u32(posting, std::bit_cast<uint32_t>(f));
-    }
+    // The row owns the original float32 bytes; the index retains its address.
     t.vector_root = storage_.put(t.vector_root, id, storage_.blob(posting), boundary);
   }
 }
@@ -514,9 +512,7 @@ Spool Database::execute(const Statement &s) {
         }
         t.index_name = s.index;
         storage_.scan(t.root, [&](int64_t id, uint64_t offset) {
-          Row row = decode(t, offset);
           std::string posting; append_u64(posting, offset);
-          for (float f : std::get<std::vector<float>>(row[c])) append_u32(posting, std::bit_cast<uint32_t>(f));
           t.vector_root = storage_.put(t.vector_root, id, storage_.blob(posting), boundary);
           return true;
         });
@@ -841,6 +837,11 @@ Spool Database::select(const Statement &s, const Table &t) {
     storage_.scan(t.vector_root, [&](int64_t id, uint64_t offset) {
       auto bytes = storage_.blob(offset);
       Candidate value; value.id = id; value.offset = read_u64(bytes);
+      if (bytes.empty()) {
+        row.reset(storage_.blob(value.offset));
+        return accept_vector(id, value.offset, row.vector(order.column));
+      }
+      // Existing inline-vector postings remain readable after an upgrade.
       const auto input = read_bytes(bytes, order.query.size() * 4);
       require(bytes.empty(), "corrupt_data", "trailing vector posting data");
       return accept_vector(id, value.offset, input);

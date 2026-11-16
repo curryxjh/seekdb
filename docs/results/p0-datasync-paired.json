@@ -1,0 +1,183 @@
+{
+  "baseline": {
+    "image": "minivectordb:p0-clean70",
+    "image_id": "sha256:2fd15c978d5b81a743f594bfeb94bac3a9478564714382f1c984df4def3f168b",
+    "architecture": "amd64",
+    "binary_sha256": "34fef50f1066570f12e8e0fe74a114f035e4a54a576d60b43f48c903a4d12212",
+    "rounds": [
+      {
+        "seed": 20261116,
+        "write": {
+          "T_ms": 1652.5535829132423,
+          "memory_peak": 21164032,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 527.6208750437945,
+          "memory_peak": 26173440,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.0004580942913889885,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 7,
+        "write": {
+          "T_ms": 1657.0945419371128,
+          "memory_peak": 22962176,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 547.9566249996424,
+          "memory_peak": 24875008,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.000250060111284256,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 39034843,
+        "write": {
+          "T_ms": 1641.9293750077486,
+          "memory_peak": 22786048,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 609.1000409796834,
+          "memory_peak": 24858624,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 8.393544703722e-05,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      }
+    ]
+  },
+  "candidate": {
+    "image": "minivectordb:p0-datasync",
+    "image_id": "sha256:67e204c55afd68c9efb4dfdac9e18e461f514a6359686d120eecc085428be138",
+    "architecture": "amd64",
+    "binary_sha256": "92d1dcff982430cfeb09f36db60f555d6f8789e9e221d4917c029d65e3caae38",
+    "rounds": [
+      {
+        "seed": 20261116,
+        "write": {
+          "T_ms": 1664.3767919158563,
+          "memory_peak": 21475328,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 578.6734579596668,
+          "memory_peak": 22392832,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.0005830079317092896,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 7,
+        "write": {
+          "T_ms": 1653.770292061381,
+          "memory_peak": 22949888,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 548.7197919283062,
+          "memory_peak": 24817664,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.000125030055642128,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      },
+      {
+        "seed": 39034843,
+        "write": {
+          "T_ms": 1652.0483329659328,
+          "memory_peak": 23064576,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "restart_content_check": true
+        },
+        "query": {
+          "T_ms": 573.4836669871584,
+          "memory_peak": 26693632,
+          "memory_max": "134217728",
+          "swap_max": "0",
+          "io_stat": "254:0 rbytes=0 wbytes=6848512 rios=0 wios=205 dbytes=0 dios=0",
+          "preparation_ms": 0.000125030055642128,
+          "recall_unfiltered": 1.0,
+          "recall_filtered": 1.0,
+          "all_query_assertions": true
+        }
+      }
+    ]
+  },
+  "metadata": {
+    "scope": "single-factor regular-data fdatasync; directory fsync unchanged",
+    "baseline_commit": "70b9fd50907b34c14fb44d9adea4897558f40b8e",
+    "platform": "Linux amd64 emulated on Apple Silicon; host load/cache not isolated",
+    "cpus": 2,
+    "memory_limit": 134217728,
+    "swap": 0,
+    "rows": 10000,
+    "dimensions": 128,
+    "queries": 1000,
+    "K": 10,
+    "write_batch": 100,
+    "warmup_queries": 10,
+    "filter_query_fraction": 0.5,
+    "filter_selectivity": 0.25,
+    "measurement": "uninstrumented; wall request/response; cumulative cgroup io.stat and memory.peak",
+    "caveats": [
+      "query B/M include loading and warmup, not stage deltas",
+      "dedicated device/writeback attribution unverified",
+      "not official platform score"
+    ],
+    "command": [
+      "tests/diagnostic_paired.py",
+      "--baseline",
+      "minivectordb:p0-clean70",
+      "--candidate",
+      "minivectordb:p0-datasync",
+      "--scope",
+      "single-factor regular-data fdatasync; directory fsync unchanged",
+      "--output",
+      "/tmp/mvdb-p0-datasync-paired.json"
+    ]
+  }
+}

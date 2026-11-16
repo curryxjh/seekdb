@@ -1,0 +1,491 @@
+--- a/minivectordb/database.cpp
++++ b/minivectordb/database.cpp
+@@ -1,0 +2 @@
++#include "diagnostics.h"
+@@ -387,0 +389,23 @@
++Database::~Database() {
++#ifdef MVDB_DIAGNOSTICS
++  const auto &s = diagnostics::stats;
++  std::fprintf(stderr,
++      "MVDB_QUERY requests=%llu sqls=%llu json_ms=%.3f sql_ms=%.3f execute_ms=%.3f output_ms=%.3f selects=%llu select_ms=%.3f first_select_ms=%.3f bind_ms=%.3f cache_builds=%llu cache_ms=%.3f filter_hits=%llu filter_builds=%llu filter_ms=%.3f eligible_rows=%llu code_rows=%llu code_ms=%.3f seed_updates=%llu seed_ms=%.3f int8_checks=%llu int8_rejects=%llu float_checks=%llu float_rejects=%llu refinements=%llu refine_ms=%.3f top_updates=%llu filtered_queries=%llu filtered_ms=%.3f unfiltered_queries=%llu unfiltered_ms=%.3f commit_calls=%llu commit_ms=%.3f catalog_copy_ms=%.3f inserted_rows=%llu vector_conversions=%llu vector_convert_ms=%.3f\n",
++      static_cast<unsigned long long>(s.request_count), static_cast<unsigned long long>(s.sql_count),
++      s.json_ns / 1.0e6, s.sql_ns / 1.0e6, s.execute_ns / 1.0e6, s.output_ns / 1.0e6,
++      static_cast<unsigned long long>(s.select_calls), s.select_ns / 1.0e6, s.first_select_ns / 1.0e6, s.bind_ns / 1.0e6,
++      static_cast<unsigned long long>(s.cache_builds), s.cache_ns / 1.0e6,
++      static_cast<unsigned long long>(s.filter_hits), static_cast<unsigned long long>(s.filter_builds), s.filter_ns / 1.0e6,
++      static_cast<unsigned long long>(s.eligible_rows), static_cast<unsigned long long>(s.code_rows), s.code_ns / 1.0e6,
++      static_cast<unsigned long long>(s.seed_updates), s.seed_ns / 1.0e6,
++      static_cast<unsigned long long>(s.int8_checks), static_cast<unsigned long long>(s.int8_rejects),
++      static_cast<unsigned long long>(s.float_checks), static_cast<unsigned long long>(s.float_rejects),
++      static_cast<unsigned long long>(s.refinements), s.refine_ns / 1.0e6,
++      static_cast<unsigned long long>(s.top_updates),
++      static_cast<unsigned long long>(s.filtered_queries), s.filtered_ns / 1.0e6,
++      static_cast<unsigned long long>(s.unfiltered_queries), s.unfiltered_ns / 1.0e6,
++      static_cast<unsigned long long>(s.commit_calls), s.commit_ns / 1.0e6, s.catalog_copy_ns / 1.0e6,
++      static_cast<unsigned long long>(s.inserted_rows), static_cast<unsigned long long>(s.vector_conversions),
++      s.convert_ns / 1.0e6);
++#endif
++}
+@@ -408 +432,9 @@
+-  return vector_literal(value.text, c.size);
++#ifdef MVDB_DIAGNOSTICS
++  ++diagnostics::stats.vector_conversions;
++  const auto started = diagnostics::Clock::now();
++#endif
++  auto result = vector_literal(value.text, c.size);
++#ifdef MVDB_DIAGNOSTICS
++  diagnostics::stats.convert_ns += diagnostics::elapsed(started);
++#endif
++  return result;
+@@ -446,0 +479,4 @@
++#ifdef MVDB_DIAGNOSTICS
++  const auto commit_started = diagnostics::Clock::now();
++  ++diagnostics::stats.commit_calls;
++#endif
+@@ -449 +485,10 @@
+-  try { committed_ = catalog_; committed_end_ = storage_.end(); transaction_ = false; }
++  try {
++#ifdef MVDB_DIAGNOSTICS
++    const auto copy_started = diagnostics::Clock::now();
++#endif
++    committed_ = catalog_;
++#ifdef MVDB_DIAGNOSTICS
++    diagnostics::stats.catalog_copy_ns += diagnostics::elapsed(copy_started);
++#endif
++    committed_end_ = storage_.end(); transaction_ = false;
++  }
+@@ -450,0 +496,3 @@
++#ifdef MVDB_DIAGNOSTICS
++  diagnostics::stats.commit_ns += diagnostics::elapsed(commit_started);
++#endif
+@@ -537,0 +586,3 @@
++#ifdef MVDB_DIAGNOSTICS
++          ++diagnostics::stats.inserted_rows;
++#endif
+@@ -580,0 +632,6 @@
++#ifdef MVDB_DIAGNOSTICS
++  const bool was_first_select = diagnostics::stats.select_calls == 0;
++  ++diagnostics::stats.select_calls;
++  const auto select_started = diagnostics::Clock::now();
++  const auto bind_started = diagnostics::Clock::now();
++#endif
+@@ -614,0 +672,3 @@
++#ifdef MVDB_DIAGNOSTICS
++  diagnostics::stats.bind_ns += diagnostics::elapsed(bind_started);
++#endif
+@@ -665 +725,5 @@
+-      else if (better(value, top.top())) { top.pop(); top.push(std::move(value)); }
++      else if (better(value, top.top())) { top.pop(); top.push(std::move(value));
++#ifdef MVDB_DIAGNOSTICS
++        ++diagnostics::stats.top_updates;
++#endif
++      }
+@@ -681,0 +746,3 @@
++#ifdef MVDB_DIAGNOSTICS
++        ++diagnostics::stats.float_checks;
++#endif
+@@ -686,3 +753,11 @@
+-              approximate * (1.0 + screen_error) + screen_slack < accept_square))) return true;
+-      }
+-    }
++              approximate * (1.0 + screen_error) + screen_slack < accept_square))) {
++#ifdef MVDB_DIAGNOSTICS
++          ++diagnostics::stats.float_rejects;
++#endif
++          return true;
++        }
++      }
++    }
++#ifdef MVDB_DIAGNOSTICS
++    ++diagnostics::stats.refinements;
++#endif
+@@ -716,0 +792,4 @@
++#ifdef MVDB_DIAGNOSTICS
++      const auto cache_started = diagnostics::Clock::now();
++      ++diagnostics::stats.cache_builds;
++#endif
+@@ -745,0 +825,3 @@
++#ifdef MVDB_DIAGNOSTICS
++      diagnostics::stats.cache_ns += diagnostics::elapsed(cache_started);
++#endif
+@@ -759,0 +842,4 @@
++#ifdef MVDB_DIAGNOSTICS
++          const auto filter_started = diagnostics::Clock::now();
++          ++diagnostics::stats.filter_builds;
++#endif
+@@ -769 +855,7 @@
+-        }
++#ifdef MVDB_DIAGNOSTICS
++          diagnostics::stats.filter_ns += diagnostics::elapsed(filter_started);
++#endif
++        }
++#ifdef MVDB_DIAGNOSTICS
++        else ++diagnostics::stats.filter_hits;
++#endif
+@@ -788,0 +881,3 @@
++#ifdef MVDB_DIAGNOSTICS
++            ++diagnostics::stats.eligible_rows;
++#endif
+@@ -792 +887,6 @@
+-      } else for (size_t i = 0; i < scan_rows_.size(); ++i) if (eligible(i)) callback(i);
++      } else for (size_t i = 0; i < scan_rows_.size(); ++i) if (eligible(i)) {
++#ifdef MVDB_DIAGNOSTICS
++        ++diagnostics::stats.eligible_rows;
++#endif
++        callback(i);
++      }
+@@ -809,0 +910,4 @@
++#ifdef MVDB_DIAGNOSTICS
++      auto code_started = diagnostics::Clock::now();
++      diagnostics::stats.code_rows += rows.size();
++#endif
+@@ -810,0 +915,4 @@
++#ifdef MVDB_DIAGNOSTICS
++      diagnostics::stats.code_ns += diagnostics::elapsed(code_started);
++      auto seed_started = diagnostics::Clock::now();
++#endif
+@@ -816,2 +924,9 @@
+-        else if (seed < seeds.top()) { seeds.pop(); seeds.push(seed); }
+-      }
++        else if (seed < seeds.top()) { seeds.pop(); seeds.push(seed);
++#ifdef MVDB_DIAGNOSTICS
++          ++diagnostics::stats.seed_updates;
++#endif
++        }
++      }
++#ifdef MVDB_DIAGNOSTICS
++      diagnostics::stats.seed_ns += diagnostics::elapsed(seed_started);
++#endif
+@@ -819,0 +935,3 @@
++#ifdef MVDB_DIAGNOSTICS
++        auto refine_started = diagnostics::Clock::now();
++#endif
+@@ -824,8 +942,35 @@
+-          if (rank > last_seed && (s.descending ? distances[i] >= cutoff : distances[i] <= cutoff)) refine(rows[i]);
+-        }
+-      }
+-    } else for_each_cached([&](size_t i) {
+-      if (!scan_screen_.empty() && top.size() == s.limit &&
+-          scan_screen_.rejects(i, screening_query, std::get<double>(top.top().key), s.descending)) return;
+-      refine(i);
+-    });
++          if (rank > last_seed) {
++#ifdef MVDB_DIAGNOSTICS
++            ++diagnostics::stats.int8_checks;
++#endif
++            if (s.descending ? distances[i] >= cutoff : distances[i] <= cutoff) refine(rows[i]);
++#ifdef MVDB_DIAGNOSTICS
++            else ++diagnostics::stats.int8_rejects;
++#endif
++          }
++        }
++#ifdef MVDB_DIAGNOSTICS
++        diagnostics::stats.refine_ns += diagnostics::elapsed(refine_started);
++#endif
++      }
++    } else {
++#ifdef MVDB_DIAGNOSTICS
++      auto refine_started = diagnostics::Clock::now();
++#endif
++      for_each_cached([&](size_t i) {
++#ifdef MVDB_DIAGNOSTICS
++        if (!scan_screen_.empty() && top.size() == s.limit) ++diagnostics::stats.int8_checks;
++#endif
++        if (!scan_screen_.empty() && top.size() == s.limit &&
++            scan_screen_.rejects(i, screening_query, std::get<double>(top.top().key), s.descending)) {
++#ifdef MVDB_DIAGNOSTICS
++          ++diagnostics::stats.int8_rejects;
++#endif
++          return;
++        }
++        refine(i);
++      });
++#ifdef MVDB_DIAGNOSTICS
++      diagnostics::stats.refine_ns += diagnostics::elapsed(refine_started);
++#endif
++    }
+@@ -857 +1002,14 @@
+-  output.write("]}"); return output;
++  output.write("]}");
++#ifdef MVDB_DIAGNOSTICS
++  const auto elapsed = diagnostics::elapsed(select_started);
++  diagnostics::stats.select_ns += elapsed;
++  if (was_first_select) diagnostics::stats.first_select_ns += elapsed;
++  if (where.empty()) {
++    diagnostics::stats.unfiltered_ns += elapsed;
++    ++diagnostics::stats.unfiltered_queries;
++  } else {
++    diagnostics::stats.filtered_ns += elapsed;
++    ++diagnostics::stats.filtered_queries;
++  }
++#endif
++  return output;
+--- a/minivectordb/database.h
++++ b/minivectordb/database.h
+@@ -37,0 +38 @@
++  ~Database();
+--- a/minivectordb/main.cpp
++++ b/minivectordb/main.cpp
+@@ -1,0 +2 @@
++#include "diagnostics.h"
+@@ -6,0 +8 @@
++#include <cstdlib>
+@@ -60,0 +63 @@
++    bool shutdown_requested = false;
+@@ -61,0 +65,3 @@
++#ifdef MVDB_DIAGNOSTICS
++      ++mvdb::diagnostics::stats.request_count;
++#endif
+@@ -64,0 +71,3 @@
++#ifdef MVDB_DIAGNOSTICS
++        auto json_started = mvdb::diagnostics::Clock::now();
++#endif
+@@ -65,0 +75,3 @@
++#ifdef MVDB_DIAGNOSTICS
++        mvdb::diagnostics::stats.json_ns += mvdb::diagnostics::elapsed(json_started);
++#endif
+@@ -69,0 +82,4 @@
++#ifdef MVDB_DIAGNOSTICS
++          shutdown_requested = true;
++          break;
++#else
+@@ -70,0 +87 @@
++#endif
+@@ -77 +94,13 @@
+-        response = std::make_unique<mvdb::Spool>(database.execute(mvdb::parse(request.sql)));
++#ifdef MVDB_DIAGNOSTICS
++        auto sql_started = mvdb::diagnostics::Clock::now();
++        ++mvdb::diagnostics::stats.sql_count;
++#endif
++        auto statement = mvdb::parse(request.sql);
++#ifdef MVDB_DIAGNOSTICS
++        mvdb::diagnostics::stats.sql_ns += mvdb::diagnostics::elapsed(sql_started);
++        auto execute_started = mvdb::diagnostics::Clock::now();
++#endif
++        response = std::make_unique<mvdb::Spool>(database.execute(statement));
++#ifdef MVDB_DIAGNOSTICS
++        mvdb::diagnostics::stats.execute_ns += mvdb::diagnostics::elapsed(execute_started);
++#endif
+@@ -84,0 +114,3 @@
++#ifdef MVDB_DIAGNOSTICS
++      auto output_started = mvdb::diagnostics::Clock::now();
++#endif
+@@ -86,0 +119,3 @@
++#ifdef MVDB_DIAGNOSTICS
++      mvdb::diagnostics::stats.output_ns += mvdb::diagnostics::elapsed(output_started);
++#endif
+@@ -89,0 +125,7 @@
++#ifdef MVDB_DIAGNOSTICS
++    const char *out = std::getenv("MVDB_DIAGNOSTICS_FILE");
++    if (out != nullptr && *out != '\0') {
++      if (std::freopen(out, "w", stderr) == nullptr) throw std::runtime_error("cannot open diagnostics output");
++    }
++#endif
++    (void)shutdown_requested;
+--- a/minivectordb/storage.cpp
++++ b/minivectordb/storage.cpp
+@@ -1,0 +2 @@
++#include "diagnostics.h"
+@@ -6,0 +8 @@
++#include <cstdio>
+@@ -36,0 +39,3 @@
++#ifdef MVDB_DIAGNOSTICS
++    const auto started = diagnostics::Clock::now();
++#endif
+@@ -37,0 +43,5 @@
++#ifdef MVDB_DIAGNOSTICS
++    ++diagnostics::stats.pread_calls;
++    if (n > 0) diagnostics::stats.pread_bytes += static_cast<uint64_t>(n);
++    diagnostics::stats.pread_ns += diagnostics::elapsed(started);
++#endif
+@@ -45,0 +56,6 @@
++#ifdef MVDB_DIAGNOSTICS
++  const auto started = diagnostics::Clock::now();
++  ++diagnostics::stats.checksum_calls;
++  diagnostics::stats.checksum_bytes += end - begin;
++  const auto io_started = diagnostics::Clock::now();
++#endif
+@@ -55,0 +72,4 @@
++#ifdef MVDB_DIAGNOSTICS
++  diagnostics::stats.checksum_io_ns += diagnostics::elapsed(io_started);
++  diagnostics::stats.checksum_ns += diagnostics::elapsed(started);
++#endif
+@@ -76,0 +97,3 @@
++#ifdef MVDB_DIAGNOSTICS
++    const auto started = diagnostics::Clock::now();
++#endif
+@@ -77,0 +101,5 @@
++#ifdef MVDB_DIAGNOSTICS
++    ++diagnostics::stats.pwrite_calls;
++    if (n > 0) diagnostics::stats.pwrite_bytes += static_cast<uint64_t>(n);
++    diagnostics::stats.pwrite_ns += diagnostics::elapsed(started);
++#endif
+@@ -85 +113,12 @@
+-  while (::fsync(fd) != 0) { if (errno != EINTR) io_error("fsync"); }
++  while (true) {
++#ifdef MVDB_DIAGNOSTICS
++    const auto started = diagnostics::Clock::now();
++#endif
++    const int result = ::fsync(fd);
++#ifdef MVDB_DIAGNOSTICS
++    ++diagnostics::stats.fsync_calls;
++    diagnostics::stats.fsync_ns += diagnostics::elapsed(started);
++#endif
++    if (result == 0) return;
++    if (errno != EINTR) io_error("fsync");
++  }
+@@ -129,0 +169,20 @@
++#ifdef MVDB_DIAGNOSTICS
++  const auto &s = diagnostics::stats;
++  std::fprintf(stderr,
++      "MVDB_IO pwrite_calls=%llu pwrite_bytes=%llu pwrite_ms=%.3f pread_calls=%llu pread_bytes=%llu pread_ms=%.3f fsync_calls=%llu fsync_ms=%.3f blob_calls=%llu blob_bytes=%llu blob_reads=%llu blob_read_bytes=%llu blob_ms=%.3f publish_calls=%llu publish_ms=%.3f publish_pwrite_ms=%.3f publish_fsync_ms=%.3f publish_checksum_ms=%.3f checksum_calls=%llu checksum_bytes=%llu checksum_ms=%.3f checksum_io_ms=%.3f node_calls=%llu node_cache_hits=%llu node_cache_misses=%llu node_entries_copied=%llu scan_calls=%llu scan_nodes=%llu scan_entries=%llu scan_ms=%.3f find_calls=%llu put_calls=%llu put_ms=%.3f\n",
++      static_cast<unsigned long long>(s.pwrite_calls), static_cast<unsigned long long>(s.pwrite_bytes), s.pwrite_ns / 1.0e6,
++      static_cast<unsigned long long>(s.pread_calls), static_cast<unsigned long long>(s.pread_bytes), s.pread_ns / 1.0e6,
++      static_cast<unsigned long long>(s.fsync_calls), s.fsync_ns / 1.0e6,
++      static_cast<unsigned long long>(s.blob_calls), static_cast<unsigned long long>(s.blob_bytes),
++      static_cast<unsigned long long>(s.blob_reads), static_cast<unsigned long long>(s.blob_read_bytes), s.blob_ns / 1.0e6,
++      static_cast<unsigned long long>(s.publish_calls), s.publish_ns / 1.0e6,
++      s.publish_pwrite_ns / 1.0e6, s.publish_fsync_ns / 1.0e6, s.publish_checksum_ns / 1.0e6,
++      static_cast<unsigned long long>(s.checksum_calls), static_cast<unsigned long long>(s.checksum_bytes), s.checksum_ns / 1.0e6,
++      s.checksum_io_ns / 1.0e6,
++      static_cast<unsigned long long>(s.node_calls), static_cast<unsigned long long>(s.node_cache_hits),
++      static_cast<unsigned long long>(s.node_cache_misses),
++      static_cast<unsigned long long>(s.node_entries_copied), static_cast<unsigned long long>(s.scan_calls),
++      static_cast<unsigned long long>(s.scan_nodes), static_cast<unsigned long long>(s.scan_entries), s.scan_ns / 1.0e6,
++      static_cast<unsigned long long>(s.find_calls),
++      static_cast<unsigned long long>(s.put_calls), s.put_ns / 1.0e6);
++#endif
+@@ -299,0 +359,7 @@
++#ifdef MVDB_DIAGNOSTICS
++  const auto started = diagnostics::Clock::now();
++  ++diagnostics::stats.publish_calls;
++  const auto checksum_before = diagnostics::stats.checksum_ns;
++  const auto sync_before = diagnostics::stats.fsync_ns;
++  const auto write_before = diagnostics::stats.pwrite_ns;
++#endif
+@@ -345,0 +412,6 @@
++#ifdef MVDB_DIAGNOSTICS
++  diagnostics::stats.publish_ns += diagnostics::elapsed(started);
++  diagnostics::stats.publish_checksum_ns += diagnostics::stats.checksum_ns - checksum_before;
++  diagnostics::stats.publish_fsync_ns += diagnostics::stats.fsync_ns - sync_before;
++  diagnostics::stats.publish_pwrite_ns += diagnostics::stats.pwrite_ns - write_before;
++#endif
+@@ -368,0 +441,5 @@
++#ifdef MVDB_DIAGNOSTICS
++  const auto started = diagnostics::Clock::now();
++  ++diagnostics::stats.blob_calls;
++  diagnostics::stats.blob_bytes += value.size() + 4;
++#endif
+@@ -377,0 +455,3 @@
++#ifdef MVDB_DIAGNOSTICS
++  diagnostics::stats.blob_ns += diagnostics::elapsed(started);
++#endif
+@@ -380,0 +461,3 @@
++#ifdef MVDB_DIAGNOSTICS
++  ++diagnostics::stats.blob_reads;
++#endif
+@@ -381,0 +465,3 @@
++#ifdef MVDB_DIAGNOSTICS
++  diagnostics::stats.blob_read_bytes += size + 4;
++#endif
+@@ -412,0 +499,3 @@
++#ifdef MVDB_DIAGNOSTICS
++  ++diagnostics::stats.node_calls;
++#endif
+@@ -414,0 +504,4 @@
++#ifdef MVDB_DIAGNOSTICS
++    ++diagnostics::stats.node_cache_hits;
++    diagnostics::stats.node_entries_copied += found->second.node.entries.size();
++#endif
+@@ -416,0 +510,3 @@
++#ifdef MVDB_DIAGNOSTICS
++  ++diagnostics::stats.node_cache_misses;
++#endif
+@@ -434,0 +531,3 @@
++#ifdef MVDB_DIAGNOSTICS
++  ++diagnostics::stats.find_calls;
++#endif
+@@ -487,0 +587,4 @@
++#ifdef MVDB_DIAGNOSTICS
++  const auto started = diagnostics::Clock::now();
++  ++diagnostics::stats.put_calls;
++#endif
+@@ -489 +592,6 @@
+-    Node n; n.entries.push_back({key, value}); return save_node(0, std::move(n), boundary);
++    Node n; n.entries.push_back({key, value});
++    const auto result = save_node(0, std::move(n), boundary);
++#ifdef MVDB_DIAGNOSTICS
++    diagnostics::stats.put_ns += diagnostics::elapsed(started);
++#endif
++    return result;
+@@ -492 +600,6 @@
+-  if (!result.has_right) return result.left.ref;
++  if (!result.has_right) {
++#ifdef MVDB_DIAGNOSTICS
++    diagnostics::stats.put_ns += diagnostics::elapsed(started);
++#endif
++    return result.left.ref;
++  }
+@@ -494 +607,5 @@
+-  return save_node(0, std::move(n), boundary);
++  const auto saved = save_node(0, std::move(n), boundary);
++#ifdef MVDB_DIAGNOSTICS
++  diagnostics::stats.put_ns += diagnostics::elapsed(started);
++#endif
++  return saved;
+@@ -496,0 +614,4 @@
++#ifdef MVDB_DIAGNOSTICS
++  ++diagnostics::stats.scan_calls;
++  const auto started = diagnostics::Clock::now();
++#endif
+@@ -500,0 +622,4 @@
++#ifdef MVDB_DIAGNOSTICS
++    ++diagnostics::stats.scan_nodes;
++    diagnostics::stats.scan_entries += n.entries.size();
++#endif
+@@ -508,0 +634,3 @@
++#ifdef MVDB_DIAGNOSTICS
++  diagnostics::stats.scan_ns += diagnostics::elapsed(started);
++#endif
+--- /dev/null
++++ b/minivectordb/diagnostics.h
+@@ -0,0 +1,39 @@
++#pragma once
++
++#ifdef MVDB_DIAGNOSTICS
++#include <chrono>
++#include <cstdint>
++
++namespace mvdb::diagnostics {
++struct Stats {
++  uint64_t pwrite_calls = 0, pwrite_bytes = 0, pwrite_ns = 0;
++  uint64_t pread_calls = 0, pread_bytes = 0, pread_ns = 0;
++  uint64_t fsync_calls = 0, fsync_ns = 0;
++  uint64_t blob_calls = 0, blob_bytes = 0, blob_reads = 0, blob_read_bytes = 0, blob_ns = 0;
++  uint64_t publish_calls = 0, publish_ns = 0;
++  uint64_t checksum_calls = 0, checksum_bytes = 0, checksum_ns = 0, checksum_io_ns = 0;
++  uint64_t node_calls = 0, node_cache_hits = 0, node_cache_misses = 0, node_entries_copied = 0;
++  uint64_t scan_calls = 0, scan_nodes = 0, scan_entries = 0, scan_ns = 0;
++  uint64_t find_calls = 0, put_calls = 0, put_ns = 0;
++  uint64_t select_calls = 0, cache_builds = 0, filter_hits = 0, filter_builds = 0;
++  uint64_t eligible_rows = 0, code_rows = 0, seed_updates = 0;
++  uint64_t int8_checks = 0, int8_rejects = 0, float_checks = 0, float_rejects = 0;
++  uint64_t refinements = 0, top_updates = 0, first_select_ns = 0;
++  uint64_t select_ns = 0, bind_ns = 0, cache_ns = 0, filter_ns = 0, code_ns = 0;
++  uint64_t seed_ns = 0, refine_ns = 0;
++  uint64_t filtered_queries = 0, unfiltered_queries = 0;
++  uint64_t filtered_ns = 0, unfiltered_ns = 0;
++  uint64_t json_ns = 0, sql_ns = 0, execute_ns = 0, output_ns = 0;
++  uint64_t request_count = 0, sql_count = 0, inserted_rows = 0;
++  uint64_t commit_calls = 0, commit_ns = 0, catalog_copy_ns = 0;
++  uint64_t publish_checksum_ns = 0, publish_fsync_ns = 0, publish_pwrite_ns = 0;
++  uint64_t convert_ns = 0, vector_conversions = 0;
++};
++
++inline Stats stats;
++using Clock = std::chrono::steady_clock;
++inline uint64_t elapsed(Clock::time_point start) {
++  return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start).count());
++}
++}
++#endif

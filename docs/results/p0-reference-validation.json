@@ -1,0 +1,242 @@
+{
+  "source_sha256": "860418c9be97b7245191e872c1945ab32fd91584954da0899b8b7b2be5860791",
+  "baseline_commit": "70b9fd50907b34c14fb44d9adea4897558f40b8e",
+  "commands": [
+    {
+      "command": [
+        "./build.sh"
+      ],
+      "cwd": "/tmp/mvdb-p0-clean70",
+      "exit_code": 0,
+      "seconds": 5.361479750019498,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/index_references.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 1.643810083041899,
+      "stdout": "PASS reference postings: D=1, legacy=False, heap/external-sort, ASC/DESC, ties, mutation, failed insert, rollback, shutdown and SIGKILL/restart\nPASS reference postings: D=17, legacy=False, heap/external-sort, ASC/DESC, ties, mutation, failed insert, rollback, shutdown and SIGKILL/restart\nPASS reference postings: D=128, legacy=False, heap/external-sort, ASC/DESC, ties, mutation, failed insert, rollback, shutdown and SIGKILL/restart\nPASS reference postings: 306 exact checks\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/index_references.py",
+        "--binary",
+        "build/minivectordb-sanitize",
+        "--legacy-binary",
+        "/tmp/mvdb-p0-clean70/build/minivectordb"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 1.1393757909536362,
+      "stdout": "PASS reference postings: D=1, legacy=True, heap/external-sort, ASC/DESC, ties, mutation, failed insert, rollback, shutdown and SIGKILL/restart\nPASS reference postings: D=17, legacy=True, heap/external-sort, ASC/DESC, ties, mutation, failed insert, rollback, shutdown and SIGKILL/restart\nPASS reference postings: D=128, legacy=True, heap/external-sort, ASC/DESC, ties, mutation, failed insert, rollback, shutdown and SIGKILL/restart\nPASS reference postings: 306 exact checks\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/public.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 1.2834645829861984,
+      "stdout": "PASS sql_crud (7 SQL)\nPASS sql_comparisons (4 SQL)\nPASS sql_ordering (4 SQL)\nPASS sql_empty (3 SQL)\nPASS sql_primary_key (4 SQL)\nPASS sql_unicode (3 SQL)\nPASS sql_bigint (3 SQL)\nPASS sql_unsupported (3 SQL)\nPASS storage_restart (3 SQL)\nPASS vector_euclidean (3 SQL)\nPASS transaction_commit (6 SQL)\nPASS transaction_rollback (6 SQL)\nPASS storage_mutations (6 SQL)\nPASS storage_multiple_tables (6 SQL)\nPASS vector_ties_and_filter (5 SQL)\nPASS vector_float32 (3 SQL)\nPASS vector_index_maintenance (9 SQL)\nPASS transaction_failed_insert (8 SQL)\nPASS transaction_autocommit_atomic (4 SQL)\nPASS transaction_shutdown_rollback (5 SQL)\nPASS public: 20 cases, 95 SQL, minivectordb-public-v4; official JSONL\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/regression.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 3.779064542031847,
+      "stdout": "PASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/query_cache.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 0.672826666967012,
+      "stdout": "PASS query cache: 41 checks; prefix/tail, dimensions, rollback, failed statement, restart, spill\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/screening.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 2.017525332979858,
+      "stdout": "FILTER counterexample: global Top10 ids=0..9 (all g=0); WHERE g=1 -> ids=[[9900], [9901], [9902], [9903], [9904], [9905], [9906], [9907], [9908], [9909]]\nFILTER transfer LIMIT 200: returned_count=100, first=9900, last=9999\nQUANTIZATION counterexample: approximate Top1 would choose id=1 (code tie); exact returned id=2, distance=1.0099999904632568\nPASS screening: 1176 exact ID/order/distance checks; seed=927431, ties, near-ties, overflow, subnormals, sparse filters, DESC, scan/index\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/vector_sweep.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 1.3824568340787664,
+      "stdout": "PASS vector sweep seed=14223819, dim=1, rows=257, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=17, rows=4096, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep seed=14223819, dim=256, rows=1300, filters=none/1%/25%/100%/empty, scan/index/txn/rollback/restart\nPASS vector sweep: 375 exact ordered ID/distance checks, ann exact fallback\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/crash.py",
+        "--binary",
+        "build/minivectordb-sanitize"
+      ],
+      "cwd": ".",
+      "exit_code": 0,
+      "seconds": 3.93803120800294,
+      "stdout": "PASS crash=before_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_write, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_rename, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_directory_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=before_success_response, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS SIGKILL without COMMIT: entire multi-table transaction absent\nPASS autocommit crash=before_data_flush: atomic batch\nPASS autocommit crash=after_data_flush: atomic batch\nPASS autocommit crash=after_data_sync: atomic batch\nPASS autocommit crash=after_catalog_write: atomic batch\nPASS autocommit crash=after_catalog_sync: atomic batch\nPASS autocommit crash=after_catalog_rename: atomic batch\nPASS autocommit crash=after_directory_sync: atomic batch\nPASS crash suite: 17 kill scenarios, 36 repeated recovery kills, 18 idempotent restarts\nPASS indexed crash=index-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=index-publish: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-before-write: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=posting-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=indexed-publish: rows, postings, filtered and unfiltered TopK consistent\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        "linux/amd64",
+        "--network",
+        "none",
+        "--memory",
+        "128m",
+        "--memory-swap",
+        "128m",
+        "--cpus",
+        "2",
+        "-e",
+        "TMPDIR=/data",
+        "-v",
+        "/private/tmp/seekdb-p0-reference-postings:/src:ro",
+        "-v",
+        "mvdb-p0-ref-validation-23ca1cc6:/data",
+        "-w",
+        "/src",
+        "--entrypoint",
+        "sh",
+        "gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c",
+        "-c",
+        "set -eu\npython3 tests/index_references.py --binary /src/build/minivectordb-linux\npython3 tests/regression.py --binary /src/build/minivectordb-linux --temp-root /data\ng++ -std=c++20 -O3 -Wall -Wextra -Wpedantic -Wconversion -Wshadow -DMINIVECTORDB_FAULTS minivectordb/*.cpp -o /data/minivectordb-fault\npython3 tests/crash.py --binary /data/minivectordb-fault --temp-root /data\n"
+      ],
+      "exit_code": 1,
+      "seconds": 327.82516995898914,
+      "stdout": "PASS reference postings: D=1, legacy=False, heap/external-sort, ASC/DESC, ties, mutation, failed insert, rollback, shutdown and SIGKILL/restart\nPASS reference postings: D=17, legacy=False, heap/external-sort, ASC/DESC, ties, mutation, failed insert, rollback, shutdown and SIGKILL/restart\nPASS reference postings: D=128, legacy=False, heap/external-sort, ASC/DESC, ties, mutation, failed insert, rollback, shutdown and SIGKILL/restart\nPASS reference postings: 306 exact checks\nPASS boundaries, framing, Unicode, float32, statement and index transaction atomicity\nPASS borrowed scan fields, variable strings, nonleading primary key, scalar/distance ordering and distinct projection distance\nPASS differential seed=7, steps=150, index_attempted=True\nPASS differential seed=42, steps=150, index_attempted=True\nPASS differential seed=20261109, steps=150, index_attempted=True\nPASS differential seed=8675309, steps=150, index_attempted=True\nPASS differential seed=39034843, steps=150, index_attempted=True\n",
+      "stderr": "g++: fatal error: Killed signal terminated program cc1plus\ncompilation terminated.\n"
+    },
+    {
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        "linux/amd64",
+        "--network",
+        "none",
+        "--memory-swap",
+        "512m",
+        "--memory",
+        "512m",
+        "--cpus",
+        "2",
+        "-e",
+        "TMPDIR=/data",
+        "-v",
+        "/private/tmp/seekdb-p0-reference-postings:/src:ro",
+        "-v",
+        "mvdb-p0-fault-0669ed65:/data",
+        "-w",
+        "/src",
+        "--entrypoint",
+        "sh",
+        "gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c",
+        "-c",
+        "g++ -std=c++20 -O3 -Wall -Wextra -Wpedantic -Wconversion -Wshadow -DMINIVECTORDB_FAULTS minivectordb/*.cpp -o /data/minivectordb-fault"
+      ],
+      "exit_code": 0,
+      "seconds": 17.201863417052664,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "docker",
+        "run",
+        "--rm",
+        "--platform",
+        "linux/amd64",
+        "--network",
+        "none",
+        "--memory-swap",
+        "128m",
+        "--memory",
+        "128m",
+        "--cpus",
+        "2",
+        "-e",
+        "TMPDIR=/data",
+        "-v",
+        "/private/tmp/seekdb-p0-reference-postings:/src:ro",
+        "-v",
+        "mvdb-p0-fault-0669ed65:/data",
+        "-w",
+        "/src",
+        "--entrypoint",
+        "sh",
+        "gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c",
+        "-c",
+        "python3 tests/crash.py --binary /data/minivectordb-fault --temp-root /data"
+      ],
+      "exit_code": 0,
+      "seconds": 2.099873375031166,
+      "stdout": "PASS crash=before_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_flush, commit_ack=False, recovered=old, recovery_kills=4, idempotent_starts=2\nPASS crash=after_data_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_write, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_catalog_rename, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_directory_sync, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=before_success_response, commit_ack=False, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS crash=after_success_response, commit_ack=True, recovered=new, recovery_kills=4, idempotent_starts=2\nPASS SIGKILL without COMMIT: entire multi-table transaction absent\nPASS autocommit crash=before_data_flush: atomic batch\nPASS autocommit crash=after_data_flush: atomic batch\nPASS autocommit crash=after_data_sync: atomic batch\nPASS autocommit crash=after_catalog_write: atomic batch\nPASS autocommit crash=after_catalog_sync: atomic batch\nPASS autocommit crash=after_catalog_rename: atomic batch\nPASS autocommit crash=after_directory_sync: atomic batch\nPASS crash suite: 17 kill scenarios, 36 repeated recovery kills, 18 idempotent restarts\nPASS indexed crash=index-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=index-publish: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-before-write: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=row-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=posting-append: rows, postings, filtered and unfiltered TopK consistent\nPASS indexed crash=indexed-publish: rows, postings, filtered and unfiltered TopK consistent\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "tests/container_checks.py",
+        "--image",
+        "minivectordb:p0-reference-postings",
+        "--rows",
+        "40000",
+        "--output",
+        "docs/results/p0-reference-resources.json"
+      ],
+      "exit_code": 0,
+      "seconds": 5.481452291016467,
+      "stdout": "{\n  \"status\": \"PASS\",\n  \"platform\": \"linux/amd64\",\n  \"network\": \"none\",\n  \"local_memory_limit\": 100663296,\n  \"swap\": 0,\n  \"rows\": 40000,\n  \"data_bytes_before_index\": 142734808,\n  \"phases\": [\n    \"large_transaction_commit\",\n    \"index_build\",\n    \"filtered_topk\",\n    \"external_sort\",\n    \"large_update_delete_rollback\",\n    \"delete_commit\",\n    \"uncommitted_delete_sigkill\",\n    \"restart\"\n  ],\n  \"before_kill\": {\n    \"memory_peak\": 100663296,\n    \"memory_max\": \"100663296\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"254:0 rbytes=2556100608 wbytes=888446976 rios=3827 wios=1989 dbytes=0 dios=0\"\n  },\n  \"after_restart\": {\n    \"memory_peak\": 91754496,\n    \"memory_max\": \"100663296\",\n    \"swap_max\": \"0\",\n    \"io_stat\": \"254:0 rbytes=70709248 wbytes=233472 rios=212 wios=1 dbytes=0 dios=0\"\n  },\n  \"seconds\": 5.368388290982693,\n  \"io_caveat\": \"Raw cgroup io.stat; dedicated device/writeback attribution not certified.\"\n}\n",
+      "stderr": ""
+    }
+  ],
+  "build_environment_note": "One combined Linux validation command ran the compiler under the 128 MiB database runtime limit. Production index-reference and differential tests passed first; compiler cc1plus was then killed. Retained failed command. Compile fault binary separately with 512 MiB; run database crash tests with unchanged 128 MiB runtime. No production test limits relaxed.",
+  "required_runtime_checks_passed": true
+}
