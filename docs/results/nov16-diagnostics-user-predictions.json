@@ -1,0 +1,12 @@
+{
+  "source": "user message in this conversation",
+  "status": "unverified hypotheses; no student experiment interpretation supplied yet",
+  "predictions": [
+    "K=10 时，现有固定大小最大堆可能已经足够高效。",
+    "换成 `nth_element`，查询耗时大概率持平或略微增加。",
+    "如果需要额外物化候选数组，内存占用可能增加；但系统级峰值不一定能稳定观测到差异。",
+    "我怀疑批量 int8 距离计算、候选扫描及安全界检查比起始种子堆更值得关注。",
+    "以上均为待验证假设，不允许直接当作结论。"
+  ],
+  "boundary": "diagnostic tools/builds only; stop and report before algorithm experiments"
+}

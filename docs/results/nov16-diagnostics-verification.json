@@ -1,0 +1,87 @@
+{
+  "scope": "diagnostic-only local validation; no official submission",
+  "production_source_sha256": "a2553e08d54269ddea41679914b7d5d03f30369ab07178f87be21f3dd66ad6d3",
+  "probe_commands_argv": [
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/oxidaner/develop/coding/open-source/seekdb-minivectordb-perf5000:/work",
+      "-w",
+      "/work",
+      "--entrypoint",
+      "g++",
+      "gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c",
+      "-std=c++20",
+      "-O3",
+      "tests/diagnostic_probe.cpp",
+      "-o",
+      "build/diagnostic-probe"
+    ],
+    [
+      "docker",
+      "run",
+      "--rm",
+      "--platform",
+      "linux/amd64",
+      "-v",
+      "/Users/oxidaner/develop/coding/open-source/seekdb-minivectordb-perf5000/build:/diag:ro",
+      "--entrypoint",
+      "/diag/diagnostic-probe",
+      "minivectordb:nov16-number-clean"
+    ]
+  ],
+  "environment_probe_repeat": {
+    "cpu_avx2": false,
+    "cpu_vnni": false,
+    "cycles_open_errno": 1,
+    "cycles_open_error": "Operation not permitted",
+    "cycles_measured": false,
+    "clock_adjacent_min_ns": 0,
+    "clock_adjacent_mean_ns": 19.698,
+    "clock_pairs": 100000
+  },
+  "probe_sha256": "e283cd2b0b3721c0403eb6748f9ddc42c821a8dc1f095504d39aa3b67922cf74",
+  "probe_binary_sha256": "59104ee2b39b9c15727b861f3c4d32a29df6c1f4e8121801d15cd52f540538d7",
+  "assembly_command_argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--platform",
+    "linux/amd64",
+    "-v",
+    "/Users/oxidaner/develop/coding/open-source/seekdb-minivectordb-perf5000/build:/work:ro",
+    "--entrypoint",
+    "objdump",
+    "gcc:14.2.0-bookworm@sha256:b99b86a28812b1e6453a231a947dc43d76fe192788a12f344a9b568bf9f5d24c",
+    "-Cd",
+    "--no-show-raw-insn",
+    "/work/diagnostic-original"
+  ],
+  "assembly_extraction": "Selected complete function blocks for QuantizedScreen::code_distance and code_distances(size_t,query), including cold clone. Production binary extracted by docker run --entrypoint cat from the identity image.",
+  "public_driver": {
+    "command_argv": [
+      "python3",
+      "protocol_check/run.py",
+      "--image",
+      "minivectordb:diagnostic-nov16",
+      "--output",
+      "docs/results/nov16-diagnostics-public"
+    ],
+    "result": "20/20 cases, 95 SQL; PASS",
+    "report": "docs/results/nov16-diagnostics-public/result.json"
+  },
+  "diagnostic_scope": "26 runs, exact oracle, identical response digest and all scalar/vector restart contents; source and official directory diffs checked separately",
+  "production_algorithm_changed": false,
+  "packaging_checks": {
+    "python_syntax": "PASS tests/build_diagnostics.py tests/performance_diagnostics.py tests/analyze_diagnostics.py",
+    "reaggregate_raw": "PASS byte-identical aggregate reconstructed from all26 raw records; count identities and response digest checked",
+    "production_diff": "PASS git diff --exit-code HEAD -- minivectordb Dockerfile build.sh",
+    "official_diff": "PASS git diff --exit-code f4d4e26653af823a7601668802f80e374ad6643c -- STDIO_PROTOCOL.md protocol_check mysqltest",
+    "learning_material": "PASS strict UTF-8 JSON,128KiB limit,source/hashes/pointers/excerpts; actual user and Agent work attributed separately",
+    "minimal_diff": "Only diagnostic tools,run records,report and authentic learning material. Modes separate timers/events/shadow/allocation perturbation. No production option/dependency/algorithm changed."
+  }
+}

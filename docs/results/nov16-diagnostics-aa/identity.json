@@ -1,0 +1,30 @@
+{
+  "source_sha256": "a2553e08d54269ddea41679914b7d5d03f30369ab07178f87be21f3dd66ad6d3",
+  "workload_sha256": "4482c7dca85141f589bf16445b2a7a6121273b620ff95df6e28e42294465c9f7",
+  "argv": [
+    "tests/performance_diagnostics.py",
+    "--output",
+    "docs/results/nov16-diagnostics-aa",
+    "--pairs",
+    "3"
+  ],
+  "rows": 10000,
+  "dimension": 128,
+  "K": 10,
+  "queries": 1000,
+  "seed": 20261109,
+  "images": {
+    "minivectordb:nov16-number-clean": {
+      "image_id": "sha256:685121a3cd38b123bcc380ef87746d0343610792ed2e0b40f99ceda3b2a0bc3c",
+      "binary_sha256": "dc7800d5669fae8c50669b104c750b460d811ccbafe0cf10628619e3c06b5608"
+    }
+  },
+  "limitations": [
+    "Apple Silicon emulates Linux amd64; no host/cache isolation.",
+    "External observer, no observer child in database cgroup.",
+    "io.stat is cumulative per device; phase increments are derived later.",
+    "memory.peak is cumulative; boundary VmRSS/VmHWM are separate.",
+    "First means empty process caches, not evicted host file cache.",
+    "Per-request wall includes Python JSON, Docker pipes and scheduling."
+  ]
+}

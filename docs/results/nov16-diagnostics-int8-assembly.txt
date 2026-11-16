@@ -1,0 +1,281 @@
+000000000040990a <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const [clone .cold]>:
+  40990a:	mov    $0x52b580,%edi
+  40990f:	call   40ec3e <std::__throw_length_error(char const*)>
+  409914:	mov    (%r14),%rdi
+  409917:	mov    0x10(%r14),%rsi
+  40991b:	sub    %rdi,%rsi
+  40991e:	test   %rdi,%rdi
+  409921:	je     409928 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const [clone .cold]+0x1e>
+  409923:	call   44de10 <operator delete(void*, unsigned long)>
+  409928:	mov    %rbx,%rdi
+  40992b:	call   526dd0 <_Unwind_Resume>
+
+0000000000436a70 <mvdb::QuantizedScreen::code_distance(unsigned long, mvdb::QuantizedScreen::Query const&) const>:
+  436a70:	push   %r13
+  436a72:	mov    %rdx,%r13
+  436a75:	push   %r12
+  436a77:	mov    %rdi,%r12
+  436a7a:	push   %rbp
+  436a7b:	push   %rbx
+  436a7c:	mov    %rsi,%rbx
+  436a7f:	sub    $0x8,%rsp
+  436a83:	movzbl 0x171cbe(%rip),%eax        # 5a8748 <guard variable for mvdb::QuantizedScreen::code_distance(unsigned long, mvdb::QuantizedScreen::Query const&) const::dot>
+  436a8a:	test   %al,%al
+  436a8c:	je     436ad0 <mvdb::QuantizedScreen::code_distance(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x60>
+  436a8e:	mov    (%r12),%rdx
+  436a92:	mov    0x30(%r12),%rax
+  436a97:	mov    0x18(%r13),%ebp
+  436a9b:	mov    0x18(%r12),%rdi
+  436aa0:	add    (%rax,%rbx,4),%ebp
+  436aa3:	imul   %rdx,%rbx
+  436aa7:	mov    0x0(%r13),%rsi
+  436aab:	add    %rbx,%rdi
+  436aae:	call   *0x171c9c(%rip)        # 5a8750 <mvdb::QuantizedScreen::code_distance(unsigned long, mvdb::QuantizedScreen::Query const&) const::dot>
+  436ab4:	add    $0x8,%rsp
+  436ab8:	lea    (%rax,%rax,1),%edx
+  436abb:	mov    %ebp,%eax
+  436abd:	pop    %rbx
+  436abe:	pop    %rbp
+  436abf:	sub    %edx,%eax
+  436ac1:	pop    %r12
+  436ac3:	pop    %r13
+  436ac5:	ret
+  436ac6:	cs nopw 0x0(%rax,%rax,1)
+  436ad0:	mov    $0x5a8748,%edi
+  436ad5:	call   44f280 <__cxa_guard_acquire>
+  436ada:	test   %eax,%eax
+  436adc:	je     436a8e <mvdb::QuantizedScreen::code_distance(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x1e>
+  436ade:	mov    $0x433830,%edx
+  436ae3:	mov    $0x4342c0,%eax
+  436ae8:	mov    $0x5a8748,%edi
+  436aed:	testb  $0x4,0x173899(%rip)        # 5aa38d <__cpu_model+0xd>
+  436af4:	cmove  %rdx,%rax
+  436af8:	mov    %rax,0x171c51(%rip)        # 5a8750 <mvdb::QuantizedScreen::code_distance(unsigned long, mvdb::QuantizedScreen::Query const&) const::dot>
+  436aff:	call   44f380 <__cxa_guard_release>
+  436b04:	jmp    436a8e <mvdb::QuantizedScreen::code_distance(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x1e>
+  436b06:	cs nopw 0x0(%rax,%rax,1)
+
+0000000000436f40 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const>:
+  436f40:	push   %r15
+  436f42:	push   %r14
+  436f44:	push   %r13
+  436f46:	push   %r12
+  436f48:	push   %rbp
+  436f49:	push   %rbx
+  436f4a:	sub    $0x18,%rsp
+  436f4e:	mov    0x38(%rsi),%r13
+  436f52:	sub    0x30(%rsi),%r13
+  436f56:	sar    $0x2,%r13
+  436f5a:	cmp    %rdx,%r13
+  436f5d:	cmova  %rdx,%r13
+  436f61:	mov    %r13,%rax
+  436f64:	shr    $0x3d,%rax
+  436f68:	jne    40990a <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const [clone .cold]>
+  436f6e:	pxor   %xmm0,%xmm0
+  436f72:	mov    %rdi,%r14
+  436f75:	mov    %rsi,%r12
+  436f78:	mov    %rcx,%r15
+  436f7b:	movq   $0x0,0x10(%rdi)
+  436f83:	movups %xmm0,(%rdi)
+  436f86:	test   %r13,%r13
+  436f89:	je     4370c0 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x180>
+  436f8f:	lea    0x0(,%r13,4),%rbp
+  436f97:	mov    %rbp,%rdi
+  436f9a:	call   44f560 <operator new(unsigned long)>
+  436f9f:	lea    (%rax,%rbp,1),%rcx
+  436fa3:	mov    %rax,(%r14)
+  436fa6:	mov    %rax,%rbx
+  436fa9:	lea    0x4(%rax),%rdi
+  436fad:	mov    %rcx,0x10(%r14)
+  436fb1:	mov    %rcx,0x8(%rsp)
+  436fb6:	movl   $0x0,(%rax)
+  436fbc:	cmp    $0x1,%r13
+  436fc0:	je     437208 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x2c8>
+  436fc6:	lea    -0x4(%rbp),%rdx
+  436fca:	xor    %esi,%esi
+  436fcc:	call   404100 <memset@plt>
+  436fd1:	mov    0x8(%rsp),%rdi
+  436fd6:	mov    0x1733b0(%rip),%eax        # 5aa38c <__cpu_model+0xc>
+  436fdc:	mov    %rdi,0x8(%r14)
+  436fe0:	mov    %eax,%edx
+  436fe2:	not    %edx
+  436fe4:	and    $0x208000,%edx
+  436fea:	je     4370e0 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x1a0>
+  436ff0:	test   $0x4,%ah
+  436ff3:	jne    437088 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x148>
+  436ff9:	xor    %ebx,%ebx
+  436ffb:	test   %r13,%r13
+  436ffe:	jne    437040 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x100>
+  437000:	jmp    4370a4 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x164>
+  437005:	nopl   (%rax)
+  437008:	mov    0x30(%r12),%rax
+  43700d:	mov    (%r12),%rdx
+  437011:	mov    %rbx,%rdi
+  437014:	mov    0x18(%r15),%ebp
+  437018:	mov    (%r15),%rsi
+  43701b:	imul   %rdx,%rdi
+  43701f:	add    (%rax,%rbx,4),%ebp
+  437022:	add    0x18(%r12),%rdi
+  437027:	call   *0x171723(%rip)        # 5a8750 <mvdb::QuantizedScreen::code_distance(unsigned long, mvdb::QuantizedScreen::Query const&) const::dot>
+  43702d:	mov    (%r14),%rdx
+  437030:	add    %eax,%eax
+  437032:	sub    %eax,%ebp
+  437034:	mov    %ebp,(%rdx,%rbx,4)
+  437037:	add    $0x1,%rbx
+  43703b:	cmp    %rbx,%r13
+  43703e:	je     4370a4 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x164>
+  437040:	movzbl 0x171701(%rip),%eax        # 5a8748 <guard variable for mvdb::QuantizedScreen::code_distance(unsigned long, mvdb::QuantizedScreen::Query const&) const::dot>
+  437047:	test   %al,%al
+  437049:	jne    437008 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0xc8>
+  43704b:	mov    $0x5a8748,%edi
+  437050:	call   44f280 <__cxa_guard_acquire>
+  437055:	test   %eax,%eax
+  437057:	je     437008 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0xc8>
+  437059:	mov    $0x4342c0,%ecx
+  43705e:	mov    $0x433830,%eax
+  437063:	mov    $0x5a8748,%edi
+  437068:	testb  $0x4,0x17331e(%rip)        # 5aa38d <__cpu_model+0xd>
+  43706f:	cmovne %rcx,%rax
+  437073:	mov    %rax,0x1716d6(%rip)        # 5a8750 <mvdb::QuantizedScreen::code_distance(unsigned long, mvdb::QuantizedScreen::Query const&) const::dot>
+  43707a:	call   44f380 <__cxa_guard_release>
+  43707f:	jmp    437008 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0xc8>
+  437081:	nopl   0x0(%rax)
+  437088:	mov    (%r12),%rdx
+  43708c:	mov    0x30(%r12),%rsi
+  437091:	mov    %rbx,%r9
+  437094:	mov    %r15,%r8
+  437097:	mov    0x18(%r12),%rdi
+  43709c:	mov    %r13,%rcx
+  43709f:	call   434f80 <mvdb::(anonymous namespace)::distances_avx2_contiguous(signed char const*, int const*, unsigned long, unsigned long, mvdb::QuantizedScreen::Query const&, int*)>
+  4370a4:	add    $0x18,%rsp
+  4370a8:	mov    %r14,%rax
+  4370ab:	pop    %rbx
+  4370ac:	pop    %rbp
+  4370ad:	pop    %r12
+  4370af:	pop    %r13
+  4370b1:	pop    %r14
+  4370b3:	pop    %r15
+  4370b5:	ret
+  4370b6:	cs nopw 0x0(%rax,%rax,1)
+  4370c0:	movq   $0x0,(%rdi)
+  4370c7:	xor    %ebp,%ebp
+  4370c9:	xor    %ebx,%ebx
+  4370cb:	movq   $0x0,0x10(%rdi)
+  4370d3:	xor    %edi,%edi
+  4370d5:	jmp    436fd6 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x96>
+  4370da:	nopw   0x0(%rax,%rax,1)
+  4370e0:	testb  $0x4,0x173289(%rip)        # 5aa370 <__cpu_features2>
+  4370e7:	je     436ff0 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0xb0>
+  4370ed:	test   %r13,%r13
+  4370f0:	je     437212 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x2d2>
+  4370f6:	mov    %rbp,%rdi
+  4370f9:	call   44f560 <operator new(unsigned long)>
+  4370fe:	movl   $0x0,(%rax)
+  437104:	mov    %rax,%rbx
+  437107:	lea    0x4(%rax),%rcx
+  43710b:	cmp    $0x1,%r13
+  43710f:	je     43712e <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x1ee>
+  437111:	cmp    $0x4,%rbp
+  437115:	je     43712e <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x1ee>
+  437117:	lea    -0x4(%rbp),%r13
+  43711b:	mov    %rcx,%rdi
+  43711e:	xor    %esi,%esi
+  437120:	mov    %r13,%rdx
+  437123:	call   404100 <memset@plt>
+  437128:	mov    %rax,%rcx
+  43712b:	add    %r13,%rcx
+  43712e:	mov    (%r14),%r9
+  437131:	mov    0x18(%r12),%rdi
+  437136:	mov    %rbx,%rax
+  437139:	mov    0x30(%r12),%rsi
+  43713e:	mov    (%r12),%r10
+  437142:	cmp    %rbx,%rcx
+  437145:	je     437260 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x320>
+  43714b:	mov    %rcx,%rdx
+  43714e:	sub    %rbx,%rdx
+  437151:	sub    $0x4,%rdx
+  437155:	mov    %rdx,%r11
+  437158:	shr    $0x2,%r11
+  43715c:	add    $0x1,%r11
+  437160:	cmp    $0x8,%rdx
+  437164:	jbe    437256 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x316>
+  43716a:	mov    %r11,%rdx
+  43716d:	mov    $0x4,%r8d
+  437173:	movdqa 0xf5075(%rip),%xmm0        # 52c1f0 <typeinfo name for mvdb::QuantizedScreen::build(std::span<float const, 18446744073709551615ul>, unsigned long, unsigned long)::{lambda(unsigned long)#1}+0x50>
+  43717b:	shr    $0x2,%rdx
+  43717f:	movd   %r8d,%xmm2
+  437184:	shl    $0x4,%rdx
+  437188:	pshufd $0x0,%xmm2,%xmm2
+  43718d:	add    %rbx,%rdx
+  437190:	data16 cs nopw 0x0(%rax,%rax,1)
+  43719b:	nopl   0x0(%rax,%rax,1)
+  4371a0:	movdqa %xmm0,%xmm1
+  4371a4:	add    $0x10,%rax
+  4371a8:	paddd  %xmm2,%xmm0
+  4371ac:	movups %xmm1,-0x10(%rax)
+  4371b0:	cmp    %rax,%rdx
+  4371b3:	jne    4371a0 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x260>
+  4371b5:	mov    %r11,%rax
+  4371b8:	and    $0xfffffffffffffffc,%rax
+  4371bc:	and    $0x3,%r11d
+  4371c0:	lea    (%rbx,%rax,4),%rdx
+  4371c4:	je     4371d1 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x291>
+  4371c6:	lea    0x4(%rdx),%r11
+  4371ca:	mov    %eax,(%rdx)
+  4371cc:	cmp    %r11,%rcx
+  4371cf:	jne    43723a <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x2fa>
+  4371d1:	sub    $0x8,%rsp
+  4371d5:	sub    %rbx,%rcx
+  4371d8:	push   %r9
+  4371da:	sar    $0x2,%rcx
+  4371de:	mov    %r15,%r9
+  4371e1:	mov    %rcx,%rdx
+  4371e4:	mov    %rbx,%rcx
+  4371e7:	mov    %rdx,%r8
+  4371ea:	mov    %r10,%rdx
+  4371ed:	call   434570 <mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)>
+  4371f2:	pop    %rcx
+  4371f3:	pop    %rsi
+  4371f4:	mov    %rbp,%rsi
+  4371f7:	mov    %rbx,%rdi
+  4371fa:	call   44de10 <operator delete(void*, unsigned long)>
+  4371ff:	jmp    4370a4 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x164>
+  437204:	nopl   0x0(%rax)
+  437208:	mov    $0x4,%ebp
+  43720d:	jmp    436fd6 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x96>
+  437212:	sub    $0x8,%rsp
+  437216:	mov    0x18(%r12),%rdi
+  43721b:	mov    (%r12),%rdx
+  43721f:	xor    %r8d,%r8d
+  437222:	mov    0x30(%r12),%rsi
+  437227:	push   %rbx
+  437228:	mov    %r15,%r9
+  43722b:	xor    %ecx,%ecx
+  43722d:	call   434570 <mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)>
+  437232:	pop    %rdi
+  437233:	pop    %r8
+  437235:	jmp    4370a4 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x164>
+  43723a:	lea    0x1(%rax),%r11d
+  43723e:	mov    %r11d,0x4(%rdx)
+  437242:	lea    0x8(%rdx),%r11
+  437246:	cmp    %r11,%rcx
+  437249:	je     4371d1 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x291>
+  43724b:	add    $0x2,%eax
+  43724e:	mov    %eax,0x8(%rdx)
+  437251:	jmp    4371d1 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x291>
+  437256:	mov    %rbx,%rdx
+  437259:	xor    %eax,%eax
+  43725b:	jmp    4371c6 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x286>
+  437260:	sub    $0x8,%rsp
+  437264:	mov    %r10,%rdx
+  437267:	mov    %rbx,%rcx
+  43726a:	xor    %r8d,%r8d
+  43726d:	push   %r9
+  43726f:	mov    %r15,%r9
+  437272:	call   434570 <mvdb::(anonymous namespace)::distances_vnni(signed char const*, int const*, unsigned long, std::span<unsigned int const, 18446744073709551615ul>, mvdb::QuantizedScreen::Query const&, int*)>
+  437277:	pop    %rax
+  437278:	pop    %rdx
+  437279:	jmp    4371f4 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const+0x2b4>
+  43727e:	mov    %rax,%rbx
+  437281:	jmp    409914 <mvdb::QuantizedScreen::code_distances(unsigned long, mvdb::QuantizedScreen::Query const&) const [clone .cold]+0xa>
+  437286:	cs nopw 0x0(%rax,%rax,1)
